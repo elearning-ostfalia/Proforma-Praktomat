@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<response xmlns="urn:proforma:v2.0"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" {% if solution.lang %}lang="{{solution.lang }} }}"{% endif %}>
+    {% if solution.seperate %}<separate-test-feedback>
+        <submission-feedback-list>
+        </submission-feedback-list>
+        <tests-response>
+            {% for testResult in testResultList %}
+            <test-response id="{{ testResult.checker.proforma_id }}">
+                <test-result>
+                    <result>
+                        <score>{% if testResult.passed  %}1{% else %}0{% endif %}</score>
+                    </result>
+                    <feedback-list>
+                        {% if testResult.checker.public %}
+                        <student-feedback level="info">
+                            <title>{{testResult.checker.title}}</title>
+                            <content format="plaintext">{% autoescape off %}<![CDATA[{{ testResult.log }}]]>{% endautoescape %}</content>
+                        </student-feedback>
+                        {% else %}
+                            <teacher-feedback level="info">
+                                <title>{{testResult.checker.title}}</title>
+                                <content format="html">{% autoescape off %}<![CDATA[{{ testResult.log }}]]>{% endautoescape %}</content>
+                            </teacher-feedback>
+                        {% endif %}
+                    </feedback-list>
+                </test-result>
+            </test-response>
+            {% endfor %}
+        </tests-response>
+    </separate-test-feedback>
+    {% endif %}
+    <files>
+    </files>
+    <response-meta-data>
+        <grader-engine name="{{ grader.name }}" version="{{ grader.version }}"/>
+    </response-meta-data>
+</response>

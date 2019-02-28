@@ -1,0 +1,117 @@
+{% load dictionary_extras %}{% autoescape off %}<?xml version="1.0" encoding="UTF-8"?>{% endautoescape %}
+<task xmlns="urn:proforma:task:v0.9.4" xmlns:ju3="urn:proforma:tests:junit3:v0.1" xmlns:ju4="urn:proforma:tests:junit4:v0.1" xmlns:praktomat="urn:proforma:praktomat:v0.1" lang="{{ defined.langCode }}">
+    <description><![CDATA[{% autoescape off %}{{ task.description }}{% endautoescape %}]]></description>
+    <proglang version="{{ defined.taskLangVersion }}">{{ defined.taskLang }} </proglang>
+    <submission-restrictions
+            max-size="{{ task.max_file_size }}"/>
+
+        {% if files %}
+            <files>
+                {% for file in files %}
+                    <file id="{{ file.instance.order }}" class="{% if file.instance == 'Copy File' %}internal{% else %}internal{% endif %}"
+                          type="{% if external %}file{% else %}embedded{% endif %}"
+                          filename="{{ file.instance|extBasename:file}}">
+                            {% autoescape off %}
+                          <![CDATA[{{ file.file|get_file_content }}]]></file>
+                            {% endautoescape %}
+                {% endfor %}
+                {% for modelSolution in modelSolutions %}
+                    <file id="solution-{{ forloop.counter0 }}" class="internal"
+                          type="embedded"
+                          filename="{{ modelSolution|basename }}">
+                            {% autoescape off %}
+                          <![CDATA[{{ modelSolution.file|get_file_content }}]]></file>
+                            {% endautoescape %}
+                {% endfor %}
+            </files>
+                {% else %}
+            <files/>
+        {% endif %}
+        <model-solutions>
+            {% for modelSolution in modelSolutions %}
+                <model-solution id="solution-{{ forloop.counter0 }}" comment="this is a solution">
+                        <filerefs>
+                           <fileref refid="solution-{{ forloop.counter0 }}"/>
+                        </filerefs>
+                </model-solution>
+            {% endfor %}
+        </model-solutions>
+    <tests>
+        {% for check in checker %}
+            <test id="{{ check.order }}">
+                <title>{{ check.title }}</title>
+                <test-type>{{ check|testType }}</test-type>
+                <test-configuration>
+                    {% if check|instance_name == 'CheckStyleChecker' or check|instance_name == 'DejaGnuTester' or check|instance_name == 'DejaGnuSetup' or check|instance_name == 'CreateFileChecker' %}
+                        <filerefs>
+                            {% if check|instance_name == 'CheckStyleChecker' %}
+                                <fileref refid="{{ check.order }}"/>{% endif %}
+                            {% if check|instance_name == 'DejaGnuTester' %}
+                                <fileref refid="{{ check.order }}"/>{% endif %}
+                            {% if check|instance_name == 'DejaGnuSetup' %}
+                                <fileref refid="{{ check.order }}"/>{% endif %}
+                            {% if check|instance_name == 'CreateFileChecker' %}
+                                <fileref refid="{{ check.order }}"/>{% endif %}
+                        </filerefs>
+                    {% endif %}
+                    {% if check|instance_name == 'JUnitChecker' %}
+                        {% if check.junit_version == "junit3" %}
+                                <ju3:mainclass>{{ check.class_name }}</ju3:mainclass>
+                        {% endif %}
+                        {% if check.junit_version == "junit4" %}
+                                <ju4:mainclass>{{ check.class_name }}</ju4:mainclass>
+                        {% endif %}
+                    {% endif %}
+                    <test-meta-data>
+                    {% if check|instance_name == 'JavaBuilder' %}
+                        <praktomat:config-CompilerFlags>{{ check|get_BuilderAtt:"flags" }}</praktomat:config-CompilerFlags>
+                        <praktomat:config-CompilerOutputFlags>{{ check|get_BuilderAtt:"output_flags" }}</praktomat:config-CompilerOutputFlags>
+                        <praktomat:config-CompilerLibs>{{ check|get_BuilderAtt:"libs" }}</praktomat:config-CompilerLibs>
+                        <praktomat:config-CompilerFilePattern>{{ check|get_BuilderAtt:"file_pattern" }}</praktomat:config-CompilerFilePattern>
+                    {% endif %}
+                    {% if check|instance_name == 'CreateFileChecker' %}
+                    {% endif %}
+                    {% if check|instance_name == 'JUnitChecker' %}
+                        <praktomat:config-testDescription>{% autoescape off %}<![CDATA[{{ check.test_description }}]]>{% endautoescape %}
+                          </praktomat:config-testDescription>
+                        <praktomat:config-testname>{{ check.name }}</praktomat:config-testname>
+                    {% endif %}
+                    {% if check|instance_name == 'DejaGnuTester' %}
+                        <praktomat:config-name>{{ check.name }}</praktomat:config-name>
+                    {% endif %}
+                    {% if check|instance_name == 'SetlXChecker' %}
+                        <praktomat:config-testDescription>{% autoescape off %}<![CDATA[{{ check.test_description }}]]>{% endautoescape %}
+                          </praktomat:config-testDescription>
+                        <praktomat:config-testname>{{ check.name }}</praktomat:config-testname>
+                    {% endif %}
+                    {% if check|instance_name == 'TextChecker' %}
+                        <praktomat:config-text>{{ check.text }}</praktomat:config-text>
+                    {% endif %}
+                    {% if check|instance_name == 'TextNotChecker' %}
+                        <praktomat:config-text>{{ check.text }}</praktomat:config-text>
+                        <praktomat:config-max_occurrence>{{ check.max_occ }}</praktomat:config-max_occurrence>
+                    {% endif %}
+                    {% if check|instance_name == 'PythonChecker' %}
+                        <praktomat:config-text>{{ check.name }}</praktomat:config-text>
+                        <praktomat:config-remove-regex>{{ check.remove }}</praktomat:config-remove-regex>
+                        <praktomat:config-returnHtml>{{ check.returns_html }}</praktomat:config-returnHtml>
+                    {% endif %}
+                    {% if check|instance_name == 'RemoteScriptChecker' %}
+                        <praktomat:config-studentFilename>{{ check.solution_file_name }}</praktomat:config-studentFilename>
+                        <praktomat:config-studentSolutionFilename>{{ check.student_solution_file_name }}</praktomat:config-studentSolutionFilename>
+                        <praktomat:config-returnHtml>{{ check.returns_html }}</praktomat:config-returnHtml>
+                    {% endif %}
+                        <praktomat:public>{{ check.public }}</praktomat:public>
+                        <praktomat:required>{{ check.required }}</praktomat:required>
+                        <praktomat:always>{{ check.always }}</praktomat:always>
+                    </test-meta-data>
+                </test-configuration>
+            </test>
+        {% endfor %}
+    </tests>
+    <grading-hints/>
+    <meta-data>
+        <title>{{ task.title }}</title>
+        <praktomat:allowed-upload-filename-mimetypes>{{ task.supported_file_types }}</praktomat:allowed-upload-filename-mimetypes>
+    </meta-data>
+</task>
