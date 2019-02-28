@@ -16,3 +16,8 @@ build
 .project
 .pydevproject
 .DS_Store
+.idea
+upload
+/media/frameworks/ace/
+/praktomat-virtualenv
+/src/settings_local.py.old

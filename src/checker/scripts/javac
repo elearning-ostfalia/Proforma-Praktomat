@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # $Id: javac,v 1.1 2002/07/19 12:22:10 krinke Exp $
 
 # Sicherheitsaspekte:
@@ -8,7 +9,7 @@
 #    Klassen-Bibliothek statt (java-sandbox.jar).
 # 3. Die Ausfuehrung findet mit einer leeren policy statt.
 #
-# Da der Praktomat als suid praktomat läuft,...
+# Da der Praktomat als suid praktomat lï¿½uft,...
 
 if [ ! -n "$JAVAC" ]
 then
@@ -36,7 +37,6 @@ fi
 # -encoding UTF-8
 if $JAVAC \
  -classpath . \
- -source 1.6 \
  -nowarn \
  -d . \
  "$@" 

@@ -1,5 +1,5 @@
 This is the source distribution of Praktomat, a programming course manager.
-
+<!--
 Prerequisites
 ============
   We recommend to run Praktomat within Apache, using Postgresql as
@@ -9,6 +9,8 @@ Prerequisites
 
     postgresql
     apache2-mpm-worker	
+
+  (For installing packages use 'apt-get install': e.g. apt-get install postgresql)
 
   Praktomat requires some 3rd-Party libraries programs to run.
   On a Ubuntu/Debian System, these can be installed by installing the following packages:
@@ -20,10 +22,11 @@ Prerequisites
     swig
     libapache2-mod-xsendfile
 
-    sun-java6-jdk (from the "Canonical Parner" Repository)
+    sun-java8-jdk (from the "Canonical Parner" Repository) (TODO -> manual)
     junit
     dejagnu
     gcj-jdk (jfc-dump, for checking Submissions for use of javax.* etc)
+    jclassinfo
    
     git-core
 
@@ -84,44 +87,12 @@ mod_wsgi
 
 
  
-
+-->
 
 Installation 
 ============
 
-1. Clone praktomat from github including submodules: 
-
-        git clone --recursive git://github.com/danielkleinert/Praktomat.git
-
-    If your git version does not support the `--recursive` option:
-
-     1. Clone praktomat *without* submodules: `git clone git://github.com/danielkleinert/Praktomat.git`
-     2. From the praktomat root directory,            run `git submodule init` and then `git submodule update`
-     3. From the subdirectory `media/frameworks/ace`, run `git submodule init` and then `git submodule update`
-
-2. Run `python bootstrap.py` from the praktomat root directory. (Python < 2.7 is not supported!)
-
-3. Run `./bin/buildout` from praktomat root directory. 
-   You need to have MySQL and PostgresSQL installed - otherwise the packages 'MySQL-python' or 'psycopg2' won't install. You can safely outcomment the corresponding package in setup.py if you'll only use the other database.  (Postgres in OSX: make shure pg_config is found: PATH=$PATH:/Library/PostgreSQL/8.4/bin/)
-
-4. Create a database in utf-8 encoding. 
-
-    MySQL: `CREATE DATABASE Praktomat DEFAULT CHARACTER SET utf8` (http://docs.djangoproject.com/en/dev/topics/install/#database-installation)
-
-    Using postgres on Ubuntu, this might work for creating a database "praktomat_default"
-
-        sudo -u postgres createuser -DRS praktomat
-
-        sudo -u postgres createdb -O praktomat praktomat_default
-	
-5. Reconfigure django settings in `Praktomat/src/settings_local.py` (http://docs.djangoproject.com/en/1.3/topics/settings/#topics-settings)
-
-6. Run `./bin/praktomat syncdb` to populate the database with the required tables of 3rd party applications. If prompted don't create a superuser as required tables will be created in the next step.
-	
-7. Run `./bin/praktomat migrate` to install the praktomat database tables.
-	* (optional) Install(also reset) a test database by running `./bin/praktomat install_demo_db`, which copies the contents of `./examples/PraktomatSupport` to the folder `UPLOAD_ROOT` configured in `settings_local.py`. 
-	  You need to change your database to the contained SQLite-database 'Database'.  
-	  Logins: userXY, tutorX, trainer, admin (password='demo') X in [1,3], Y in [1,5]
+-> look at install.md ;)
 
 8. It should now be possible to start the developmet server with `./bin/praktomat runserver` or `./bin/praktomat runserver_plus`
 
@@ -133,15 +104,36 @@ Installation
 Update 
 ======
 
-1. update the source with git or svn from github
+1. update the source with git from github
 
 2. update python dependencies with `./bin/buildout`
 
 3. backup your database(seriously!) and run `./bin/praktomat syncdb` to install any new 3rd party tables as well as `./bin/praktomat migrate` to update praktomats tables
 
+## using external URIs
 
-PhpBB integration 
-=================
+### create a task
 
-To access the praktomat usersessions from an phpBB folow the instructions in `src/sessionprofile/phpbb/README.txt`.
+Format-Version 1.0.1
+`curl -X POST -F "filename.end=@filename_in_directory.end" http://{server}importTaskObject/V1.01 > ./output.html`
 
+Format-Version 0.9.4
+`curl -X POST -F "filename.end=@filename_in_directory.end" http://{server}importTaskObject/V2 > ./output.html`
+
+### grade submission
+
+file submission:
+`curl -X POST -F "submission.zip=@submission.zip" http://{server}/external_grade/proforma/v1/task/{taskID} > ./output.html`
+
+text_field-submission:
+`curl --data-urlencode LONCAPA_student_response='public class ..' http://{server}/textfield/lcxml/{filename}/{taskID}`
+
+## Todo
+
+### createTask
+- check POST
+- check ZIP
+- check task -> version
+- validate
+- create
+- return TaskID

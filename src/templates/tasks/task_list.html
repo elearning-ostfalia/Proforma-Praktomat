@@ -35,15 +35,15 @@
 	
 	{% if not user|in_group:"Trainer" and not user.is_superuser %}
 		{% if tutors or trainers %}
-			<div id="contact"><a> Got Problems? </a>
+			<div id="contact"><a> {% trans "Got Problems?"%} </a>
 			{% if tutors %}
-				<a> Your tutor{{tutors.count|pluralize}}: </a>
+				<a> {% trans "Your tutor"%}{{tutors.count|pluralize}}: </a>
 				{% for tutor in tutors %}
 					<a href="mailto:{{tutor.email}}">{{tutor.get_full_name}}</a>	
 				{% endfor %}
 			{% endif %}
 			{% if trainers %}
-				<a> Your trainer{{trainers.count|pluralize}}: </a>
+				<a> {% trans "Your trainer"%}{{trainers.count|pluralize}}: </a>
 				{% for trainer in trainers %}
 					<a href="mailto:{{trainer.email}}">{{trainer.get_full_name}}</a>	
 				{% endfor %}
@@ -76,9 +76,9 @@
 {% if user|in_group:"User"%}	
 	{% if attestations %}
 		<div id="attestation_overview">
-			<h2>Result Overview</h2>
+			<h2>{% trans "Result Overview"%}</h2>
 			<table>
-				<tr><th>Task</th><th>Grade</th><th>Rating Scale</th></tr>
+				<tr><th>{% trans "Task"%}</th><th>{% trans "Grade"%}</th><th>{% trans "Rating Scale"%}</th></tr>
 				{% for task, attestation in attestations%}
 					<tr>
 						<td>{{task}}</td>
@@ -90,9 +90,9 @@
 				{% endfor %}
 				
 				{% if show_final_grade %}
-					<tr class="final_grade"><td>Final Grade</td><td>{{user.final_grade}}</td></tr>
+					<tr class="final_grade"><td>{% trans "Final Grade"%}</td><td>{{user.final_grade}}</td></tr>
 				{% else %}
-					<tr class="final_grade" id="predicted_final_grade"><td>Predicted Final Grade</td><td id="calculated_grade_cell"></td></tr>
+					<tr class="final_grade" id="predicted_final_grade"><td>{% trans "Predicted Final Grade"%}</td><td id="calculated_grade_cell"></td></tr>
 				{% endif %}
 				
 			</table>

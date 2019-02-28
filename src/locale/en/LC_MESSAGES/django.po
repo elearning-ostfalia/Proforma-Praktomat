@@ -1,0 +1,889 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2012-07-26 15:45+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: accounts/admin.py:25
+msgid "Personal info"
+msgstr ""
+
+#: accounts/admin.py:26
+msgid "Permissions"
+msgstr ""
+
+#: accounts/admin.py:27
+msgid "Groups"
+msgstr ""
+
+#: accounts/admin.py:28
+msgid "Important dates"
+msgstr ""
+
+#: accounts/forms.py:66 accounts/forms.py:124
+msgid "A user with that username already exists."
+msgstr ""
+
+#: accounts/forms.py:97 accounts/views.py:85
+#, python-format
+msgid "Account activation on %s"
+msgstr ""
+
+#: accounts/models.py:22
+msgid "The tutorial the student belongs to."
+msgstr ""
+
+#: accounts/models.py:28
+msgid "The final grade for the whole class."
+msgstr ""
+
+#: accounts/models.py:30
+msgid "activation key"
+msgstr ""
+
+#: accounts/models.py:169
+msgid "The name of the tutorial"
+msgstr ""
+
+#: accounts/models.py:171
+msgid "The tutors in charge of the tutorium."
+msgstr ""
+
+#: accounts/models.py:175
+msgid "Tutors"
+msgstr ""
+
+#: attestation/models.py:21
+msgid "Comment which is shown to the user."
+msgstr ""
+
+#: attestation/models.py:22
+msgid "Comment which is only visible to tutors"
+msgstr ""
+
+#: attestation/models.py:23
+msgid "The mark for the whole solution."
+msgstr ""
+
+#: attestation/models.py:25
+msgid "Indicates whether the attestation is ready to be published"
+msgstr ""
+
+#: attestation/models.py:26
+msgid "Indicates whether the user can see the attestation."
+msgstr ""
+
+#: attestation/models.py:27
+msgid "The Date/Time the attestation was published."
+msgstr ""
+
+#: attestation/models.py:44
+#, python-format
+msgid "New attestation for your solution of the task '%s'"
+msgstr ""
+
+#: attestation/models.py:56
+msgid "The content of the solution file annotated by the tutor."
+msgstr ""
+
+#: attestation/models.py:75
+msgid "The Name of the Aspect to be rated. E.g.: \"Readabylity\""
+msgstr ""
+
+#: attestation/models.py:76
+msgid ""
+"Description of the Aspect and how it should be rated. E.w.: \"How well is "
+"the code structured?\""
+msgstr ""
+
+#: attestation/models.py:83
+msgid "The Name of the rating scale for the aspects. E.g.: \"School marks\""
+msgstr ""
+
+#: attestation/models.py:91
+msgid ""
+"The Name of the item(mark) in the rating scale. E.g.: \"A\" or \"very good\" "
+msgstr ""
+
+#: attestation/models.py:92
+msgid "Defines the order in which the items are sorted. Lowest is best."
+msgstr ""
+
+#: attestation/models.py:120
+msgid ""
+"This JavaScript will calculate a recommend end note for every user based on "
+"final grade of every task."
+msgstr ""
+
+#: checker/models.py:95
+msgid ""
+"Determines the order in wich the checker will start. Not necessary "
+"continuously!"
+msgstr ""
+
+#: checker/models.py:99
+msgid "Test results are displayed to the submitter."
+msgstr ""
+
+#: checker/models.py:100
+msgid "The test must be passed to submit the solution."
+msgstr ""
+
+#: checker/models.py:101
+msgid "The test will run on submission time."
+msgstr ""
+
+#: checker/models.py:210
+msgid "Indicates whether the test has been passed"
+msgstr ""
+
+#: checker/models.py:211
+msgid "Text result of the checker"
+msgstr ""
+
+#: checker/checker/CheckStyleChecker.py:15 checker/checker/ScriptChecker.py:12
+msgid "Name to be displayed on the solution detail page."
+msgstr ""
+
+#: checker/checker/CheckStyleChecker.py:16
+msgid "XML configuration of CheckStyle. See http://checkstyle.sourceforge.net/"
+msgstr ""
+
+#: checker/checker/CreateFileChecker.py:13
+msgid "The file that is copied into the sandbox"
+msgstr ""
+
+#: checker/checker/CreateFileChecker.py:14
+msgid ""
+"What the file will be named in the sandbox. If empty, the name the file is "
+"stored under on the webserver is used!"
+msgstr ""
+
+#: checker/checker/CreateFileChecker.py:15
+msgid "Subfolder in the sandbox which shall contain the file."
+msgstr ""
+
+#: checker/checker/DejaGnu.py:58 checker/checker/JUnit3Checker.py:17
+msgid "The name of the Test"
+msgstr ""
+
+#: checker/checker/DejaGnu.py:59
+msgid ""
+"In den folgenden DejaGnu-Testfällen werden typischerweise Funktionen "
+"aufgerufen, die beim vorherigen Schritt <EM>Tests einrichten</EM> definiert "
+"wurden.\t Siehe\tauch den Abschnitt <EM>How to write a test case</EM> im <A "
+"TARGET=\"_blank\" HREF=\"http://www.gnu.org/manual/dejagnu/\">DejaGnu-"
+"Handbuch</A>."
+msgstr ""
+
+#: checker/checker/DejaGnu.py:157
+msgid ""
+"Das Setup benutzt den <A HREF=\"http://www.gnu.org/software/dejagnu/dejagnu."
+"html\">DejaGnu-Testrahmen</A>, um die Programme zu testen. Die in dieser "
+"Datei enthaltenen Definitionen gelten für alle Testfälle dieser Aufgabe. Sie "
+"werden beim Testen in die DejaGnu-Datei <TT>default.exp</TT> geschrieben. "
+"(Vergl. hierzuden Abschnitt <EM>Target dependent procedures</EM> im\t<A HREF="
+"\"http://www.gnu.org/manual/dejagnu/\" TARGET=\"_blank\">DejaGnu-Handbuch</"
+"A>.) Die Variablen PROGRAM und JAVA werden mit dem Programmnamen bzw. dem "
+"Pfad zur Java-Runtime ersetzt."
+msgstr ""
+
+#: checker/checker/DiffChecker.py:16 checker/checker/ScriptChecker.py:13
+msgid ""
+"The shell script whose output for the given input file is compared to the "
+"given output file."
+msgstr ""
+
+#: checker/checker/DiffChecker.py:17
+msgid "The file containing the input for the program."
+msgstr ""
+
+#: checker/checker/DiffChecker.py:18
+msgid "The file containing the output for the program."
+msgstr ""
+
+#: checker/checker/InterfaceChecker.py:16
+#: checker/checker/InterfaceChecker.py:17
+#: checker/checker/InterfaceChecker.py:18
+#: checker/checker/InterfaceChecker.py:19
+#: checker/checker/InterfaceChecker.py:20
+#: checker/checker/InterfaceChecker.py:21
+#: checker/checker/InterfaceChecker.py:22
+msgid "The name of the interface that must be implemeted."
+msgstr ""
+
+#: checker/checker/JUnit3Checker.py:18
+msgid "Die JUnit3-Testfälle als Java .class File"
+msgstr ""
+
+#: checker/checker/JUnitChecker.py:21
+msgid "The fully qualified name of the Testcase class"
+msgstr ""
+
+#: checker/checker/JUnitChecker.py:22
+msgid ""
+"Description of the Testcase. To be displayed on Checker Results page when "
+"checker is  unfolded."
+msgstr ""
+
+#: checker/checker/JUnitChecker.py:23
+msgid "Name of the Testcase. To be displayed as title on Checker Results page"
+msgstr ""
+
+#: checker/checker/LineWidthChecker.py:16
+msgid "The maximum length of a line of code."
+msgstr ""
+
+#: checker/checker/LineWidthChecker.py:17
+msgid "The amount of characters a tab represents."
+msgstr ""
+
+#: checker/checker/LineWidthChecker.py:18
+msgid ""
+"Regular expression describing the filenames to be checked. Case Insensetive. "
+"Blank: use all files."
+msgstr ""
+
+#: checker/checker/LineWidthChecker.py:19
+msgid ""
+"Regular expression describing included filenames, which shall be excluded. "
+"Case Insensetive. Blank: use all files."
+msgstr ""
+
+#: checker/checker/ScriptChecker.py:14
+msgid "Regular expression describing passages to be removed from the output."
+msgstr ""
+
+#: checker/checker/ScriptChecker.py:15
+msgid ""
+"If the script doesn't return HTML it will be enclosed in &lt; pre &gt; tags."
+msgstr ""
+
+#: checker/checker/TextChecker.py:14
+msgid "The text that has to be in the solution."
+msgstr ""
+
+#: checker/checker/TextNotChecker.py:14
+#: checker/checker/TextNotCheckerOliver.py:14
+msgid "The text you search in the text"
+msgstr ""
+
+#: checker/checker/TextNotChecker.py:15
+#: checker/checker/TextNotCheckerOliver.py:15
+msgid ""
+"The allowed max. occurrence of text in the source. 0 means the word is not "
+"allowed"
+msgstr ""
+
+#: checker/compiler/Builder.py:25
+msgid "Compiler flags"
+msgstr ""
+
+#: checker/compiler/Builder.py:26
+#, python-format
+msgid "Output flags. '%s' will be replaced by the program name."
+msgstr ""
+
+#: checker/compiler/Builder.py:27
+msgid "Compiler libraries"
+msgstr ""
+
+#: checker/compiler/Builder.py:28
+msgid ""
+"Regular expression describing all source files to be passed to the compiler."
+msgstr ""
+
+#: solutions/forms.py:28
+#, python-format
+msgid "The file of type %s is not supported."
+msgstr ""
+
+#: solutions/forms.py:33
+msgid "The zip file seams to be corrupt."
+msgstr ""
+
+#: solutions/forms.py:35
+msgid "The zip file is to big."
+msgstr ""
+
+#: solutions/forms.py:41
+#, python-format
+msgid ""
+"The file '%(file)s' of guessed mime type '%(type)s' in this zip file is not "
+"supported."
+msgstr ""
+
+#: solutions/forms.py:48
+msgid "Uhoh - something unexpected happened."
+msgstr ""
+
+#: solutions/forms.py:50
+#, python-format
+msgid "The file '%(file)s' is bigger than %(size)iKB which is not suported."
+msgstr ""
+
+#: solutions/forms.py:57
+msgid "You must at least choose one file."
+msgstr ""
+
+#: solutions/models.py:25
+msgid ""
+"Id unique in task and user.Eg. Solution 1 of user X in task Y in contrast to "
+"global solution Z"
+msgstr ""
+
+#: solutions/models.py:31
+msgid "Indicates whether the solution has passed all public and required tests"
+msgstr ""
+
+#: solutions/models.py:32
+msgid ""
+"Indicates whether the solution has at least failed one public and not "
+"required tests"
+msgstr ""
+
+#: solutions/models.py:33
+msgid "Indicates whether the solution is a rip-off of another one."
+msgstr ""
+
+#: solutions/models.py:34
+msgid "Indicates whether this solution is the last (accepted) of the author."
+msgstr ""
+
+#: solutions/models.py:114
+msgid ""
+"Source code file as part of a solution or Zip file containing multiple "
+"solution files."
+msgstr ""
+
+#: solutions/models.py:115
+msgid "Guessed file type. Automatically  set on save()."
+msgstr ""
+
+#: solutions/views.py:68
+#, python-format
+msgid "%s submission confirmation"
+msgstr ""
+
+#: tasks/models.py:17
+msgid "The name of the Task"
+msgstr ""
+
+#: tasks/models.py:18
+msgid "Description of the assignment."
+msgstr ""
+
+#: tasks/models.py:19
+msgid "The time on which the user will see the task."
+msgstr ""
+
+#: tasks/models.py:20
+msgid ""
+"The time up until the user has time to complete the task. This time will be "
+"extended by one hour for those who yust missed the deadline."
+msgstr ""
+
+#: tasks/models.py:21
+msgid ""
+"Regular Expression describing the mime types of solution files that the user "
+"is allowed to upload."
+msgstr ""
+
+#: tasks/models.py:22
+msgid "The maximum size of an uploaded solution file in kilobyte."
+msgstr ""
+
+#: tasks/models.py:25
+msgid ""
+"Indicates whether the checker which don't run immediately on submission have "
+"been executed."
+msgstr ""
+
+#: tasks/models.py:26
+msgid "The scale used to mark the hole solution."
+msgstr ""
+
+#: templates/404.html:5
+msgid "Error 404"
+msgstr ""
+
+#: templates/access_denied.html:5
+msgid "Access denied"
+msgstr ""
+
+#: templates/base.html:25
+msgid "Rating overview"
+msgstr ""
+
+#: templates/base.html:27
+msgid "My Tutorial"
+msgstr ""
+
+#: templates/admin/base_site.html:4
+#, python-format
+msgid "Praktomat admin: %(title)s"
+msgstr ""
+
+#: templates/admin/base_site.html:7
+#, python-format
+msgid "%(SITE_NAME)s: Admin"
+msgstr ""
+
+#: templates/admin/base_site.html:10
+msgid "User site"
+msgstr ""
+
+#: templates/admin/accounts/user/change_list.html:9
+#: templates/admin/tasks/task/change_list.html:9
+#, python-format
+msgid "Import %(name)s"
+msgstr ""
+
+#: templates/admin/accounts/user/change_list.html:14
+#: templates/admin/accounts/user/import_tutorial_assignment.html:16
+msgid "Import tutorial assignment"
+msgstr ""
+
+#: templates/admin/accounts/user/change_list.html:19
+#: templates/admin/attestation/ratingscale/change_list.html:14
+#: templates/admin/tasks/task/change_list.html:14
+#, python-format
+msgid "Add %(name)s"
+msgstr ""
+
+#: templates/admin/accounts/user/import.html:13
+#: templates/admin/accounts/user/import_tutorial_assignment.html:13
+#: templates/admin/attestation/ratingscale/generate.html:13
+#: templates/admin/tasks/task/import.html:13
+msgid "Home"
+msgstr ""
+
+#: templates/admin/accounts/user/import.html:16
+msgid "Import User"
+msgstr ""
+
+#: templates/admin/accounts/user/import.html:26
+#: templates/admin/accounts/user/import_tutorial_assignment.html:26
+#: templates/admin/attestation/ratingscale/generate.html:26
+#: templates/admin/tasks/task/import.html:26
+msgid "Please correct the error below."
+msgid_plural "Please correct the errors below."
+msgstr[0] ""
+msgstr[1] ""
+
+#: templates/admin/accounts/user/import.html:36
+#: templates/admin/accounts/user/import_tutorial_assignment.html:36
+#: templates/admin/attestation/ratingscale/generate.html:36
+#: templates/admin/tasks/task/import.html:36
+msgid "Save"
+msgstr ""
+
+#: templates/admin/attestation/ratingscale/change_list.html:9
+#, python-format
+msgid "Generate %(name)s"
+msgstr ""
+
+#: templates/admin/attestation/ratingscale/generate.html:16
+msgid "Generate ratingScale"
+msgstr ""
+
+#: templates/admin/tasks/stacked.html:9
+#: templates/admin/tasks/task/change_form.html:9
+msgid "View on site"
+msgstr ""
+
+#: templates/admin/tasks/stacked.html:64
+#, python-format
+msgid "Add another %(verbose_name)s"
+msgstr ""
+
+#: templates/admin/tasks/stacked.html:67
+msgid "Remove"
+msgstr ""
+
+#: templates/admin/tasks/task/change_form.html:7
+msgid "Download Final Solutions"
+msgstr ""
+
+#: templates/admin/tasks/task/change_form.html:8
+msgid "History"
+msgstr ""
+
+#: templates/admin/tasks/task/import.html:16
+msgid "Import Task"
+msgstr ""
+
+#: templates/attestation/attestation_email.html:1
+#: templates/solutions/submission_confirmation_email.html:1
+msgid "Hello "
+msgstr ""
+
+#: templates/attestation/attestation_email.html:3
+#, python-format
+msgid ""
+"your solution to the task \"%(task)s\" has been attested by %(attester)s."
+msgstr ""
+
+#: templates/attestation/attestation_email.html:8
+#: templates/registration/registration_email.html:10
+#: templates/solutions/submission_confirmation_email.html:14
+msgid "Thanks for using our site!"
+msgstr ""
+
+#: templates/attestation/attestation_email.html:10
+#: templates/registration/password_reset_email.html:11
+#: templates/registration/registration_email.html:12
+#: templates/solutions/submission_confirmation_email.html:16
+#, python-format
+msgid "The %(site_name)s team"
+msgstr ""
+
+#: templates/attestation/attestation_list.html:34
+msgid "The task is not yet expired."
+msgstr ""
+
+#: templates/attestation/attestation_list.html:37
+msgid "Not all checker have yet been run."
+msgstr ""
+
+#: templates/attestation/attestation_list.html:52
+msgid "Attestation Progress by Tutor"
+msgstr ""
+
+#: templates/attestation/attestation_list.html:65
+msgid "Unatested solutions"
+msgstr ""
+
+#: templates/attestation/attestation_list.html:98
+msgid "My attestations"
+msgstr ""
+
+#: templates/attestation/attestation_list.html:114
+#: templates/attestation/attestation_list.html:130
+#: templates/solutions/solution_detail.html:33
+msgid "Marked as Plagiarism"
+msgstr ""
+
+#: templates/attestation/attestation_list.html:124
+msgid "Attestations by other tutors"
+msgstr ""
+
+#: templates/attestation/attestation_view.html:33
+#: templates/tasks/task_list.html:67
+msgid "Attestation"
+msgstr ""
+
+#: templates/attestation/attestation_view.html:80
+msgid "Annotated Files"
+msgstr ""
+
+#: templates/attestation/rating_overview.html:73
+msgid "Rating Overview"
+msgstr ""
+
+#: templates/attestation/statistics.html:321
+#: templates/tasks/task_detail.html:21 templates/tasks/task_list.html:68
+msgid "Statistics"
+msgstr ""
+
+#: templates/attestation/tutorial_none.html:5
+msgid "No Tutorial"
+msgstr ""
+
+#: templates/registration/login.html:5
+msgid "Login"
+msgstr ""
+
+#: templates/registration/password_change_done.html:5
+#: templates/registration/password_change_form.html:5
+#: templates/registration/password_change_form.html:10
+msgid "Password change"
+msgstr ""
+
+#: templates/registration/password_change_done.html:10
+msgid "Password change successful"
+msgstr ""
+
+#: templates/registration/password_change_done.html:12
+msgid "Your password was changed."
+msgstr ""
+
+#: templates/registration/password_change_form.html:12
+msgid ""
+"Please enter your old password, for security's sake, and then enter your new "
+"password twice so we can verify you typed it in correctly."
+msgstr ""
+
+#: templates/registration/password_change_form.html:17
+msgid "Old password:"
+msgstr ""
+
+#: templates/registration/password_change_form.html:19
+#: templates/registration/password_reset_confirm.html:18
+msgid "New password:"
+msgstr ""
+
+#: templates/registration/password_change_form.html:21
+#: templates/registration/password_reset_confirm.html:20
+msgid "Confirm password:"
+msgstr ""
+
+#: templates/registration/password_change_form.html:23
+#: templates/registration/password_reset_confirm.html:21
+msgid "Change my password"
+msgstr ""
+
+#: templates/registration/password_reset_complete.html:5
+#: templates/registration/password_reset_confirm.html:5
+#: templates/registration/password_reset_done.html:5
+#: templates/registration/password_reset_form.html:5
+#: templates/registration/password_reset_form.html:10
+msgid "Password reset"
+msgstr ""
+
+#: templates/registration/password_reset_complete.html:10
+msgid "Password reset complete"
+msgstr ""
+
+#: templates/registration/password_reset_complete.html:12
+msgid "Your password has been set.  You may go ahead and log in now."
+msgstr ""
+
+#: templates/registration/password_reset_complete.html:14
+msgid "Log in"
+msgstr ""
+
+#: templates/registration/password_reset_confirm.html:12
+msgid "Enter new password"
+msgstr ""
+
+#: templates/registration/password_reset_confirm.html:14
+msgid ""
+"Please enter your new password twice so we can verify you typed it in "
+"correctly."
+msgstr ""
+
+#: templates/registration/password_reset_confirm.html:26
+msgid "Password reset unsuccessful"
+msgstr ""
+
+#: templates/registration/password_reset_confirm.html:28
+msgid ""
+"The password reset link was invalid, possibly because it has already been "
+"used.  Please request a new password reset."
+msgstr ""
+
+#: templates/registration/password_reset_done.html:10
+msgid "Password reset successful"
+msgstr ""
+
+#: templates/registration/password_reset_done.html:12
+msgid ""
+"We've e-mailed you instructions for setting your password to the e-mail "
+"address you submitted. You should be receiving it shortly."
+msgstr ""
+
+#: templates/registration/password_reset_email.html:2
+msgid "You're receiving this e-mail because you requested a password reset"
+msgstr ""
+
+#: templates/registration/password_reset_email.html:3
+#, python-format
+msgid "for your user account at %(site_name)s"
+msgstr ""
+
+#: templates/registration/password_reset_email.html:5
+msgid "Please go to the following page and choose a new password:"
+msgstr ""
+
+#: templates/registration/password_reset_email.html:9
+#: templates/registration/registration_email.html:8
+msgid "Your username, in case you've forgotten:"
+msgstr ""
+
+#: templates/registration/password_reset_form.html:12
+msgid ""
+"Forgotten your password? Enter your e-mail address below, and we'll e-mail "
+"instructions for setting a new one."
+msgstr ""
+
+#: templates/registration/password_reset_form.html:16
+msgid "E-mail address:"
+msgstr ""
+
+#: templates/registration/password_reset_form.html:16
+msgid "Reset my password"
+msgstr ""
+
+#: templates/registration/registration_activated.html:5
+msgid "Activation"
+msgstr ""
+
+#: templates/registration/registration_activated.html:9
+msgid "Activation successful,Activation unsuccessful"
+msgstr ""
+
+#: templates/registration/registration_activated.html:12
+msgid " You have successfully activated your account. You can now login."
+msgstr ""
+
+#: templates/registration/registration_activated.html:15
+msgid "Your activation has failed due to one of the folloing reasons:"
+msgstr ""
+
+#: templates/registration/registration_activated.html:17
+#, python-format
+msgid " The activation period of %(expiration_days)s days has expired. "
+msgstr ""
+
+#: templates/registration/registration_activated.html:18
+msgid ""
+"The activation code was allready succsessfully used. You may try to log in."
+msgstr ""
+
+#: templates/registration/registration_activated.html:19
+msgid "The activation code is invalid."
+msgstr ""
+
+#: templates/registration/registration_activated.html:20
+msgid "An account with the same matnumber was allready activated."
+msgstr ""
+
+#: templates/registration/registration_change.html:5
+#: templates/registration/registration_change.html:10
+msgid "Change Account"
+msgstr ""
+
+#: templates/registration/registration_complete.html:6
+#: templates/registration/registration_form.html:5
+msgid "Registration"
+msgstr ""
+
+#: templates/registration/registration_complete.html:11
+msgid "Registration successful"
+msgstr ""
+
+#: templates/registration/registration_complete.html:13
+msgid ""
+"We've e-mailed you instructions for activating your account to the e-mail "
+"address you submitted. You should be receiving it shortly."
+msgstr ""
+
+#: templates/registration/registration_email.html:2
+#, python-format
+msgid ""
+"You're receiving this e-mail because you registerd an account at "
+"%(site_name)s"
+msgstr ""
+
+#: templates/registration/registration_email.html:4
+#, python-format
+msgid ""
+"Please go to the following page to activate your account within "
+"%(expiration_days)s days"
+msgstr ""
+
+#: templates/registration/registration_form.html:10
+msgid "Register a new Account"
+msgstr ""
+
+#: templates/solutions/checker_results_inline.html:14
+msgid "passed, failed"
+msgstr ""
+
+#: templates/solutions/solution_detail.html:15
+msgid ""
+"All required tests have been passed. Nevertheless there is at least one "
+"warning"
+msgstr ""
+
+#: templates/solutions/solution_detail.html:16
+msgid "You should consider correcting it."
+msgstr ""
+
+#: templates/solutions/solution_detail.html:18
+msgid "All required tests have been passed."
+msgstr ""
+
+#: templates/solutions/solution_detail.html:21
+msgid "Not all required tests have been passed."
+msgstr ""
+
+#: templates/solutions/solution_detail.html:22
+msgid "Please correct the errors below and try again!"
+msgstr ""
+
+#: templates/solutions/solution_detail.html:50
+#: templates/solutions/solution_detail.html:57
+msgid "Results"
+msgstr ""
+
+#: templates/solutions/solution_detail.html:63
+msgid "Files"
+msgstr ""
+
+#: templates/solutions/solution_list.html:48
+msgid "Time left:"
+msgstr ""
+
+#: templates/solutions/solution_list.html:49
+#: templates/solutions/solution_list.html:55
+msgid "Upload solution"
+msgstr ""
+
+#: templates/solutions/solution_list.html:56
+msgid "The deadline has past. Therefore (re)submission is not possible."
+msgstr ""
+
+#: templates/solutions/solution_list.html:68
+msgid "Final Solution"
+msgstr ""
+
+#: templates/solutions/solution_list.html:74
+msgid "There is no final solution."
+msgstr ""
+
+#: templates/solutions/solution_list.html:77
+msgid "Solution History"
+msgstr ""
+
+#: templates/solutions/solution_list.html:81
+msgid "No solutions have been uploaded."
+msgstr ""
+
+#: templates/tasks/task_detail.html:18
+msgid "Attestations"
+msgstr ""
+
+#: templates/tasks/task_detail.html:24
+msgid "My Solutions"
+msgstr ""
+
+#: templates/tasks/task_list.html:59
+msgid "Expired tasks"
+msgstr ""
+
+#: templates/tasks/task_list.html:59
+msgid "Upcoming tasks"
+msgstr ""
+
+#: templates/tasks/task_list.html:64
+msgid "Solutions"
+msgstr ""
+
+#: templates/tasks/task_list.html:73
+msgid "Nothing to do right now! Yay!"
+msgstr ""
