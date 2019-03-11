@@ -3,16 +3,18 @@
 
 import os
 
-# A boolean that turns on/off template debug mode. If this is True, the fancy 
-# error page will display a detailed report for any TemplateSyntaxError. 
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+# A boolean that turns on/off template debug mode. If this is True, the fancy
+# error page will display a detailed report for any TemplateSyntaxError.
 # Note that Django only displays fancy error pages if DEBUG is True.
 TEMPLATE_DEBUG = True
 
 # Subclassed TestSuitRunner to prepopulate unit test database.
 TEST_RUNNER = 'utilities.TestSuite.TestSuiteRunner'
 
-# The ID, as an integer, of the current site in the django_site database table. 
-# This is used so that application data can hook into specific site(s) and 
+# The ID, as an integer, of the current site in the django_site database table.
+# This is used so that application data can hook into specific site(s) and
 # a single database can manage content for multiple sites.
 SITE_ID = 1
 
@@ -21,7 +23,7 @@ SITE_ID = 1
 USE_I18N = True
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'db(@293vg@52-2mgn2zjypq=pc@28t@==$@@vt^yf78l$429yn'
+SECRET_KEY = ''
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -30,23 +32,24 @@ TEMPLATE_LOADERS = (
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
-	'context_processors.settings.from_settings',
-	'django.contrib.auth.context_processors.auth',
-	'django.core.context_processors.debug',
-	'django.core.context_processors.i18n',
-	'django.core.context_processors.media',
-	'django.core.context_processors.request',
-	'django.contrib.messages.context_processors.messages',
+    'context_processors.settings.from_settings',
+    'django.contrib.auth.context_processors.auth',
+    'django.core.context_processors.debug',
+    'django.core.context_processors.i18n',
+    'django.core.context_processors.media',
+    'django.core.context_processors.request',
+    'django.contrib.messages.context_processors.messages',
 )
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
-	'sessionprofile.middleware.SessionProfileMiddleware', #phpBB integration
+    'sessionprofile.middleware.SessionProfileMiddleware', #phpBB integration
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'accounts.middleware.AuthenticationMiddleware',	
-	'accounts.middleware.LogoutInactiveUserMiddleware',
-	'django.middleware.transaction.TransactionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+    'accounts.middleware.AuthenticationMiddleware',
+    'accounts.middleware.LogoutInactiveUserMiddleware',
+    'django.middleware.transaction.TransactionMiddleware',
 )
 
 ROOT_URLCONF = 'urls'
@@ -56,36 +59,38 @@ TEMPLATE_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     os.path.dirname(__file__)+"/templates",
-				 
+
 )
 
 INSTALLED_APPS = (
-	'django.contrib.auth',
-	'django.contrib.contenttypes',
-	'django.contrib.sessions',
-	'django.contrib.admin',
-	'django.contrib.admindocs',
-	'django.contrib.markup',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.admin',
+    'django.contrib.admindocs',
+    'django.contrib.markup',
 
-	# ./manage.py runserver_plus allows for debugging on werkzeug traceback page. invoke error with assert false
-	# not needed for production
-	'django_extensions',
+    # ./manage.py runserver_plus allows for debugging on werkzeug traceback page. invoke error with assert false
+    # not needed for production
+    'django_extensions',
 
-	# intelligent schema and data migrations
-	'south', 
+    # intelligent schema and data migrations
+    'south',
 
-	# contains a widget to render a form field as a TinyMCE editor
-	'tinymce',
+    # contains a widget to render a form field as a TinyMCE editor
+    'tinymce',
 
-	'configuration',
-	'accounts',
-	'tasks',
-	'solutions',
-	'attestation',
-	'checker',
-	'utilities',
-				  
-	'sessionprofile', #phpBB integration
+    'configuration',
+    'accounts',
+    'tasks',
+    'solutions',
+    'attestation',
+    'checker',
+    'utilities',
+    'export_universal_task',
+    'external_grade',
+
+    'sessionprofile', #phpBB integration
 )
 
 
@@ -95,12 +100,12 @@ DEFAULT_FILE_STORAGE = 'utilities.storage.UploadStorage'
 
 NUMBER_OF_TASKS_TO_BE_CHECKED_IN_PARALLEL = 1
 
-USE_KILL_LOG = False
+# USE_KILL_LOG = False
 
 try:
-    from settings_local import * 
-except ImportError: 
-    pass 
+    from settings_local import *
+except ImportError:
+    pass
 
 # Required to be set when baseurl ist not a top level domain
 LOGIN_URL = BASE_URL + 'accounts/login/'
@@ -113,18 +118,78 @@ TINYMCE_DEFAULT_CONFIG = {
 
   'theme': "advanced",
   'theme_advanced_buttons1' : "formatselect,|,bold,italic,underline,strikethrough,|,forecolor,|,bullist,numlist,|,sub,sup,|,outdent,indent,blockquote,syntaxhl,|,visualchars,nonbreaking,|,link,unlink,anchor,image,cleanup,help,code,|,print,|,fullscreen",
-	'theme_advanced_buttons2' : "cut,copy,paste,pastetext,pasteword,|,search,replace,|,undo,redo,|,tablecontrols,|,hr,removeformat,visualaid,|,charmap,emotions,iespell,media,advhr",				   
-	'theme_advanced_buttons3' : "",
-	'theme_advanced_buttons4' : "",
-	'theme_advanced_toolbar_location' : "top",
-	'theme_advanced_toolbar_align' : "left",
-	'theme_advanced_statusbar_location' : "bottom",
-	'theme_advanced_resizing' : True,
-	'extended_valid_elements' : "textarea[cols|rows|disabled|name|readonly|class]" ,
-	
-	'content_css' : MEDIA_URL+'/styles/style.css',
+    'theme_advanced_buttons2' : "cut,copy,paste,pastetext,pasteword,|,search,replace,|,undo,redo,|,tablecontrols,|,hr,removeformat,visualaid,|,charmap,emotions,iespell,media,advhr",
+    'theme_advanced_buttons3' : "",
+    'theme_advanced_buttons4' : "",
+    'theme_advanced_toolbar_location' : "top",
+    'theme_advanced_toolbar_align' : "left",
+    'theme_advanced_statusbar_location' : "bottom",
+    'theme_advanced_resizing' : True,
+    'extended_valid_elements' : "textarea[cols|rows|disabled|name|readonly|class]" ,
+
+    'content_css' : MEDIA_URL+'/styles/style.css',
   'relative_urls': False,
 }
 TINYMCE_SPELLCHECKER = False
 TINYMCE_COMPRESSOR = False
 
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(message)s %(request)r'
+        }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'debug.log'),
+            'formatter': 'verbose'
+        },
+        'error-file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'error.log'),
+            'formatter': 'verbose'
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'include_html': True,
+        },
+    },
+    'loggers': {
+        'checker': {
+            'handlers': ['console', 'error-file'],
+            'level': 'ERROR',  # change debug level as appropiate
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,  # keep 10 historical versions
+        },
+        'external_grade': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',  # change debug level as appropiate
+            'propagate': False,
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,  # keep 10 historical versions
+        },
+        'export_universal_task': {
+            'handlers': ['console', 'error-file'],
+            'level': 'ERROR',  # change debug level as appropiate
+            'propagate': False,
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,  # keep 10 historical versions
+        },
+        'django': {
+            'handlers': ['console', 'error-file', 'file'],
+            'level': 'DEBUG',  # change debug level as appropiate
+            'maxBytes': 1024*1024*4,  # 15MB
+            'backupCount': 10,  # keep 10 historical versions
+        }
+    }
+}
