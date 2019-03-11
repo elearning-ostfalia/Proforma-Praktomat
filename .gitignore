@@ -22,3 +22,16 @@ upload
 /praktomat-virtualenv
 /src/settings_local.py.old
 extra/junit-4.12-addon-gruendel.jar
+extra/junit-4.12-addon-gruendel.jar
+extra/checkstyle-5.4-all.jar
+extra/checkstyle-6.2-all.jar
+extra/checkstyle-7.6-all.jar
+extra/checkstyle-all-4.4.jar
+extra/hamcrest-core-1.3.jar
+extra/jclassinfo-0.19.1.tar.gz
+extra/junit-3.8.jar
+extra/junit-4.10.jar
+extra/junit-4.11.jar
+extra/junit-4.12.jar
+extra/setlX-1.7.jar
+extra/setlX-2.7.jar
