@@ -22,7 +22,6 @@ upload
 /praktomat-virtualenv
 /src/settings_local.py.old
 extra/junit-4.12-addon-gruendel.jar
-extra/junit-4.12-addon-gruendel.jar
 extra/checkstyle-5.4-all.jar
 extra/checkstyle-6.2-all.jar
 extra/checkstyle-7.6-all.jar
