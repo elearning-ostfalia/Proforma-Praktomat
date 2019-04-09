@@ -73,7 +73,7 @@ INSTALLED_APPS = (
     # ./manage.py runserver_plus allows for debugging on werkzeug traceback page. invoke error with assert false
     # not needed for production
     'django_extensions',
-
+    'django.contrib.staticfiles',
     # intelligent schema and data migrations
     'south',
 

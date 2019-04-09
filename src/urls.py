@@ -5,13 +5,14 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 import sys
 import os
+import settings
 
 from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
                        # Index page
-                       url(r'^$', 'django.views.generic.simple.redirect_to', {'url': 'tasks/'}, name="index"),
+                       url(r'^$', 'django.views.generic.simple.redirect_to', {'url': settings.BASE_URL + 'tasks/'}, name="index"),
 
                        # Admin
                        url(r'^admin/tasks/task/(?P<task_id>\d+)/model_solution', 'tasks.views.model_solution',
@@ -54,17 +55,17 @@ urlpatterns = patterns('',
                        # external_grade common url: server / lms / function / domain / user / task
                        # todo: username sollte @ enthalten
                        # file grader: function / user_name / task_id
-                       url(r'^external_grade/(?P<user_name>[\w\.@\-]{3,60})/(?P<task_id>\d{1,6})$',
-                           'external_grade.views.file_grader', name='external_grade'),
+                       #url(r'^external_grade/(?P<user_name>[\w\.@\-]{3,60})/(?P<task_id>\d{1,6})$',
+                       #    'external_grade.views.file_grader', name='external_grade'),
                        # file grader: function / domain / user_name / task_id
-                       url(
-                           r'^external_grade/(?P<domain>[a-zA-Z\_\.\d]{3,32})/\
-                             (?P<user_name>[\w\.\@\-]{3,60})/(?P<task_id>\d{1,6})$',
-                           'external_grade.views.file_grader', name='external_grade'),
+                       #url(
+                       #    r'^external_grade/(?P<domain>[a-zA-Z\_\.\d]{3,32})/\
+                       #      (?P<user_name>[\w\.\@\-]{3,60})/(?P<task_id>\d{1,6})$',
+                       #    'external_grade.views.file_grader', name='external_grade'),
                        # file grader: function / lms / domain / user_name / task_id
-                       url(
-                           r'^external_grade/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<domain>[a-zA-Z\_\.\d]{3,32})/(?P<user_name>[\w\.\@\-]{3,60})/(?P<task_id>\d{1,6})$',
-                           'external_grade.views.file_grader', name='external_grade'),
+                       #url(
+                       #    r'^external_grade/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<domain>[a-zA-Z\_\.\d]{3,32})/(?P<user_name>[\w\.\@\-]{3,60})/(?P<task_id>\d{1,6})$',
+                       #    'external_grade.views.file_grader', name='external_grade'),
                        # file grader post
                        #url(
                        #    r'^external_grade/proforma/v1/task/(?P<task_id>\d{1,6})$', 'external_grade.views.file_grader_post'

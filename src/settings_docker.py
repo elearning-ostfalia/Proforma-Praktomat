@@ -29,7 +29,7 @@ LANGUAGE_CODE = 'de'
 SITE_NAME = 'Praktomat'
 
 # The URL where this site is reachable. 'http://localhost:8000/' in case of the development server.
-BASE_URL = 'http://localhost:8010/'
+BASE_URL = 'http://localhost:80/'
 
 # URL that serves the static media files (CSS, JavaScript and images) of praktomat contained in 'media/'.
 # Make sure to use a trailing slash if there is a path component (optional in other cases).
@@ -40,6 +40,10 @@ MEDIA_URL = BASE_URL + 'media/'
 # Make sure to use a trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
 ADMIN_MEDIA_PREFIX = '/media/admin/'
+# where to put static django admin files 
+STATIC_ROOT='/praktomat/media/'
+
+STATIC_URL=BASE_URL[:-1] +ADMIN_MEDIA_PREFIX
 
 # Absolute path to the directory that shall hold all uploaded files as well as files created at runtime.
 # Example: "/home/media/media.lawrence.com/"
