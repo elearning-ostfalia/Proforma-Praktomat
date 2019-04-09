@@ -1,5 +1,0 @@
-DB_NAME=pmdb
-DB_USER=pmuser
-DB_PASS=pmuserpass
-DB_PORT=5432
-DB_DOCKER_SERVICE=postgres

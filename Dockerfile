@@ -1,57 +1,61 @@
-FROM python:2.7
+# FROM python:2.7.9
+# FROM debian:jessie
+# we need ubuntu in order to install Oracle Java 
+# (I did not succedd with python:2.7.9 which is probabely based on debian)
+FROM ubuntu:xenial
+
+MAINTAINER Ostfalia
+
+ENV PYTHONUNBUFFERED 1
+
+# for praktomat itself
+RUN apt-get update && apt-get install -y locales && locale-gen de_DE.UTF-8
+
+# change locale to somethin UTF-8 
+# RUN apt-get install -y locales && locale-gen de_DE.UTF-8 
+ENV LANG de_DE.UTF-8
+ENV LC_ALL de_DE.UTF-8
+
+RUN apt-get install -y swig libxml2-dev libxslt1-dev python2.7 python-dev python-pip libpq-dev locales wget
 
 
-ENV DJANGO_VERSION 1.3.7
-ENV DEFAULT_USER ecult
-ENV DEFAULT_EMAIL user@localhost
-ENV DEFAULT_PASS user
 
+# install OpenJDK (only needed if you want to run Java Compiler checker)
+RUN apt-get update && apt-get install -y default-jdk
+
+# install checkstyle (only needed if you want to run Checkstyle checker)
+RUN apt-get install -y checkstyle
+
+# && apt-get autoremove -y
+
+
+ 
 RUN mkdir /praktomat
 WORKDIR /praktomat
+ADD requirements.txt /praktomat/
+RUN pip install --upgrade pip 
+RUN pip install -r requirements.txt --ignore-installed --force-reinstall --upgrade --no-cache-dir && pip install --upgrade chardet && pip install gunicorn[eventlet]
+# gunicorn is used for async processing
 
-# install build dependencies
-RUN apt-get update && \
-    apt-get install -y sudo git \
-                       gcc gettext flex bison \
-                       wget make dejagnu libsasl2-dev \
-                       libssl-dev libxml2-dev libxslt1-dev \
-                       libcunit1-dev libcunit1 swig sudo jclassinfo \
-                       software-properties-common
-#install java -> # https://github.com/dockerfile/java/tree/master/oracle-java8
-RUN \
-  echo oracle-java10-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections && \
-  add-apt-repository ppa:linuxuprising/java && \
-  apt-get update && \
-  apt-get install -y --allow-unauthenticated oracle-java10-installer && \
-  rm -rf /var/lib/apt/lists/* && \
-  rm -rf /var/cache/oracle-jdk8-installer
 
-# Define commonly used JAVA_HOME variable
-ENV JAVA_HOME /usr/lib/jvm/java-10-oracle
+ADD . /praktomat
 
-#### create upload directory for submission and testing
-RUN mkdir upload
-COPY README.md requirements.txt ./
-COPY src/ src/
-COPY extra extra/
-COPY media media/
+RUN mkdir -p /praktomat/upload
 
-#### creates several directories and generates a python build script and build
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt --ignore-installed --force-reinstall --upgrade --no-cache-dir
+# COPY src/ src/
+# COPY extra extra/
+# COPY media media/
 
-# RUN python bootstrap.py && \
-#    python ./bin/buildout
+# remove staticfiles, otherwise we get problems with collectstatic later on
+RUN pip uninstall staticfiles 
 
-# sync db and migrate
-RUN ./src/manage.py syncdb --noinput --migrate
-# RUN ./src/manage.py schemamigration checker --auto && \
-#    ./src/manage.py migrate checker
-EXPOSE 8000
-#### create superuser and sys_prod
-RUN echo "from django.contrib.auth.models import User; User.objects.create_superuser('$DEFAULT_USER', '$DEFAULT_EMAIL', '$DEFAULT_PASS')" | python ./src/manage.py shell --plain
-RUN echo "from django.contrib.auth.models import User; User.objects.create_user('sys_prod', '$DEFAULT_EMAIL', '$DEFAULT_PASS')" | python ./src/manage.py shell --plain
-CMD [ "/usr/local/bin/python", "/praktomat/src/manage.py", "runserver", "0.0.0.0:8000"]
-#ENTRYPOINT echo "Hello, praktomat"
-# CMD [ "python", "./manage.py", "runserver", "0.0.0.0:8000", "--settings=mysite.settings.prod" ]
-# command: bash -c "sleep 3 && python manage.py runserver_plus 0.0.0.0:80"
+
+# clean packages
+RUN apt-get clean
+RUN rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
+
+
+# run entrypoint.sh
+ENTRYPOINT ["/praktomat/src/entrypoint.sh"]
+
+

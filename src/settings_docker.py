@@ -29,7 +29,7 @@ LANGUAGE_CODE = 'de'
 SITE_NAME = 'Praktomat'
 
 # The URL where this site is reachable. 'http://localhost:8000/' in case of the development server.
-BASE_URL = 'http://localhost:8000/'
+BASE_URL = 'http://localhost:8010/'
 
 # URL that serves the static media files (CSS, JavaScript and images) of praktomat contained in 'media/'.
 # Make sure to use a trailing slash if there is a path component (optional in other cases).
@@ -43,7 +43,7 @@ ADMIN_MEDIA_PREFIX = '/media/admin/'
 
 # Absolute path to the directory that shall hold all uploaded files as well as files created at runtime.
 # Example: "/home/media/media.lawrence.com/"
-UPLOAD_ROOT = ""
+UPLOAD_ROOT = "/praktomat/upload"
 
 
 ADMINS = [
@@ -89,7 +89,7 @@ MANAGERS = ADMINS
 # Length of timeout applied whenever an external check that runs a students
 # submission is executed,
 # for example: JUnitChecker
-TEST_TIMEOUT = 60
+TEST_TIMEOUT = 15
 
 # Maximal size (in kbyte) of files created whenever an external check that
 # runs a students submission is executed,
@@ -119,9 +119,7 @@ JAVA_LIBS = {'junit3': '/praktomat/extra/junit-3.8.jar',
              'junit4': '/praktomat/extra/junit-4.10.jar',
              'junit4.12': '/praktomat/extra/junit-4.12.jar:'
              '/praktomat/extra/hamcrest-core-1.3.jar',
-             'junit4.12-gruendel': '/praktomat/extra/junit-4.12.jar' 
-             '/praktomat/extra/junit-4.12-addon-gruendel.jar:'
-             '/praktomat/extra/hamcrest-core-1.3.jar'}
+             'junit4.12-gruendel': '/praktomat/extra/junit-4.12.jar:/praktomat/extra/JUnit4AddOn.jar:/praktomat/extra/hamcrest-core-1.3.jar'}
 CHECKSTYLE_VER = {'check-6.2': '/praktomat/extra/checkstyle-6.2-all.jar',
                   'check-7.6': '/praktomat/extra/checkstyle-7.6-all.jar',
                   'check-5.4': '/praktomat/extra/checkstyle-7.6-all.jar'}

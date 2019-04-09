@@ -103,7 +103,12 @@ NUMBER_OF_TASKS_TO_BE_CHECKED_IN_PARALLEL = 1
 # USE_KILL_LOG = False
 
 try:
-    from settings_local import *
+    if "DB_DOCKER_SERVICE" in os.environ:
+        print 'import docker settings'
+        from settings_docker import *     
+    else:
+        print 'import local settings'
+        from settings_local import * 
 except ImportError:
     pass
 
