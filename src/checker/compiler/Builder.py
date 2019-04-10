@@ -30,7 +30,7 @@ class Builder(Checker):
     _libs = models.CharField(max_length=1000, blank=True, default="", help_text=_('Compiler libraries'))
     _file_pattern = models.CharField(max_length=1000, default=r"^[a-zA-Z0-9_]*$", help_text=_(
         'Regular expression describing all source files to be passed to the compiler.'))
-    _main_required = models.BooleanField(default=True, help_text = _('Is a submission required to provide a main method?'))
+    _main_required = models.BooleanField(default=False, help_text = _('Is a submission required to provide a main method?'))
 
     def title(self):
         return u"%s - Compiler" % self.language()
@@ -113,7 +113,8 @@ class Builder(Checker):
 
         # Try to find out the main modules name with only the source files present
         try:
-            env.set_program(self.main_module(env))
+            if self._main_required:
+                env.set_program(self.main_module(env))
         except self.NotFoundError:
             pass
 
@@ -134,7 +135,8 @@ class Builder(Checker):
 
                 # Now that submission was successfully built, try to find the main modules name again
         try:
-            if passed : env.set_program(self.main_module(env))
+            if self._main_required:
+                if passed : env.set_program(self.main_module(env))
         except self.NotFoundError as e:
             # But only complain if the main method is required
             if self._main_required:

@@ -4,7 +4,7 @@ grant {
 	permission java.io.FilePermission "*","read";
 	permission java.io.FilePermission "spielDieZombie.txt", "write";
 	permission java.io.FilePermission "spielDieZombie2.txt", "write";
-	permission java.lang.management.ManagementPermission" "monitor";
+	permission java.lang.management.ManagementPermission "monitor";
 	permission java.io.FilePermission "Materialien/playlist.csv","read";
 	permission java.io.FilePermission "/home/tester/junit.properties", "read";
 	permission java.io.FilePermission "${user.dir}${/}data${/}-", "read";
