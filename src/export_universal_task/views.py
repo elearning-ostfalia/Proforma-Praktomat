@@ -3,6 +3,7 @@ import json
 import re
 import tempfile
 import zipfile
+import traceback
 
 from datetime import datetime
 from os.path import dirname
@@ -31,6 +32,7 @@ from solutions.models import Solution, SolutionFile
 from tasks.models import Task, MediaFile
 from export_universal_task.import_helper import check_post_request, import_task_v2, \
     extract_zip_with_xml_and_zip_dict, import_task as itask
+#from VERSION import version
 import VERSION
 
 logger = logging.getLogger(__name__)
@@ -780,7 +782,7 @@ def importTaskObject(request, task_xml, dict_zip_files_post=None):
     response_data = dict()
     response_data['taskid'] = newTask.id
     response_data['message'] = message
-    return HttpResponse(json.dumps(response_data), content_type="application/json")
+    return response_data #HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
 def creatingFileChecker(embeddedFileDict, newTask, ns, valOrder, xmlTest):
@@ -833,7 +835,7 @@ def reg_check(regText):
 
 
 @csrf_exempt
-def importTaskObjectV2(request, ):
+def importTaskObjectV2(task_xml, dict_zip_files): #request, ):
     """
     importTaskObject(request)
     return response
@@ -854,23 +856,23 @@ def importTaskObjectV2(request, ):
           "unit": "urn:proforma:unittest",
           "jartest": 'urn:proforma:tests:jartest:v1',
           }
-    check_post_request(request)
-    filename, uploaded_file = request.FILES.popitem()  # returns list?
+    #check_post_request(request)
+    #filename, uploaded_file = request.FILES.popitem()  # returns list?
 
     # check ZIP
-    if filename[-3:].upper() == 'ZIP':
-        xmlexercise, dict_zip_files = extract_zip_with_xml_and_zip_dict(uploaded_file=uploaded_file)
-    else:
-        xmlexercise = uploaded_file[0].read()  # todo check name
+    #if filename[-3:].upper() == 'ZIP':
+    #    task_xml, dict_zip_files = extract_zip_with_xml_and_zip_dict(uploaded_file=uploaded_file)
+    #else:
+    #    task_xml = uploaded_file[0].read()  # todo check name
 
     try:
         #encoding = chardet.detect(xmlExercise)['encoding'] # does not work perfectly
-        encodingSearch = RXCODING.search(xmlexercise, re.IGNORECASE)
+        encodingSearch = RXCODING.search(task_xml, re.IGNORECASE)
         if encodingSearch:
             encoding = encodingSearch.group("enc")
 
             if str(encoding).upper() != 'UTF-8':
-                xmlExercise = xmlexercise.decode(encodingSearch.group('enc')).encode('utf-8')  # todo: remove decode
+                xmlExercise = task_xml.decode(encodingSearch.group('enc')).encode('utf-8')  # todo: remove decode
             else:
                 pass
             #xmlExercise = xmlExercise.decode('utf-8', 'replace')
@@ -879,7 +881,7 @@ def importTaskObjectV2(request, ):
         else:
             pass
 
-        xmlObject = objectify.fromstring(xmlexercise)
+        xmlObject = objectify.fromstring(task_xml)
 
     except Exception as e:
         response.write("Error while parsing xml\r\n" + str(e))
@@ -1338,7 +1340,7 @@ def importTaskObjectV2(request, ):
     response_data = dict()
     response_data['taskid'] = newTask.id
     response_data['message'] = message
-    return HttpResponse(json.dumps(response_data), content_type="application/json")
+    return response_data # HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
 @csrf_exempt  # disable csrf-cookie
@@ -1346,7 +1348,7 @@ def import_1_01(request):
     response = import_task(request)
     return response
 
-
+# internal proforma entry point
 @csrf_exempt  # disable csrf-cookie
 def import_task(request, ):
     """
@@ -1357,53 +1359,72 @@ def import_task(request, ):
     tries to objectify the xml and import it in Praktomat
     """
 
-    rxcoding = re.compile(r"encoding=\"(?P<enc>[\w.-]+)")
+    logger.debug('import_task called')
 
-    error_message = ""
-    response = HttpResponse()
-    dict_zip_files = None
+    try:
+        check_post_request(request)
+        filename, uploaded_file = request.FILES.popitem()  # returns list?
+        response_data = import_task_internal(filename, uploaded_file[0])
+        return HttpResponse(json.dumps(response_data), content_type="application/json")
+
+
+    except Exception as inst:
+        logger.exception(inst)
+        print "Exception caught: " + str(type(inst))  # the exception instance
+        print "Exception caught: " + str(inst.args)  # arguments stored in .args
+        print "Exception caught: " + str(inst)  # __str__ allows args to be printed directly
+        callstack = traceback.format_exc()
+        print "Exception caught Stack Trace: " + str(callstack)  # __str__ allows args to be printed directly
+
+        #x, y = inst.args
+        #print 'x =', x
+        #print 'y =', y
+        response = HttpResponse()
+        response.write("Error while importing task\r\n" + str(inst) + '\r\n' + callstack)
+
+
+def import_task_internal(filename, uploaded_file):
+
+    logger.debug('import_task_internal called')
 
     # here is the actual namespace for the version
     format_namespace_v0_9_4 = "urn:proforma:task:v0.9.4"
     format_namespace_v1_0_1 = "urn:proforma:task:v1.0.1"
     format_namespace_v2_0 = "urn:proforma:v2.0"
 
-    check_post_request(request)
-    filename, uploaded_file = request.FILES.popitem()  # returns list?
+    rxcoding = re.compile(r"encoding=\"(?P<enc>[\w.-]+)")
 
+    dict_zip_files = None
     if filename[-3:].upper() == 'ZIP':
         task_xml, dict_zip_files = extract_zip_with_xml_and_zip_dict(uploaded_file=uploaded_file)
     else:
         task_xml = uploaded_file[0].read()  # todo check name
 
-    try:
-        encoding = rxcoding.search(task_xml, re.IGNORECASE)
-        if (encoding != 'UFT-8' or encoding != 'utf-8') and encoding is not None:
-            task_xml = task_xml.decode(encoding.group('enc')).encode('utf-8')
-        xml_object = objectify.fromstring(task_xml)
+    encoding = rxcoding.search(task_xml, re.IGNORECASE)
+    if (encoding != 'UFT-8' or encoding != 'utf-8') and encoding is not None:
+        task_xml = task_xml.decode(encoding.group('enc')).encode('utf-8')
+    xml_object = objectify.fromstring(task_xml)
 
-    except Exception as e:
-        response.write("Error while parsing xml\r\n" + str(e))
-        return response
-
-    xml_task = xml_object
+    #xml_task = xml_object
     # TODO check against schema
 
     # check Namespace
     if format_namespace_v0_9_4 in xml_object.nsmap.values():
-        response = importTaskObjectV2(request,)
+        logger.debug('handle 0.9.4 task')
+        response_data = importTaskObjectV2(task_xml, dict_zip_files)  # request,)
     elif format_namespace_v1_0_1 in xml_object.nsmap.values():
-        response = itask(request, task_xml, dict_zip_files)
+        logger.debug('handle 1.0.1 task')
+        response_data = itask(task_xml, dict_zip_files)
     elif format_namespace_v2_0 in xml_object.nsmap.values():
-        response = import_task_v2(request, task_xml, dict_zip_files)
+        logger.debug('handle 2.0 task')
+        response_data = import_task_v2(task_xml, dict_zip_files)
     else:
-        response.write("The Exercise could not be imported!\r\nOnly support for the following namespaces: " +
+        raise Exception("The Exercise could not be imported!\r\nOnly support for the following namespaces: " +
                        format_namespace_v0_9_4 + "\r\n" +
                        format_namespace_v1_0_1 + "\r\n" +
                        format_namespace_v2_0)
-        return response
-    return response
 
+    return response_data
 
 
 @csrf_exempt  # NOTE: für Marcel danach remove;)

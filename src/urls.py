@@ -7,6 +7,8 @@ import sys
 import os
 import settings
 
+from proforma import views as proforma_views
+
 from django.contrib import admin
 admin.autodiscover()
 
@@ -42,6 +44,8 @@ urlpatterns = patterns('',
                        url(r'^tasks/(?P<task_id>\d+)/solutionupload/user/(?P<user_id>\d+)$', 'solutions.views.solution_list', name='solution_list'),
 
 # Proforma add-on [start]
+                       # Proforma 2.0
+                       url(r'^api/v2/submissions$', proforma_views.grade_api_v2, name="grade_api_v2"),
                        # external_grade common url: server / lms / function / domain / user / task
                        # todo: username sollte @ enthalten
                        # file grader: function / user_name / task_id
@@ -61,6 +65,7 @@ urlpatterns = patterns('',
                        #    r'^external_grade/proforma/v1/task/(?P<task_id>\d{1,6})$', 'external_grade.views.file_grader_post'
                        #    , name='external_grade_files'),
                        # file grader post
+                       # proforma internal
                        url(
                            r'^external_grade/(?P<response_format>[a-zA-Z\_\.\d]{3,32})/v1/task/(?P<task_id>\d{1,6})$', 'external_grade.views.file_grader_post'
                            , name='external_grade_files'),

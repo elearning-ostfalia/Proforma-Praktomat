@@ -21,14 +21,109 @@ import codecs
 import re
 import logging
 import chardet
+import traceback
 
 from solutions.forms import SolutionFormSet
 
 logger = logging.getLogger(__name__)
 
-
+# internal proforma entry point
 @csrf_exempt  # disable csrf-cookie
 def file_grader_post(request, response_format, task_id=None):
+    try:
+
+        logger.debug("file_grader_post start")
+
+        DEFINED_USER = "sys_prod"
+        ziptype_re = re.compile(r'^application/(zip|x-zip|x-zip-compressed|x-compressed)$')
+
+        response = HttpResponse()
+        # save files
+        # start grading
+
+        # check post
+        if request.method != 'POST':
+            raise Exception("No POST-Request")
+
+        postData = request.POST.copy()
+
+        #if len(postData) > 1:
+        #    result_message = "Error: Please only one file "
+        #    response.write(result_page(award="ERROR", message=result_message))
+        #    return response
+
+        #check if task exist
+        if not check_task_id(task_id):
+            raise Exception("task does not exist. Task number " +  str(task_id))
+
+        #check if user is authenticated if not login
+        if not request.user.is_authenticated():
+            if authenticate_user(DEFINED_USER, request) is None:
+                raise Exception("system user does not exist")
+
+        #create task_object for submitting data
+        task = get_object_or_404(Task, pk=task_id)
+        supported_types_re = re.compile(task.supported_file_types)
+
+        fileNameList = []
+        DataNameList = []
+        fileDict = dict()
+        for filename, file in request.FILES.iteritems():
+            fileNameList.append(str(filename))
+            DataNameList.append(str(file.name))
+            actualFileName = re.search(r"([\w\.\-]+)$", filename, re.MULTILINE)
+            contentType = mimetypes.guess_type(filename)[0]  #todo: really?
+            if not actualFileName:
+                raise Exception("Incorrect filename")
+
+            if (contentType is None) or (not (supported_types_re.match(contentType) or ziptype_re.match(contentType))):
+                result_message = "Mime-type %s is not supported by this task" % contentType
+                raise Exception(result_message)
+
+            try:
+                filename.decode('ascii')
+                fileDict[str(filename)] = file
+            except UnicodeEncodeError:
+                raise Exception("filename must not contain any special characters:" + filename)
+
+        #two lists with fileName and DataName
+
+        solution = initSolution(request, task)
+
+        # todo: copy from solution/views -> files from form could use default checks
+        # formset = SolutionFormSet(solution, request.FILES, instance=solution)
+        saveSolution(solution, fileDict)
+        result, solution = gradeSolution(solution)
+        lcxml = get_solution_xml(result, solution, fileNameList, response_format)
+
+        logger.debug("file_grader_post finished")
+
+        return HttpResponse(lcxml)
+
+        #result_message = "Everything is fine"
+        #response.write(result_page(award="CORRECT", message=result_message))
+        #response.status_code = 200
+        #return response
+
+    except Exception as inst:
+        logger.exception(inst)
+        #print "Exception caught: " + str(type(inst))  # the exception instance
+        #print "Exception caught: " + str(inst.args)  # arguments stored in .args
+        #print "Exception caught: " + str(inst)  # __str__ allows args to be printed directly
+        callstack = traceback.format_exc()
+        #print "Exception caught Stack Trace: " + str(callstack)  # __str__ allows args to be printed directly
+
+        #result_message = str(inst) + "\n" + callstack
+        response.write(get_http_error_page('Error in grading process', str(inst), callstack))
+        response.status_code = 500 # internal error
+        return response
+
+
+def grader_internal(task_id, files, response_format):
+    # check if task exist
+    if not check_task_id(task_id):
+        raise Exception("task does not exist. Task number " + str(task_id))
+
     DEFINED_USER = "sys_prod"
     ziptype_re = re.compile(r'^application/(zip|x-zip|x-zip-compressed|x-compressed)$')
 
@@ -36,83 +131,69 @@ def file_grader_post(request, response_format, task_id=None):
     # save files
     # start grading
 
-    # check post
-    if request.method != 'POST':
-        result_message = "No POST-Request"
-        response.write(result_page(award="ERROR", message=result_message))
-        return response
-    else:
-        try:
-            postData = request.POST.copy()
-        except Exception as e:
-            result_message = "Error no Files attached. " + str(e)
-            response.write(result_page(award="ERROR", message=result_message))
-            return response
 
-    #check if task exist
-    if not check_task_id(task_id):
-        result_message = "The task is not existence. Task number: " + str(task_id)
-        response.write(result_page(award="ERROR", message=result_message))
-
-    #check if user is authenticated if not login
-    if not request.user.is_authenticated():
-        if authenticate_user(DEFINED_USER, request) is None:
-            result_message = "The system user does not exist in the grader"
-            response.write(result_page(award="ERROR", message=result_message))
-            response.status_code = 200
-            return response
+    # check if user is authenticated if not login
+    #if not request.user.is_authenticated():
+    #    if authenticate_user(DEFINED_USER, request) is None:
+    #        raise Exception("system user does not exist")
 
     #create task_object for submitting data
     task = get_object_or_404(Task, pk=task_id)
     supported_types_re = re.compile(task.supported_file_types)
 
-    fileNameList = []
-    DataNameList = []
+    #print files
     fileDict = dict()
-    for filename, file in request.FILES.iteritems():
-        fileNameList.append(str(filename))
-        DataNameList.append(str(file.name))
-        actualFileName = re.search(r"([\w\.\-]+)$", filename, re.MULTILINE)
-        contentType = mimetypes.guess_type(filename)[0]  # todo: really?
-        if not actualFileName:
-            result_message = "Filename contains an error"
-            response.write(result_page(award="ERROR", message=result_message))
-            return response
+    fileNameList = []
+    fileDict["submission.zip"] = files["submission.zip"]
+    fileNameList.append("submission.zip")
 
-        if (contentType is None) or (not (supported_types_re.match(contentType) or ziptype_re.match(contentType))):
-            result_message = "Mime-type %s is not supported by this task" % contentType
-            response.write(result_page(award="ERROR", message=result_message))
-            response.status_code = 200
-            return response
-        try:
-            filename.decode('ascii')
-            fileDict[str(filename)] = file
-        except UnicodeEncodeError:
-            result_message = "The filename must not contain any special characters "
-            response.write(result_page(award="ERROR", message=result_message))
-            return response
+    # DataNameList = []
+    #
+    # for filename, file in files:
+    #     fileNameList.append(str(filename))
+    #     DataNameList.append(str(file.name))
+    #     actualFileName = re.search(r"([\w\.\-]+)$", filename, re.MULTILINE)
+    #     contentType = mimetypes.guess_type(filename)[0]  # todo: really?
+    #     if not actualFileName:
+    #         raise Exception("Incorrect filename")
+    #
+    #     if (contentType is None) or (not (supported_types_re.match(contentType) or ziptype_re.match(contentType))):
+    #         result_message = "Mime-type %s is not supported by this task" % contentType
+    #         raise Exception(result_message)
+    #
+    #     try:
+    #         filename.decode('ascii')
+    #         fileDict[str(filename)] = file
+    #     except UnicodeEncodeError:
+    #         raise Exception("filename must not contain any special characters:" + filename)
 
     # two lists with fileName and DataName
 
-    solution = initSolution(request, task)
+    #solution = initSolution(request, task)
+
+    user_id = None
+    #author = get_object_or_404(User, pk=user_id) \
+    #    if user_id else request.user # todo: Ablauf checken vielleicht nur request.user?
+    #author = get_object_or_404(User, pk=user_id)
+    sysProd = User.objects.get(username=DEFINED_USER)
+
+    #solution object for submission
+    solution = Solution(task=task, author=sysProd)
+    #save the solution model in the database
+    solution.save()
+
 
     # todo: copy from solution/views -> files from form could use default checks
     # formset = SolutionFormSet(solution, request.FILES, instance=solution)
-    try:
-        saveSolution(solution, fileDict)
-    except UnicodeEncodeError:
-        result_message = "The uploaded files must not contain any special characters"
-        response.write(result_page(award="ERROR", message=result_message))
-        return response
-
+    saveSolution(solution, fileDict)
     result, solution = gradeSolution(solution)
     lcxml = get_solution_xml(result, solution, fileNameList, response_format)
-    return HttpResponse(lcxml)
 
-    # result_message = "Everything is fine"
-    # response.write(result_page(award="CORRECT", message=result_message))
-    # response.status_code = 200
-    # return response
+    logger.debug("file_grader_post finished")
+
+    return lcxml #HttpResponse(lcxml)
+
+
 
 
 def initSolution(request, task):
@@ -144,10 +225,7 @@ def saveSolution(solution, fileDict):
         super_short_solution = shorter_saved_solution[1:]
         #save solution file
         solution_file.file = super_short_solution
-        try:
-            solution_file.save()
-        except Exception:
-            raise
+        solution_file.save()
 
 
 def gradeSolution(solution):
@@ -332,7 +410,7 @@ def error_page(error_code):
         message = "error not specified"
     return """<loncapagrade>
     <awarddetail>%s</awarddetail>
-    <message><![CDATA[%s]]></message>
+    <message><![CDATA[external_grade: %s]]></message>
     <awarded></awarded>
     </loncapagrade>""" % (award, message)
 
@@ -340,7 +418,7 @@ def error_page(error_code):
 def result_page(award, message):
     return """<loncapagrade>
     <awarddetail>%s</awarddetail>
-    <message><![CDATA[%s]]></message>
+    <message><![CDATA[external_grade: %s]]></message>
     <awarded></awarded>
     </loncapagrade>""" % (award, message)
 
@@ -439,7 +517,7 @@ def get_solution_xml(result, solution, file_name, response_format):
             if not result[index].passed:
                 solution.accepted = False
                 false_required_hidden_test = True
-    logger.debug("Checker: " + str(result[index].checker))
+        logger.debug("Checker: " + str(result[index].checker))
 
     # remove 'None' tests from proforma2
     res_arr = list(result)

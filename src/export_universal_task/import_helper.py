@@ -144,7 +144,8 @@ def extract_zip_with_xml_and_zip_dict(uploaded_file):
     # ZIP import
     task_xml = None
     ignored_file_names_re = re.compile(regex)
-    zip_file = zipfile.ZipFile(uploaded_file[0], 'r')
+    zip_file = zipfile.ZipFile(uploaded_file, 'r')
+    #zip_file = zipfile.ZipFile(uploaded_file[0], 'r')
     dict_zip_files = dict()
     for zipFileName in zip_file.namelist():
         if not ignored_file_names_re.search(zipFileName):  # unzip only allowed files + wanted file
@@ -556,7 +557,7 @@ def create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict):
                     message = "No File for python-checker found"
 
 
-def import_task_v2(request, task_xml, dict_zip_files=None):
+def import_task_v2(task_xml, dict_zip_files=None):
     format_namespace = "urn:proforma:v2.0"
     ns = {"p": format_namespace}
     message = ""
@@ -565,7 +566,7 @@ def import_task_v2(request, task_xml, dict_zip_files=None):
         xml_dict = validate_xml(xml=task_xml)
     except Exception as e:
         logger.debug(str(type(e))+str(e.args))
-        return json_error_message(json_message="validate_xml error: " + str(e.args), http_code=400)
+        return json_error_message(json_message="validate_xml error (task.xml): " + str(e.args), http_code=400)
 
     xml_obj = objectify.fromstring(task_xml)
 
@@ -594,20 +595,21 @@ def import_task_v2(request, task_xml, dict_zip_files=None):
     val_order = export_universal_task.views.creatingFileCheckerNoDep(create_file_dict, new_task, ns,
                                                                      val_order, xmlTest=None)
     for xmlTest in xml_obj.tests.iterchildren():
-        try:
-            if xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "java-compilation":  # todo check compilation_xsd
-                create_java_compiler_checker(xmlTest, val_order, new_task, ns)
-            elif xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "unittest":
-                create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict)
-            elif xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "java-checkstyle":
-                create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_dict)
-            elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "jartest" and \
-                    xmlTest.xpath("p:test-configuration/jartest:jartest[@framework='setlX']", namespaces=ns):
-                create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict)
-            elif xmlTest.xpath("proforma:test-type", namespaces=ns)[0] == "python":
+        #try:
+        if xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "java-compilation":  # todo check compilation_xsd
+            create_java_compiler_checker(xmlTest, val_order, new_task, ns)
+        elif xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "unittest":
+            create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict)
+        elif xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "java-checkstyle":
+            create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_dict)
+        #elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "jartest" and \
+        #     xmlTest.xpath("p:test-configuration/jartest:jartest[@framework='setlX']", namespaces=ns):
+        #        create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict)
+        elif xmlTest.xpath("proforma:test-type", namespaces=ns)[0] == "python-doctest":
                 create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict)
-        except Exception as e:
-            return HttpResponse(content=to_json(e), content_type="application/json")
+        #except Exception as e:
+        #    return json_error_message(json_message="create_test error: " + str(e.args), http_code=400) # Karins Versuch
+        #    return HttpResponse(content=to_json(e), content_type="application/json")
         val_order += 1
     new_task.save()
     # proglang -> e.g Java 1.6 / Python 2.7
@@ -621,15 +623,14 @@ def import_task_v2(request, task_xml, dict_zip_files=None):
     response_data = dict()
     response_data['taskid'] = new_task.id
     response_data['message'] = message
-    return HttpResponse(json.dumps(response_data), content_type="application/json")
-
+    return response_data # HttpResponse(json.dumps(response_data), content_type="application/json")
 
 def getitem_from_dict(dataDict, mapList):
     """Iterate nested dictionary"""
     return reduce(getitem, mapList, dataDict)
 
 
-def import_task(request, task_xml, dict_zip_files_post=None ):
+def import_task(task_xml, dict_zip_files_post=None ):
     """
     :param request: request object for getting POST and GET
     :return: response
@@ -1236,7 +1237,7 @@ def import_task(request, task_xml, dict_zip_files_post=None ):
     response_data = dict()
     response_data['taskid'] = new_task.id
     response_data['message'] = message
-    return HttpResponse(json.dumps(response_data), content_type="application/json")
+    return response_data # HttpResponse(json.dumps(response_data), content_type="application/json")
 
 
 def check_submission_restriction(xml_dict, new_task):
