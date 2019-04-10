@@ -219,11 +219,10 @@ def create_file_dict_func(xml_obj, namespace, external_file_dict=None, ):
     modelsolution_file_dict = dict()
 
     try:
-        list_of_embedded_files = xml_obj.xpath("/p:task/p:files/p:file", namespaces=namespace)
+        list_of_files = xml_obj.xpath("/p:task/p:files/p:file", namespaces=namespace)
 
-        for k in list_of_embedded_files:
+        for k in list_of_files:
             # todo add: embedded-bin-file
-            # todo add: attached-bin-file
             # todo add: attached-txt-file
             used_by_grader = k.attrib.get('used-by-grader')
             if used_by_grader == "true":
@@ -240,7 +239,7 @@ def create_file_dict_func(xml_obj, namespace, external_file_dict=None, ):
                         raise Exception('no files in zip found')
                     embedded_file_dict[k.attrib.get("id")] = external_file_dict[filename]
                 else:
-                    raise Exception('unsupported file type in task.xml (embedded-bin-file or embedded-bin-file)')
+                    raise Exception('unsupported file type in task.xml (embedded-bin-file or attached-txt-file)')
 
         create_file_dict = embedded_file_dict
 
@@ -1242,15 +1241,18 @@ def import_task(request, task_xml, dict_zip_files_post=None ):
 
 def check_submission_restriction(xml_dict, new_task):
     path = ['submission-restrictions']
+    max_size = None
+    restriction = getitem_from_dict(xml_dict, path)
+
     try:
-        restriction = getitem_from_dict(xml_dict, path)
         max_size = restriction.get("@max-size")
-    except KeyError:
-        raise KeyError
-    if max_size is None:
-        new_task.max_file_size = 1000
-    else:
-        new_task.max_file_size = int(max_size) / 1024
+    except AttributeError:
+        # no max size given => use default (1MB)
+        max_size = 1000000
+
+    # convert to KB
+    new_task.max_file_size = int(max_size) / 1024
+
     new_task.save()
     # todo add file restrictions
     return True
