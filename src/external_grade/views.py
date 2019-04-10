@@ -442,11 +442,8 @@ def get_solution_xml(result, solution, file_name, response_format):
     # remove 'None' tests from proforma2
     res_arr = list(result)
     max = len(res_arr) - 1
-
-    print "====> " + str(len(res_arr))
     for index in range(len(res_arr)):
         indexReverse = max - index
-        print "====> Handle indexReverse " + str(indexReverse) + ": Proforma-ID= " + res_arr[indexReverse].checker.proforma_id
         if res_arr[indexReverse].checker.proforma_id == "None" and response_format == "proformav2":
             # CopyFile checker has no attribute passed!
             if not res_arr[indexReverse].passed:
@@ -454,7 +451,6 @@ def get_solution_xml(result, solution, file_name, response_format):
                 logger.error('Checker None FAILED!')
             else:
                 res_arr.remove(res_arr[indexReverse])
-            print "====> remove "
 
 
     if response_format == "proformav2":
