@@ -20,6 +20,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 from lxml import etree
 from lxml import objectify
+import logging
 
 from accounts.models import User
 from attestation.models import Rating
@@ -30,6 +31,9 @@ from solutions.models import Solution, SolutionFile
 from tasks.models import Task, MediaFile
 from export_universal_task.import_helper import check_post_request, import_task_v2, \
     extract_zip_with_xml_and_zip_dict, import_task as itask
+import VERSION
+
+logger = logging.getLogger(__name__)
 
 
 def checker_struct(actual_task):
@@ -1429,10 +1433,10 @@ def test_post(request, ):
 
 @csrf_exempt
 def show_version(request):
-    contents = ""
-    try:
-        with open("VERSION", "r") as f:
-            contents = f.read()
-    except Exception:
-        return HttpResponse("Could not read version")
-    return HttpResponse(contents)
+    #contents = ""
+    #try:
+    #    with open("VERSION", "r") as f:
+    #        contents = f.read()
+    #except Exception:
+    #    return HttpResponse("Could not read version")
+    return HttpResponse(VERSION.version)

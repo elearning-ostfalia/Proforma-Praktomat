@@ -11,6 +11,7 @@ from accounts.models import User
 from utilities import encoding
 from urllib2 import Request, urlopen, URLError, HTTPError
 from solutions.models import Solution, SolutionFile
+from VERSION import version
 
 from django.template.loader import render_to_string
 
@@ -430,7 +431,8 @@ def get_solution_xml(result, solution, file_name, response_format):
     solution.seperate = True
     grader = dict()
     grader.update({"name": "praktomat"})
-    grader.update({"version": "2.3.1"})
+    grader.update({"version": version})
+
 
     for index in range(len(result)):
         if result[index].checker.required and not result[index].checker.public:
