@@ -138,6 +138,11 @@ TINYMCE_DEFAULT_CONFIG = {
 TINYMCE_SPELLCHECKER = False
 TINYMCE_COMPRESSOR = False
 
+PROFORMA_SCHEMA = {
+    'proforma_v2.0': 'xsd/proforma_v2.0.xsd'
+}
+
+
 
 LOGGING = {
     'version': 1,
@@ -170,6 +175,13 @@ LOGGING = {
         },
     },
     'loggers': {
+        'proforma': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',  # change debug level as appropiate
+            'propagate': False,
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,  # keep 10 historical versions			
+        },	
         'checker': {
             'handlers': ['console', 'error-file'],
             'level': 'ERROR',  # change debug level as appropiate
@@ -190,11 +202,18 @@ LOGGING = {
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
-        'django': {
+        #'django': {
+        #    'handlers': ['console', 'error-file', 'file'],
+        #    'level': 'DEBUG',  # change debug level as appropiate
+        #    'maxBytes': 1024*1024*4,  # 15MB
+        #    'backupCount': 10,  # keep 10 historical versions
+        #},
+        'django.request': {
             'handlers': ['console', 'error-file', 'file'],
-            'level': 'DEBUG',  # change debug level as appropiate
+            'level': 'INFO',  # change debug level as appropiate
+            'propagate': False,
             'maxBytes': 1024*1024*4,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
-        }
+        }		
     }
 }
