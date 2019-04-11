@@ -7,8 +7,18 @@
         <tests-response>
             {% for testResult in testResultList %}
             <test-response id="{{ testResult.checker.proforma_id }}">
-                <test-result>
-                    <result>
+                {# Format=<{{testResult.log_format }}> #}
+                {% if testResult.is_proforma_subtests_format  %}
+
+                {# version with complete subtest result #}
+                {#<subtests-response>#}
+                {% autoescape off %}{{ testResult.log }}{% endautoescape %}
+                {#</subtests-response>#}
+
+                {% else %}
+                {# default version with simple log output and passed/failed converted to score #}
+                <test-result>                
+                    <result {% if testResult.internal_error  %}is-internal-error="true"{% endif %}>
                         <score>{% if testResult.passed  %}1{% else %}0{% endif %}</score>
                     </result>
                     <feedback-list>
@@ -25,6 +35,8 @@
                         {% endif %}
                     </feedback-list>
                 </test-result>
+
+                {% endif %}
             </test-response>
             {% endfor %}
         </tests-response>

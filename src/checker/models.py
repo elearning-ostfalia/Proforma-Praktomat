@@ -336,8 +336,22 @@ class CheckerResult(models.Model):
     checker = generic.GenericForeignKey('content_type','object_id')
 
     passed = models.BooleanField(default=True,  help_text=_('Indicates whether the test has been passed'))
+    internal_error = models.BooleanField(default=False,  help_text=_('Indicates whether an error occured during test exceution'))
     log = models.TextField(help_text=_('Text result of the checker'))
     creation_date = models.DateTimeField(auto_now_add=True)
+
+    # new for handling subtest results in Prforma
+    NORMAL_LOG = '0'
+    PROFORMA_SUBTESTS = '1'
+    LOG_FORMAT_CHOICES = (
+        (NORMAL_LOG, 'Checker_Log'),
+        (PROFORMA_SUBTESTS, 'Proforma_Subtests'),
+    )
+    log_format = models.CharField(
+        max_length=2,
+        choices=LOG_FORMAT_CHOICES,
+        default=NORMAL_LOG,
+    )
 
     def title(self):
         """ Returns the title of the Checker that did run. """
@@ -351,10 +365,20 @@ class CheckerResult(models.Model):
         """ Checks if the results of the Checker are to be shown *publicly*, i.e.: even to the submitter """
         return self.checker.show_publicly(self.passed)
 
-    def set_log(self, log,timed_out=False,truncated=False):
+    def set_log(self, log,timed_out=False,truncated=False, log_format=NORMAL_LOG):
         """ Sets the log of the Checker run. timed_out and truncated indicated if appropriate error messages shall be appended  """
+
+        if log_format != self.NORMAL_LOG:
+            # no truncation allowed for special logs
+            assert not truncated
+
         if timed_out:
+            self.set_internal_error(True)
             log = '<div class="error">Timeout occured!</div>' + log
+        else:
+            # set new log format only in case of
+            self.log_format = log_format
+
         if truncated:
             log = '<div class="error">Output too long, truncated</div>' + log
 
@@ -364,6 +388,17 @@ class CheckerResult(models.Model):
         """ Sets the passing state of the Checker. """
         assert isinstance(passed, int)
         self.passed = passed
+
+    def set_internal_error(self, internal_error):
+        """ Sets the Internbal Error state of the Checker. """
+        assert isinstance(internal_error, int)
+        self.internal_error = internal_error
+
+    def is_proforma_subtests_format(self):
+        """ Template needs a boolean in order to do conditional handling :-( """
+        return self.log_format == self.PROFORMA_SUBTESTS
+
+
 
 
 def check(solution, run_all = 0):
