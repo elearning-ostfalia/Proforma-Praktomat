@@ -19,6 +19,7 @@ build
 .idea
 upload
 /media/frameworks/ace/
+/media/admin/
 /praktomat-virtualenv
 /src/settings_local.py.old
 extra/junit-4.12-addon-gruendel.jar

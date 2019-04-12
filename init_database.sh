@@ -21,6 +21,8 @@ python ./src/manage.py syncdb --noinput --migrate
 echo "migrate schema"
 # do not use exit here!
 python ./src/manage.py schemamigration checker --auto
+# use initial in order to create initial migrations file
+#python ./src/manage.py schemamigration checker --initial
 echo "migrate checker"
 python ./src/manage.py migrate checker || exit
 

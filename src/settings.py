@@ -149,12 +149,13 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(message)s %(request)r'
+            'format': '%(asctime)s [%(process)d] [%(levelname)s] %(module)s %(message)s'
         }
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
         },
         'file': {
             'level': 'INFO',
