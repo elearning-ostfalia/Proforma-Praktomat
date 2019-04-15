@@ -34,6 +34,14 @@ PARENT_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 logger = logging.getLogger(__name__)
 
 
+def get_http_error_page(title, message, callstack):
+    return """%s
+
+    %s
+
+Callstack:
+    %s""" % (title, message, callstack)
+
 def grade_api_v2(request,):
     """
     grade_api_v2
@@ -48,10 +56,6 @@ def grade_api_v2(request,):
 #                 '\nHTTP_HOST: ' + request.META.get('HTTP_HOST') +
 #                 '\nrequest.path: ' + request.path +
 #     '\nrequest.POST:' + str(list(request.POST.items())))
-
-
-    # check POST returns submission_xml or raise exception with msg
-
 
     # create task and get Id
     try:
@@ -83,21 +87,19 @@ def grade_api_v2(request,):
 
         submission_dict = xml2dict(xml)
 
-        # check task-type
-        # 1. external-task -> uri / http-field
-        # 2. task-embedded
-        # 3. inline-task-zip
         task_file = None
         task_filename = None
-
+        # check task-type
         if submission_dict.get("external-task"):
+            # 1. external-task -> uri / http-field
             task_path = submission_dict["external-task"]["$"]
             #task_uuid = submission_dict["external-task"]["@uuid"]
             task_file, task_filename = get_external_task(request, task_path)
-
         elif submission_dict.get("task"):
+            # 2. task-embedded
             raise Exception ("embedded task in submission.xml is not supported")
         elif submission_dict.get("inline-task-zip"):
+            # 3. inline-task-zip
             raise Exception ("inline-task-zip in submission.xml is not supported")
             #return "inline-task-zip"
         else:
@@ -114,17 +116,11 @@ def grade_api_v2(request,):
         #print 'result for Task-ID: ' + str(response_data)
         task_id = str(response_data['taskid'])
         message = response_data['message']
-
-        #task_id = create_external_task(content_file_obj=task_file, server=settings.GRADERV, taskFilename=task_filename,
-        #                               formatVersion=answer_format)
-        #print 'Task-ID: ' + str(task_id)
         if task_id == None:
             raise Exception("could not create task")
 
         # send submission to grader
         logger.debug('grade submission')
-        #grade_result = send_submission2external_grader(request=request, server=settings.GRADERV, taskID=task_id,
-        #                                               files=submission_zip, answer_format=answer_format)
         grade_result = grader_internal(task_id, submission_zip, answer_format)
         logger.debug("grading finished")
         response = HttpResponse()
@@ -132,27 +128,10 @@ def grade_api_v2(request,):
         response.status_code = 200
         return response
 
-        # logger.debug("grade_result: " + grade_result)
-        # if result.status_code == requests.codes.ok:
-        #    return result.text
-
-        #response = HttpResponse()
-        #response.write(grade_result.text)
-        #response.status_code = grade_result.status_code
-        #return response
-
-        #return grade_result
-        #return HttpResponse(grade_result)
-
     except Exception as inst:
         logger.exception(inst)
         callstack = traceback.format_exc()
         print "Exception caught Stack Trace: " + str(callstack)  # __str__ allows args to be printed directly
-
-        #x, y = inst.args
-        #print 'x =', x
-        #print 'y =', y
-        #return response_error(msg="grade_api_v2\r\n" + str(inst) + '\r\n' + callstack, format=answer_format)
         response = HttpResponse()
         response.write(get_http_error_page('Error in grading process', str(inst), callstack))
         response.status_code = 500 # internal error
@@ -161,8 +140,6 @@ def grade_api_v2(request,):
 
 def get_external_task(request, task_uri):
 
-    #task_uri = task_type_dict["external-task"].get("task_path")  # todo check uri
-    #task_uuid = task_type_dict["external-task"].get("task_uuid")
     logger.debug("task_uri: " + str(task_uri))
     ##
     # test file-field
@@ -230,28 +207,28 @@ def check_post(request):
         return xml_encoded
 
 
-def answer_format(award, message, format=None, awarded=None):
-    if format is None or "loncapaV1":
-        return """<loncapagrade>
-        <awarddetail>%s</awarddetail>
-        <message><![CDATA[proforma/api_v2: %s]]></message>
-        <awarded></awarded>
-        </loncapagrade>""" % (award, message)
-    else:
-        return """<loncapagrade>
-        <awarddetail>%s</awarddetail>
-        <message><![CDATA[proforma/api_v2: %s]]></message>
-        <awarded>%s</awarded>
-        </loncapagrade>""" % (award, message, awarded)
+# def answer_format(award, message, format=None, awarded=None):
+#     if format is None or "loncapaV1":
+#         return """<loncapagrade>
+#         <awarddetail>%s</awarddetail>
+#         <message><![CDATA[proforma/api_v2: %s]]></message>
+#         <awarded></awarded>
+#         </loncapagrade>""" % (award, message)
+#     else:
+#         return """<loncapagrade>
+#         <awarddetail>%s</awarddetail>
+#         <message><![CDATA[proforma/api_v2: %s]]></message>
+#         <awarded>%s</awarded>
+#         </loncapagrade>""" % (award, message, awarded)
 
 
-def response_error(msg, format):
-    """
-
-    :param msg:
-    :return: response
-    """
-    return HttpResponse(answer_format("error", msg, format))
+# def response_error(msg, format):
+#     """
+#
+#     :param msg:
+#     :return: response
+#     """
+#     return HttpResponse(answer_format("error", msg, format))
 
 
 def get_xml_version(submission_xml):
@@ -395,61 +372,61 @@ def file_dict2zip(file_dict):
         shutil.rmtree(tmp_dir)
 
 
-def create_external_task(content_file_obj, server, taskFilename, formatVersion):
+# def create_external_task(content_file_obj, server, taskFilename, formatVersion):
+#
+#
+#
+#     #if settings.server.get(server):
+#     #    LOGINBYSERVER
+#     FILENAME = taskFilename
+#     #f = codecs.open(content_file_obj.name, 'r+', 'utf-8')
+#     #files = {FILENAME: codecs.open(content_file_obj.name, 'r+', 'utf-8')}
+#
+#     try:
+#         files = {FILENAME: open(content_file_obj.name, 'rb')}
+#     except IOError:  #
+#         files = {FILENAME: content_file_obj}
+#     url = urlparse.urljoin(server, 'importTask')
+# #    url = urllib.parse.urljoin(server, 'importTask')
+#     result = requests.post(url, files=files)
+#
+#     message = ''
+#     if result.headers['Content-Type'] == 'application/json':
+#         logger.debug(result.text)
+#         #try:
+#         taskid = result.json().get('taskid')
+#         message = result.json().get('message')
+#
+#         #except ValueError:
+#         #    message = "Error while creating task on grader: " + str(ValueError)
+#         #    raise ValueError(message)
+#         #except Exception:
+#         #    message = "Error while creating task on grader: " + str(Exception)
+#         #    raise Exception(message)
+#     else:
+#         message = "Could not create task on grader: " + result.text
+#         raise IOError(message)
+#
+#     if taskid == None:
+#         logger.debug('could not create task: ' + str(message))
+#         raise Exception('could not create task: ' + str(message))
+#
+#     return taskid
 
 
-
-    #if settings.server.get(server):
-    #    LOGINBYSERVER
-    FILENAME = taskFilename
-    #f = codecs.open(content_file_obj.name, 'r+', 'utf-8')
-    #files = {FILENAME: codecs.open(content_file_obj.name, 'r+', 'utf-8')}
-
-    try:
-        files = {FILENAME: open(content_file_obj.name, 'rb')}
-    except IOError:  #
-        files = {FILENAME: content_file_obj}
-    url = urlparse.urljoin(server, 'importTask')
-#    url = urllib.parse.urljoin(server, 'importTask')
-    result = requests.post(url, files=files)
-
-    message = ''
-    if result.headers['Content-Type'] == 'application/json':
-        logger.debug(result.text)
-        #try:
-        taskid = result.json().get('taskid')
-        message = result.json().get('message')
-
-        #except ValueError:
-        #    message = "Error while creating task on grader: " + str(ValueError)
-        #    raise ValueError(message)
-        #except Exception:
-        #    message = "Error while creating task on grader: " + str(Exception)
-        #    raise Exception(message)
-    else:
-        message = "Could not create task on grader: " + result.text
-        raise IOError(message)
-
-    if taskid == None:
-        logger.debug('could not create task: ' + str(message))
-        raise Exception('could not create task: ' + str(message))
-
-    return taskid
-
-
-def send_submission2external_grader(request, server, taskID, files, answer_format):
-    logger.debug("send_submission2external_grader called")
-    serverpath = urlparse.urlparse(server)#
-##    serverpath = urllib.parse.urlparse(server)
-    domainOutput = "external_grade/" + str(answer_format) + "/v1/task/"
-    path = "/".join([str(x).rstrip('/') for x in [serverpath.path, domainOutput, str(taskID)]])
-    gradingURL = urlparse.urljoin(server, path)
-##    gradingURL = urllib.parse.urljoin(server, path)
-    logger.debug("gradingURL: " + gradingURL)
-    result = requests.post(url=gradingURL, files=files)
-    return result
-    #if result.status_code == requests.codes.ok:
-    #    return result.text
-    #else:
-    #    logger.exception("send_submission2external_grader: " + str(result.status_code) + "result_text: " + result.text)
-    #    raise Exception(result.text)
+# def send_submission2external_grader(request, server, taskID, files, answer_format):
+#     logger.debug("send_submission2external_grader called")
+#     serverpath = urlparse.urlparse(server)#
+# ##    serverpath = urllib.parse.urlparse(server)
+#     domainOutput = "external_grade/" + str(answer_format) + "/v1/task/"
+#     path = "/".join([str(x).rstrip('/') for x in [serverpath.path, domainOutput, str(taskID)]])
+#     gradingURL = urlparse.urljoin(server, path)
+# ##    gradingURL = urllib.parse.urljoin(server, path)
+#     logger.debug("gradingURL: " + gradingURL)
+#     result = requests.post(url=gradingURL, files=files)
+#     return result
+#     #if result.status_code == requests.codes.ok:
+#     #    return result.text
+#     #else:
+#     #    logger.exception("send_submission2external_grader: " + str(result.status_code) + "result_text: " + result.text)
+#     #    raise Exception(result.text)

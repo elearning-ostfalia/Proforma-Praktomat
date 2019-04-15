@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from proforma_taskget.views import answer_format_template
+#from proforma_taskget.views import answer_format_template
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
@@ -28,6 +28,21 @@ REGEXTASKPATH = re.compile(r"(/res/)(?P<domain>[a-z0-9]+)(?P<path>[/a-zA-Z.0-9]+
 
 logger = logging.getLogger(__name__)
 
+
+
+def answer_format_template(award, message, format=None, awarded=None):
+    if format is None or "loncapaV1":
+        return """<loncapagrade>
+        <awarddetail>%s</awarddetail>
+        <message><![CDATA[proforma: %s]]></message>
+        <awarded></awarded>
+        </loncapagrade>""" % (award, message)
+    else:
+        return """<loncapagrade>
+        <awarddetail>%s</awarddetail>
+        <message><![CDATA[proforma: %s]]></message>
+        <awarded>%s</awarded>
+        </loncapagrade>""" % (award, message, awarded)
 
 def save_submission(user_hash, task_uuid, course_hash, submission_url=None, submisssion_fileobj=None, submission_zip=None ):
     base_dir = os.path.dirname(os.path.dirname(__file__))

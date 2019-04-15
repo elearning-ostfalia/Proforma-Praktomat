@@ -88,31 +88,31 @@ urlpatterns = patterns('',
 
                        # export_universal_task
 
-                       # export as plain xml
-                       url(r'^export_task/(?P<task_id>\d{1,6})$', 'export_universal_task.views.export',
-                           name='export_task'),
-                       # export zip
-                       url(r'^export_task/(?P<task_id>\d{1,6})\.zip$', 'export_universal_task.views.export', {'OutputZip':'TRUE'},
-                           name='export_task'),
-                       # list all available tasks
-                       url(r'^export_task/list$', 'export_universal_task.views.listTasks',
-                           name='list_task'),
+                       # # export as plain xml
+                       # url(r'^export_task/(?P<task_id>\d{1,6})$', 'export_universal_task.views.export',
+                       #     name='export_task'),
+                       # # export zip
+                       # url(r'^export_task/(?P<task_id>\d{1,6})\.zip$', 'export_universal_task.views.export', {'OutputZip':'TRUE'},
+                       #     name='export_task'),
+                       # # list all available tasks
+                       # url(r'^export_task/list$', 'export_universal_task.views.listTasks',
+                       #     name='list_task'),
                        # list some details about specific task
-                       url(r'^export_task/detail/(?P<task_id>\d{1,6})$', 'export_universal_task.views.detail',
-                           name='export_task_detail'),
-                       # test_post
-                       url(r'^testPost$', 'export_universal_task.views.test_post', name='testPost'),
+                       # url(r'^export_task/detail/(?P<task_id>\d{1,6})$', 'export_universal_task.views.detail',
+                       #     name='export_task_detail'),
+                       # # test_post
+                       # url(r'^testPost$', 'export_universal_task.views.test_post', name='testPost'),
                        # import task
-                       url(r'^activateTask/(?P<task_id>\d{1,6})$$', 'export_universal_task.views.activateTasks',
-                           name='activateTasks'),
-                       url(r'^importTaskObject$', 'export_universal_task.views.importTaskObject',
-                           name='importTaskObject'),
+                       # url(r'^activateTask/(?P<task_id>\d{1,6})$$', 'export_universal_task.views.activateTasks',
+                       #     name='activateTasks'),
+                       # url(r'^importTaskObject$', 'export_universal_task.views.importTaskObject',
+                       #     name='importTaskObject'),
                        url(r'^importTask$', 'export_universal_task.views.import_task',
                            name='importTask'),
-                       url(r'^importTaskObject/V2$', 'export_universal_task.views.importTaskObjectV2',
-                           name='importTaskObjectV2'),
-                       url(r'^importTaskObject/V1.01$', 'export_universal_task.views.import_1_01',
-                           name='importTaskObjectV1.01'),
+                       # url(r'^importTaskObject/V2$', 'export_universal_task.views.importTaskObjectV2',
+                       #     name='importTaskObjectV2'),
+                       # url(r'^importTaskObject/V1.01$', 'export_universal_task.views.import_1_01',
+                       #     name='importTaskObjectV1.01'),
 						   
                        url(r'^VERSION$', 'export_universal_task.views.show_version', name="show_version"),
 						   

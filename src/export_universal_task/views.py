@@ -1454,10 +1454,4 @@ def test_post(request, ):
 
 @csrf_exempt
 def show_version(request):
-    #contents = ""
-    #try:
-    #    with open("VERSION", "r") as f:
-    #        contents = f.read()
-    #except Exception:
-    #    return HttpResponse("Could not read version")
     return HttpResponse(VERSION.version)
