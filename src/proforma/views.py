@@ -90,16 +90,6 @@ def svn_to_zip(svn_uri, svn_user, svn_pass, submission_svn_rev=None):
     """
     submission_directory = "submission-zip"
     remote = svn.remote.RemoteClient(svn_uri, username=svn_user, password=svn_pass)
-    # try:
-    #     info = remote.info()
-    # except ValueError:
-    #     raise ValueError("SVN-Uri could not be accessed -> is your group right?", str(svn_uri))
-    # except Exception:
-    #     raise Exception("SVN-Uri could not be accessed -> is your group right?", str(svn_uri))
-    # if submission_svn_rev is not None:
-    #     svn_rev = info["commit_revision"]
-    #     if not (int(svn_rev) == int(submission_svn_rev)):
-    #         raise Exception("SubmissionError", "CommitRev is not the same as Rev_Head")
 
     tmp_dir = tempfile.mkdtemp()
     remote.export(to_path=os.path.join(tmp_dir, submission_directory), revision=submission_svn_rev)
@@ -305,22 +295,6 @@ def grade_api_v1(request, fw=None, fw_version=None):
                                                        message="read post-request task-file: "
                                              + str(type(e))+str(e.args),
                                                        format=answer_format_form))
-#    else:
-#        try:
-#            # content = get_task_from_externtal_server(server=settings.LONCAPAREPOSITORY, cookie=cookie, taskPath=taskPath)
-#            # todo not check if vita.. better if LON_CAPA
-#            if task_repo == "https://vita.ostfalia.de":
-#                raise Exception("no lon-capa support")
-#                #cj = login_phantomjs(server=task_repo)
-#                #content = get_task_from_externtal_server(server=task_repo, task_path=task_path, cookie=cj)
-#            else:
-#                content = get_task_from_externtal_server(server=task_repo, task_path=task_path)
-#        except IOError as e:
-#            return HttpResponse(answer_format_template(award="ERROR", message="get_task_from_externtal_server: " + str(type(e)) + str(e.args),
-#                                                       format=answer_format_form))
-#        except Exception as e:
-#            return HttpResponse(answer_format_template(award="ERROR", message="get_task_from_externtal_server: " + str(type(e)) + str(e.args),
-#                                                       format=answer_format_form))
 
     # todo: task_data = check_task(content)
     # todo: 1. check if proglang is supported ->
@@ -528,46 +502,6 @@ def create_external_task(content_file_obj, server, taskFilename, formatVersion):
         raise IOError(message)
 
 
-def checkRepositoryPath(repositoryPath):
-    #/res/fhwf/kruse/excercisesource.txt
-    match = re.search(REGEXTASKPATH, repositoryPath)
-    try:
-        if match:
-            repos = match.group('domain')
-            if repos:
-                if settings.LONCAPA_DOMAINS.get(repos):
-                    return False
-    except:
-        raise Exception
-
-
-def checkStudentPath(filePathes):
-    # /uploaded/fhwfdev4/OliR/portfolio/HelloWorld.java split it
-    splittedFilePathes = filePathes.split(',')
-    splittedFilePathes = [_f for _f in splittedFilePathes if _f]  # remove empty list elements
-    domain = None
-    filePathList = []
-    for path in splittedFilePathes:
-        match = re.search(REGEXDOMPATH, path)
-        if match:
-            if domain is None:
-                submissionDomain = match.group('domain')
-                if settings.LONCAPA_DOMAINS.get(submissionDomain):
-                    submissionDomain = settings.LONCAPA_DOMAINS.get(submissionDomain)
-                else:
-                    raise ImportError('Could not download task student submission file. Your student submission path '
-                                      'is not correct /uploaded/{domain}/{path}')
-            if match.group('path'):
-                filePathList.append(match.group('path'))
-            else:
-                message = "The path to your submission is not correct: " + str(path)
-                raise ImportError(message)
-        else:
-            raise ImportError('Could not download task student submission file. Your student submission path '
-                              'is not correct /uploaded/{domain}/{path}')
-    return submissionDomain, filePathList
-
-
 def getStudentSubmissionFile(filePathList, domain):
     listOfSolutionFiles = []
     with requests.Session() as s:
@@ -592,22 +526,6 @@ def getStudentSubmissionFile(filePathList, domain):
             except Exception:
                 raise Exception("An Error occured while downloading studentsubmission")
     return listOfSolutionFiles
-
-
-@csrf_exempt
-def list_repo(request):
-    response_data = dict()
-    response_data['repositories'] = settings.REPOSITORY
-    return HttpResponse(json.dumps(response_data), content_type="application/json")
-
-
-@csrf_exempt
-def test_task(request):
-    filename = 'task.xml'
-    files = {'file': (filename, "Test")}
-    # ToDo: put in settings
-    result = requests.post('http://141.41.9.5/justGrade/importTaskObject', files=files)
-    return HttpResponse(answer_format_template(award="Error", message=result.text))
 
 
 @csrf_exempt

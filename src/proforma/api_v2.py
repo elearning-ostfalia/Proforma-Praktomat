@@ -288,15 +288,6 @@ def answer_format(award, message, format=None, awarded=None):
         </loncapagrade>""" % (award, message, awarded)
 
 
-def get_http_error_page(title, message, callstack):
-    return """%s
-    
-    %s
-    
-Callstack:
-    %s""" % (title, message, callstack)
-
-
 def response_error(msg, format):
     """
 
@@ -427,27 +418,6 @@ def file_dict2zip(file_dict):
     #                    "Couldn't determine absolute path of '.'", e)
     finally:
         shutil.rmtree(tmp_dir)
-
-
-def write_cache_task(uuid, task_zip_content):
-    """
-    Writes the task_file in the cache directory structure: /cache/uuid/yymmdd_uuid.zip
-    :param uuid: string of the uuid
-    :param task_zip_content: zip-file
-    :return: task_file
-    """
-    # todo check uuid -> length
-    # todo check task_zip -> name / length
-    if (uuid is None) or (task_zip_content is None):
-        raise Exception("uuid or task is missing")
-    try:
-        with open(os.path.join(CACHE_PATH, uuid), 'wb') as task_file:
-            task_file.write(task_zip_content)
-            return task_file
-
-    except Exception:
-        logger.exception("Could not save task: " + str(Exception))
-        raise Exception("Could not save task: ")
 
 
 def create_external_task(content_file_obj, server, taskFilename, formatVersion):
