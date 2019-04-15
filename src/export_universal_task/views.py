@@ -1383,7 +1383,7 @@ def import_task(request, ):
         response.write("Error while importing task\r\n" + str(inst) + '\r\n' + callstack)
 
 
-def import_task_internal(filename, uploaded_file):
+def import_task_internal(filename, task_file):
 
     logger.debug('import_task_internal called')
 
@@ -1396,9 +1396,9 @@ def import_task_internal(filename, uploaded_file):
 
     dict_zip_files = None
     if filename[-3:].upper() == 'ZIP':
-        task_xml, dict_zip_files = extract_zip_with_xml_and_zip_dict(uploaded_file=uploaded_file)
+        task_xml, dict_zip_files = extract_zip_with_xml_and_zip_dict(uploaded_file=task_file)
     else:
-        task_xml = uploaded_file[0].read()  # todo check name
+        task_xml = task_file[0].read()  # todo check name
 
     encoding = rxcoding.search(task_xml, re.IGNORECASE)
     if (encoding != 'UFT-8' or encoding != 'utf-8') and encoding is not None:

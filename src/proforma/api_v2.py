@@ -8,10 +8,10 @@ import traceback
 
 
 
-from django.core.serializers import json
+#from django.core.serializers import json
 from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
-from django.views.decorators.csrf import csrf_exempt
+#from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 
 import os
@@ -21,7 +21,7 @@ import requests
 import shutil
 import logging
 import xmlschema
-import pprint
+#import pprint
 from requests.exceptions import InvalidSchema
 from export_universal_task.views import import_task_internal
 from external_grade.views import grader_internal
@@ -30,7 +30,7 @@ from external_grade.views import grader_internal
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 PARENT_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-CACHE_PATH = os.path.join(BASE_DIR, "/cache")
+#CACHE_PATH = os.path.join(BASE_DIR, "/cache")
 logger = logging.getLogger(__name__)
 
 
@@ -40,7 +40,6 @@ def grade_api_v2(request,):
     rtype: grade_api_v2
     """
     xml_version = None
-    lms_is_lon_capa = False
     answer_format = "proformav2"
     xml_dict = dict()
     post_content = ""
@@ -56,32 +55,24 @@ def grade_api_v2(request,):
 
     # create task and get Id
     try:
+        # check request
+        xml = check_post(request)
+
         # debugging uploaded files
-        for field_name, file in request.FILES.items():
-            filename = file.name
-            logger.debug("grade_api_v2: request.Files: " + str(file) + "\tfilename: " + str(filename))
+        #for field_name, file in request.FILES.items():
+        #    filename = file.name
+        #    logger.debug("grade_api_v2: request.Files: " + str(file) + "\tfilename: " + str(filename))
 
         # todo:
         # 1. check xml -> validate against xsd
         # 2. check uuid or download external xml
         # 3. files > file id all should be zipped
-        # 4.
-        # check if LON-CAPA
-        #if check_lon_capa(request):
-        #    lms_is_lon_capa = True
-        #    answer_format = "loncapaV1"
 
-        try:
-            xml = check_post(request)
-        except KeyError as e:
-            raise Exception("No submisson attached")
 
         # get xml version
-        xml_version = get_xml_version(submission_xml=xml)
+        #xml_version = get_xml_version(submission_xml=xml)
 
         # do not validate for performance reasons
-        # concat LON-CAPA
-        # student_response -> in XML einfügen
         # validate xsd
         #if xml_version:
         #    # logger.debug("xml: " + xml)
@@ -90,80 +81,34 @@ def grade_api_v2(request,):
         #    logger.debug("no version - " + str(xml))
         #    is_valid = validate_xml(xml=xml)
 
-        #if is_valid is False:
-        #    raise Exception("no valid answer submitted -> check xsd")
-
         submission_dict = xml2dict(xml)
 
         # check task-type
         # 1. external-task -> uri / http-field
         # 2. task-embedded
         # 3. inline-task-zip
-        task_type_dict = check_task_type(submission_dict)
-
-        external_task_http_field = False
         task_file = None
         task_filename = None
-        if task_type_dict.get("external-task"):
-            task_uri = task_type_dict["external-task"].get("task_path")  # todo check uri
-            task_uuid = task_type_dict["external-task"].get("task_uuid")
-            logger.debug("task_uri: " + str(task_uri))
-            ##
 
-            # test file-field
-            m = re.match(r"(http\-file\:)(?P<file_name>.+)", task_uri)
-            file_name = None
-            if m:
-                file_name = m.group('file_name')
+        if submission_dict.get("external-task"):
+            task_path = submission_dict["external-task"]["$"]
+            #task_uuid = submission_dict["external-task"]["@uuid"]
+            task_file, task_filename = get_external_task(request, task_path)
 
-            if file_name is not None:
-                external_task_http_field = True
-                logger.debug("file_name: " + str(file_name))
-                for filename, file in request.FILES.items():
-                    name = request.FILES[filename].name
-                    if name == file_name:
-                        task_filename = name
-                        task_file = file
-                if task_file is None:
-                    raise Exception("task is not attached - Request-Files")
-            else:
-                logger.debug("file_name is None ")
-                try:
-                    # getTask todo: check cache for uuid
-                    parse_uri = urlparse(task_uri)
-                    # scheme://netloc/path;parameters?query#fragment
+        elif submission_dict.get("task"):
+            raise Exception ("embedded task in submission.xml is not supported")
+        elif submission_dict.get("inline-task-zip"):
+            raise Exception ("inline-task-zip in submission.xml is not supported")
+            #return "inline-task-zip"
+        else:
+            raise Exception ("could not find task in submission.xml")
 
-                    if parse_uri.netloc == 'vita.ostfalia.de':
-                        cj = login_phantomjs(server="https://" + parse_uri.netloc)
-                        task_file = get_task_from_externtal_server(server=parse_uri.scheme + "://" + parse_uri.netloc,
-                                                                   task_path=parse_uri.path,
-                                                                   cookie=cj,
-                                                                   task_uuid=None)
-                    else:
-                        # todo clean this shit
-                        parse_path = parse_uri.path + "?" + parse_uri.query
-                        logger.debug("parse_path: " + parse_path)
-                        task_file = get_task_from_externtal_server(server=parse_uri.scheme + "://" + parse_uri.netloc,
-                                                                   task_path=parse_path)
-                    if settings.CACHE and task_uuid:
-                        write_cache_task(task_uuid, task_file)
-                except InvalidSchema as e:
-                    logger.exception(str(type(e)) + str(e.args))
-                    raise Exception("external url is not valid: " + task_uri)
+        # task_type_dict = check_task_type(submission_dict)
+        submission_files = get_submission_files(submission_dict, request) # returns a dictionary (filename -> contant)
+        # compress to zip file
+        submission_zip_obj = file_dict2zip(submission_files)
+        submission_zip = {"submission" + ".zip": submission_zip_obj}  # todo name it to the user + course
 
-        submission_type = check_submission_type(submission_dict, request)
-        # todo external submission
-        if submission_type.get("embedded_files"):
-            submission_zip_obj = file_dict2zip(submission_type.get("embedded_files"))
-            submission_zip = {"submission" + ".zip": submission_zip_obj}  # todo name it to the user + course
-        elif submission_type.get("external-submission"):
-            logger.debug("submission_type: external-submission")
-            submission_zip_obj = file_dict2zip(submission_type.get("external-submission"))
-            submission_zip = {"submission" + ".zip": submission_zip_obj}  # todo name it to the user + course
-            logger.debug("external-submission" + str(submission_zip))
-
-        if external_task_http_field is False:
-            task_filename = os.path.basename(parse_uri.path)
         logger.debug('import task')
         response_data = import_task_internal(task_filename, task_file)
         #print 'result for Task-ID: ' + str(response_data)
@@ -214,7 +159,30 @@ def grade_api_v2(request,):
         return response
 
 
-#        return response_error(msg="create_external_task", format=answer_format)
+def get_external_task(request, task_uri):
+
+    #task_uri = task_type_dict["external-task"].get("task_path")  # todo check uri
+    #task_uuid = task_type_dict["external-task"].get("task_uuid")
+    logger.debug("task_uri: " + str(task_uri))
+    ##
+    # test file-field
+    m = re.match(r"(http\-file\:)(?P<file_name>.+)", task_uri)
+    file_name = None
+    if m:
+        file_name = m.group('file_name')
+    else:
+        raise Exception("uunsupported external task URI: " + task_uri)
+
+    logger.debug("file_name: " + str(file_name))
+    for filename, file in request.FILES.items():
+        name = request.FILES[filename].name
+        if name == file_name:
+            task_filename = name
+            task_file = file
+            return task_file, task_filename
+
+    raise Exception("could not find task with URI " + task_uri)
+
 
 
 
@@ -230,25 +198,26 @@ def check_post(request):
     # todo check encoding of the xml -> first line
     encoding = 'utf-8'
     if not request.POST:
-        if request.FILES:
-                try:
-                    # submission.xml in request.Files
-                    logger.debug("FILES.keys(): " + str(request.FILES.keys()))
-                    if request.FILES['submission.xml'].name is not None:
-                        xml_dict = dict()
-                        xml_dict[request.FILES['submission.xml'].name] = request.FILES['submission.xml']
-                        logger.debug("xml_dict.keys(): " + str(xml_dict.keys()))
-                        xml = xml_dict.popitem()[1].read()
-                        xml_decoded = xml.decode(encoding)
-                        return xml_decoded
-                    elif request.FILES['submission.zip'].name:
-                        # todo zip handling -> praktomat zip
-                        raise Exception("zip handling is not implemented")
-                    else:
-                        raise KeyError("No submission attached")
-                except MultiValueDictKeyError:
-                    raise KeyError("No submission attached")
-        else:
+
+        if not request.FILES:
+            raise KeyError("No submission attached")
+
+        try:
+            # submission.xml in request.Files
+            logger.debug("FILES.keys(): " + str(request.FILES.keys()))
+            if request.FILES['submission.xml'].name is not None:
+                xml_dict = dict()
+                xml_dict[request.FILES['submission.xml'].name] = request.FILES['submission.xml']
+                logger.debug("xml_dict.keys(): " + str(xml_dict.keys()))
+                xml = xml_dict.popitem()[1].read()
+                xml_decoded = xml.decode(encoding)
+                return xml_decoded
+            elif request.FILES['submission.zip'].name:
+                # todo zip handling -> praktomat zip
+                raise Exception("zip handling is not implemented")
+            else:
+                raise KeyError("No submission attached")
+        except MultiValueDictKeyError:
             raise KeyError("No submission attached")
     else:
         xml = request.POST.get("submission.xml")
@@ -259,18 +228,6 @@ def check_post(request):
 
         xml_encoded = xml.encode(encoding)
         return xml_encoded
-
-
-def check_lon_capa(request):
-    """
-    check if LMS is LON-CAPA
-    :param request:
-    :return:
-    """
-    if request.POST.get("LONCAPA_student_response"):
-        return True
-    else:
-        return False
 
 
 def answer_format(award, message, format=None, awarded=None):
@@ -336,44 +293,62 @@ def xml2dict(xml):
     return xml_dict
 
 
-def check_task_type(submission_dict):
-    if submission_dict.get("external-task"):
-        task_path = submission_dict["external-task"]["$"]
-        task_uuid = submission_dict["external-task"]["@uuid"]
-        return {"external-task": {"task_path": task_path, "task_uuid": task_uuid}}
-    elif submission_dict.get("task"):
-        return "task"
-    elif submission_dict.get("inline-task-zip"):
-        return "inline-task-zip"
-    else:
-        return None
+# def check_task_type(submission_dict):
+#     if submission_dict.get("external-task"):
+#         task_path = submission_dict["external-task"]["$"]
+#         task_uuid = submission_dict["external-task"]["@uuid"]
+#         return {"external-task": {"task_path": task_path, "task_uuid": task_uuid}}
+#     elif submission_dict.get("task"):
+#         return "task"
+#     elif submission_dict.get("inline-task-zip"):
+#         return "inline-task-zip"
+#     else:
+#         return None
 
 
-def check_submission_type(submission_dict, request):
+def get_submission_files(submission_dict, request):
+
     if submission_dict.get("external-submission"):
-        submission_files_dict = None
         field_name = submission_dict["external-submission"]
-        if field_name is not None:
-            m = re.match(r"(http\-file\:)(?P<file_name>.+)", field_name)
-            file_name = None
-            if m:
-                file_name = m.group('file_name')
+        if not field_name:
+            raise Exception("invalid value for external-submission (none)")
 
-        if file_name is not None:
-            logger.debug("submission file_name: " + str(file_name))
-            for filename, file in request.FILES.items():
-                name = request.FILES[filename].name
-                if name == file_name:
-                    submission_files_dict = dict()
-                    file_content = str(file.read().decode(encoding='utf-8', errors='replace'))
-                    # logger.debug("submission file content is: " + file_content)
-                    submission_files_dict.update({name: file_content})
-                    break
-            if submission_files_dict is None:
-                raise Exception("submission is not attached - Request-Files")
+        m = re.match(r"(http\-file\:)(?P<file_name>.+)", field_name)
+        if not m:
+            raise Exception("unsupported external-submission: " + field_name)
+
+        file_name = m.group('file_name')
+        if file_name is None:
+            raise Exception("missing filename in external-submission")
+
+        logger.debug("submission file_name: " + str(file_name))
+        for filename, file in request.FILES.items():
+            name = request.FILES[filename].name
+            logger.debug("request.FILES[" + name + "]")
+
+            if name == file_name:
+                submission_files_dict = dict()
+                file_content = str(file.read().decode(encoding='utf-8', errors='replace'))
+                # logger.debug("submission file content is: " + file_content)
+                submission_files_dict.update({file_name: file_content})
+                return submission_files_dict
+
+        # special handling for filenames containing a relative path:
+        # if file_name is not found:
+        for filename, file in request.FILES.items():
+            name = request.FILES[filename].name
+            logger.debug("request.FILES[" + name + "]")
+            pure_filename = os.path.basename(file_name) # remove path
+            if name == pure_filename:
+                submission_files_dict = dict()
+                file_content = str(file.read().decode(encoding='utf-8', errors='replace'))
+                # logger.debug("submission file content is: " + file_content)
+                submission_files_dict.update({file_name: file_content})
+                return submission_files_dict
 
 
-        return{"external-submission": submission_files_dict}
+        raise Exception("could not find external submission " + file_name)
+
     elif submission_dict.get("files"):
         # todo get a dict of files
         # embedded-files
@@ -386,7 +361,7 @@ def check_submission_type(submission_dict, request):
                 except KeyError:
                     raise Exception("No submission attached")
                 submission_files_dict.update({filename: file_content})
-            return {"embedded_files": submission_files_dict}
+            return submission_files_dict
     else:
         raise Exception("No submission attached")
 
