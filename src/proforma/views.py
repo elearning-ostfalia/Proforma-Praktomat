@@ -46,7 +46,19 @@ def grade_api_v2(request):
 #     # os.makedirs(base_dir[, mode]) todo save the submission exeption
 
 
-
+def answer_format_template(award, message, format=None, awarded=None):
+    if format is None or "loncapaV1":
+        return """<loncapagrade>
+        <awarddetail>%s</awarddetail>
+        <message><![CDATA[proforma_taskget: %s]]></message>
+        <awarded></awarded>
+        </loncapagrade>""" % (award, message)
+    else:
+        return """<loncapagrade>
+        <awarddetail>%s</awarddetail>
+        <message><![CDATA[proforma_taskget; %s]]></message>
+        <awarded>%s</awarded>
+        </loncapagrade>""" % (award, message, awarded)
 
 
 # OLD API
@@ -208,7 +220,8 @@ def grade_api_v1(request, fw=None, fw_version=None):
         callstack = traceback.format_exc()
         print "Exception caught Stack Trace: " + str(callstack)  # __str__ allows args to be printed directly
         response = HttpResponse()
-        response.write(api_v2.get_http_error_page('Error in grading process', str(inst), callstack))
+        response.write(answer_format_template(award="ERROR", message="Error in grading process: " + str(inst) + callstack))
+        #response.write(api_v2.get_http_error_page('Error in grading process', str(inst), callstack))
         response.status_code = 500 # internal error
         return response
 

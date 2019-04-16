@@ -12,6 +12,8 @@ import re
 import requests
 import logging
 import tempfile
+import urllib
+import views
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +133,7 @@ def send_result_to_gradebook(grade_result, labor_id, aufgaben_id, group, externa
 
 
 def get_svn_group(request):
-    if not svn.check_system_svn():
+    if not check_system_svn():
         raise Exception("svn is not installed on the server")
     # LON_CAPA special
     lc_submission = request.POST.get("LONCAPA_student_response")
@@ -142,7 +144,7 @@ def get_svn_group(request):
     if not submission_svn_repository:
         raise Exception("Please add a svn-repository if you use svn-ostfalia")
     if lc_submission:
-        submission_dict = svn.get_group_rev(lc_submission)
+        submission_dict = get_group_rev(lc_submission)
         # we expect: Gruppe=<int>;Rev=<int>;
         if 'Gruppe' not in submission_dict:
             raise Exception("There as a problem with your group-name.")
@@ -170,7 +172,7 @@ def grade_svn_submission(aufgaben_id, external_course_book, labor_id, request, s
                          str(submission_svn_server))
         raise Exception("the configured svn-server and repository is not known to the middleware")
     try:
-        submission_svn_user, submission_svn_pass = svn_submission.get_svn_credetials(
+        submission_svn_user, submission_svn_pass = get_svn_credetials(
             svn_repository=submission_svn_repository,
             svn_server=submission_svn_server)
     except KeyError as err:
@@ -182,19 +184,19 @@ def grade_svn_submission(aufgaben_id, external_course_book, labor_id, request, s
            str(submission_svn_path) + "/src"
     submission_svn_uri = urllib.parse.urljoin(submission_svn_server, path)
     try:
-        student_submission_zip_obj = svn_submission.svn_to_zip(svn_uri=submission_svn_uri, svn_user=submission_svn_user,
+        student_submission_zip_obj = svn_to_zip(svn_uri=submission_svn_uri, svn_user=submission_svn_user,
                                                                svn_pass=submission_svn_pass)
     except ValueError as e:
         raise Exception("Could not connect to svn -> remote.info got exception" + str(e))
     # start grading todo gruppe -> Gruppe
     submission_zip = {"Gruppe" + str(submission_svn_group) + ".zip": student_submission_zip_obj}
     # submission_zip = {'submission.zip': student_submission_zip_obj}
-    grade_result = send_submission2external_grader(request=request, server=settings.GRADERV, taskID=task_id,
+    grade_result = views.send_submission2external_grader(request=request, server=settings.GRADERV, taskID=task_id,
                                                    files=submission_zip)
     # if everything works we should end here
     if external_course_book:
         # todo should be startet with another thread -> parallel
-        svn_submission.send_result_to_gradebook(grade_result, labor_id=labor_id, aufgaben_id=aufgaben_id,
+        send_result_to_gradebook(grade_result, labor_id=labor_id, aufgaben_id=aufgaben_id,
                                                 group=submission_svn_group,
                                                 external_course_book_uri=external_course_book)
     return grade_result
