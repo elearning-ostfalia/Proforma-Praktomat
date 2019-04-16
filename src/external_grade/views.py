@@ -233,87 +233,87 @@ def gradeSolution(solution):
     return result, solution
 
 
-@csrf_exempt  # disable csrf-cookie
-def text_grader(request, user_name=None, task_id=None, file_name=None, lms=None):
-    """
-
-    :param request:
-    :param user_name:
-    :param task_id:
-    :param file_name:
-    :return:
-    """
-    response = HttpResponse()
-    result_message = ""
-    DEFINED_USER = "sys_prod"  # username in praktomat
-    DEFINED_FILENAME = "submit.java"
-    response_format = "loncapa"
-    # todo: user_name erase
-
-    if file_name is None:
-        file_name = DEFINED_FILENAME
-    else:
-        try:
-            # only ascii characters are allowed
-            file_name = file_name.encode("utf-8")
-        except UnicodeEncodeError:
-            result_message = "Der Text darf keine Sonderzeichen enthalten"
-            response.write(result_page(award="ERROR", message=result_message))
-            response.status_code = 200
-            return response
-
-    # check if task exist
-    if not check_task_id(task_id):
-        response.write(error_page(1))
-        response.status_code = 200
-        return response
-
-    #create task_object for submitting data
-    task = get_object_or_404(Task, pk=task_id)
-
-    if request.POST:  # check if it is a POST.Request
-        student_response = request.POST.get('LONCAPA_student_response')  # get string of post-message
-        if not student_response:
-            result_message = "Keine Einreichung angegeben"
-            response.write(result_page(award="ERROR", message=result_message))
-            response.status_code = 200
-            return response
-            #  todo: max file size? anything i should remove?
-    else:
-        result_message = "Keine Einreichung angegeben"
-        response.write(result_page(award="ERROR", message=result_message))
-        response.status_code = 200
-        return response
-
-    #check if user is authenticated if not login
-    if not request.user.is_authenticated():
-        if authenticate_user(DEFINED_USER, request) is None:
-            result_message = "Der System_User existiert nicht auf dem Bewertungssystem"
-            response.write(result_page(award="ERROR", message=result_message))
-            response.status_code = 200
-            return response
-    try:
-        result, solution = grade_task(student_response, request, file_name, task)
-    except Exception as e:
-        result_message = "%s" % e
-        response.write(result_page(award="ERROR", message=result_message))
-        response.status_code = 200
-        return response
-        #result printing
-
-    if lms == 'lcxml':
-        fileList = list()
-        fileList.append(file_name)  # one file is the exception -> list needed
-        lcxml = get_solution_xml(result, solution, fileList, response_format)
-        return HttpResponse(lcxml)
-    else:
-        result_award, result_message = get_solution(result, result_message, solution)  # print submitted files
-        #print_submitted_files
-        result_message = print_submitted_files(result_message, solution, file_name)
-
-        response.write(result_page(award=result_award, message=result_message))
-        response.status_code = 200
-    return response
+# @csrf_exempt  # disable csrf-cookie
+# def text_grader(request, user_name=None, task_id=None, file_name=None, lms=None):
+#     """
+#
+#     :param request:
+#     :param user_name:
+#     :param task_id:
+#     :param file_name:
+#     :return:
+#     """
+#     response = HttpResponse()
+#     result_message = ""
+#     DEFINED_USER = "sys_prod"  # username in praktomat
+#     DEFINED_FILENAME = "submit.java"
+#     response_format = "loncapa"
+#     # todo: user_name erase
+#
+#     if file_name is None:
+#         file_name = DEFINED_FILENAME
+#     else:
+#         try:
+#             # only ascii characters are allowed
+#             file_name = file_name.encode("utf-8")
+#         except UnicodeEncodeError:
+#             result_message = "Der Text darf keine Sonderzeichen enthalten"
+#             response.write(result_page(award="ERROR", message=result_message))
+#             response.status_code = 200
+#             return response
+#
+#     # check if task exist
+#     if not check_task_id(task_id):
+#         response.write(error_page(1))
+#         response.status_code = 200
+#         return response
+#
+#     #create task_object for submitting data
+#     task = get_object_or_404(Task, pk=task_id)
+#
+#     if request.POST:  # check if it is a POST.Request
+#         student_response = request.POST.get('LONCAPA_student_response')  # get string of post-message
+#         if not student_response:
+#             result_message = "Keine Einreichung angegeben"
+#             response.write(result_page(award="ERROR", message=result_message))
+#             response.status_code = 200
+#             return response
+#             #  todo: max file size? anything i should remove?
+#     else:
+#         result_message = "Keine Einreichung angegeben"
+#         response.write(result_page(award="ERROR", message=result_message))
+#         response.status_code = 200
+#         return response
+#
+#     #check if user is authenticated if not login
+#     if not request.user.is_authenticated():
+#         if authenticate_user(DEFINED_USER, request) is None:
+#             result_message = "Der System_User existiert nicht auf dem Bewertungssystem"
+#             response.write(result_page(award="ERROR", message=result_message))
+#             response.status_code = 200
+#             return response
+#     try:
+#         result, solution = grade_task(student_response, request, file_name, task)
+#     except Exception as e:
+#         result_message = "%s" % e
+#         response.write(result_page(award="ERROR", message=result_message))
+#         response.status_code = 200
+#         return response
+#         #result printing
+#
+#     if lms == 'lcxml':
+#         fileList = list()
+#         fileList.append(file_name)  # one file is the exception -> list needed
+#         lcxml = get_solution_xml(result, solution, fileList, response_format)
+#         return HttpResponse(lcxml)
+#     else:
+#         result_award, result_message = get_solution(result, result_message, solution)  # print submitted files
+#         #print_submitted_files
+#         result_message = print_submitted_files(result_message, solution, file_name)
+#
+#         response.write(result_page(award=result_award, message=result_message))
+#         response.status_code = 200
+#     return response
 
 
 def save_file(data, solution_file, filename):

@@ -7,7 +7,7 @@ import sys
 import os
 import settings
 
-from proforma import views as proforma_views
+#import proforma
 
 from django.contrib import admin
 admin.autodiscover()
@@ -45,7 +45,7 @@ urlpatterns = patterns('',
 
 # Proforma add-on [start]
                        # Proforma 2.0
-                       url(r'^api/v2/submissions$', proforma_views.grade_api_v2, name="grade_api_v2"),
+                       url(r'^api/v2/submissions$', 'proforma.views.grade_api_v2', name="grade_api_v2"),
                        # external_grade common url: server / lms / function / domain / user / task
                        # todo: username sollte @ enthalten
                        # file grader: function / user_name / task_id
@@ -69,22 +69,22 @@ urlpatterns = patterns('',
                        url(
                            r'^external_grade/(?P<response_format>[a-zA-Z\_\.\d]{3,32})/v1/task/(?P<task_id>\d{1,6})$', 'external_grade.views.file_grader_post'
                            , name='external_grade_files'),
-                       # text grader: function / lms / file_name / task_id
-                       url(
-                           r'^external_grade_textfield/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<file_name>[a-zA-Z_\.\d]{3,250})/(?P<task_id>\d{1,6})$',
-                           'external_grade.views.text_grader', name='external_grade_textfield'),
-                       # text grader: function / file_name / user_name / task_id
-                       url(
-                           r'^external_grade_textfield/(?P<file_name>[a-zA-Z\_\.\d]{3,250})/(?P<user_name>[\w\.\@\-]{3,60})/(?P<task_id>\d{1,6})$',
-                           'external_grade.views.text_grader', name='external_grade_textfield'),
-                       # text grader: function / lms / file_name / user_name / task_id
-                       url(
-                           r'^external_grade_textfield/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<file_name>[a-zA-Z_\.\d]{3,250})/(?P<user_name>[\w\.\@\-]{3,60})/(?P<task_id>\d{1,6})$',
-                           'external_grade.views.text_grader', name='external_grade_textfield'),
-                       # textfield grader
-                       url(
-                           r'^textfield/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<file_name>[a-zA-Z_\.\d]{3,250})/(?P<task_id>\d{1,6})$',
-                           'external_grade.views.text_grader', name='external_grade_textfield'),
+                       # # text grader: function / lms / file_name / task_id
+                       # url(
+                       #     r'^external_grade_textfield/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<file_name>[a-zA-Z_\.\d]{3,250})/(?P<task_id>\d{1,6})$',
+                       #     'external_grade.views.text_grader', name='external_grade_textfield'),
+                       # # text grader: function / file_name / user_name / task_id
+                       # url(
+                       #     r'^external_grade_textfield/(?P<file_name>[a-zA-Z\_\.\d]{3,250})/(?P<user_name>[\w\.\@\-]{3,60})/(?P<task_id>\d{1,6})$',
+                       #     'external_grade.views.text_grader', name='external_grade_textfield'),
+                       # # text grader: function / lms / file_name / user_name / task_id
+                       # url(
+                       #     r'^external_grade_textfield/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<file_name>[a-zA-Z_\.\d]{3,250})/(?P<user_name>[\w\.\@\-]{3,60})/(?P<task_id>\d{1,6})$',
+                       #     'external_grade.views.text_grader', name='external_grade_textfield'),
+                       # # textfield grader
+                       # url(
+                       #     r'^textfield/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<file_name>[a-zA-Z_\.\d]{3,250})/(?P<task_id>\d{1,6})$',
+                       #     'external_grade.views.text_grader', name='external_grade_textfield'),
 
                        # export_universal_task
 
@@ -113,8 +113,21 @@ urlpatterns = patterns('',
                        #     name='importTaskObjectV2'),
                        # url(r'^importTaskObject/V1.01$', 'export_universal_task.views.import_1_01',
                        #     name='importTaskObjectV1.01'),
-						   
-                       url(r'^VERSION$', 'export_universal_task.views.show_version', name="show_version"),
+
+# from old middleware
+#                        url(
+#                            r'^grade/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<lms_version>\d{1,6})/(?P<language>[a-zA-Z\_\.\d]{3,32})/'
+#                            r'(?P<language_version>\d{1,6})/(?P<textfield_or_file>[a-zA-Z\_\.\d]{4,9})$'
+#                            r'', proforma_views.grade_api_v1, name="grade"),
+#                        url(
+#                            r'^grade/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<lms_version>\d{1,6})/(?P<language>[a-zA-Z\_\.\d]{3,32})/'
+#                            r'(?P<textfield_or_file>[a-zA-Z\_\.\d]{4,9})$'
+#                            r'', proforma_views.grade_api_v1, name="grade"),
+#                        url(
+#                            r'^api/v1/grading/prog-languages/(?P<fw>[a-zA-Z\_\.\d]{3,32})/(?P<fw_version>\d{1,6})/submissions$'
+#                            r'', proforma_views.grade_api_v1, name="grade_api_v1"),
+
+                       url(r'^VERSION$', 'proforma.views.show_version', name="show_version"),
 						   
 # Proforma add-on [end]						   
 					   

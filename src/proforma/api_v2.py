@@ -210,19 +210,6 @@ def check_post(request):
         return xml_encoded
 
 
-# def answer_format(award, message, format=None, awarded=None):
-#     if format is None or "loncapaV1":
-#         return """<loncapagrade>
-#         <awarddetail>%s</awarddetail>
-#         <message><![CDATA[proforma/api_v2: %s]]></message>
-#         <awarded></awarded>
-#         </loncapagrade>""" % (award, message)
-#     else:
-#         return """<loncapagrade>
-#         <awarddetail>%s</awarddetail>
-#         <message><![CDATA[proforma/api_v2: %s]]></message>
-#         <awarded>%s</awarded>
-#         </loncapagrade>""" % (award, message, awarded)
 
 
 # def response_error(msg, format):

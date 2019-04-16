@@ -33,7 +33,7 @@ from tasks.models import Task, MediaFile
 from export_universal_task.import_helper import check_post_request, import_task_v2, \
     extract_zip_with_xml_and_zip_dict, import_task as itask
 #from VERSION import version
-import VERSION
+
 
 logger = logging.getLogger(__name__)
 
@@ -1452,6 +1452,3 @@ def test_post(request, ):
 
 
 
-@csrf_exempt
-def show_version(request):
-    return HttpResponse(VERSION.version)
