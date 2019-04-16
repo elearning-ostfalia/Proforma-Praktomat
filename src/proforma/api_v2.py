@@ -111,8 +111,8 @@ def grade_api_v2(request,):
         # task_type_dict = check_task_type(submission_dict)
         submission_files = get_submission_files(submission_dict, request) # returns a dictionary (filename -> contant)
         # compress to zip file
-        submission_zip_obj = file_dict2zip(submission_files)
-        submission_zip = {"submission" + ".zip": submission_zip_obj}  # todo name it to the user + course
+        #submission_zip_obj = file_dict2zip(submission_files)
+        #submission_zip = {"submission" + ".zip": submission_zip_obj}  # todo name it to the user + course
 
         logger.debug('import task')
         response_data = import_task_internal(task_filename, task_file)
@@ -124,7 +124,8 @@ def grade_api_v2(request,):
 
         # send submission to grader
         logger.debug('grade submission')
-        grade_result = grader_internal(task_id, submission_zip, answer_format)
+        grade_result = grader_internal(task_id, submission_files, answer_format)
+        #grade_result = grader_internal(task_id, submission_zip, answer_format)
         logger.debug("grading finished")
         response = HttpResponse()
         response.write(grade_result)
@@ -143,7 +144,7 @@ def grade_api_v2(request,):
 
 def get_external_task(request, task_uri):
 
-    logger.debug("task_uri: " + str(task_uri))
+    # logger.debug("task_uri: " + str(task_uri))
     ##
     # test file-field
     m = re.match(r"(http\-file\:)(?P<file_name>.+)", task_uri)
@@ -288,10 +289,10 @@ def get_submission_files(submission_dict, request):
         if file_name is None:
             raise Exception("missing filename in external-submission")
 
-        logger.debug("submission file_name: " + str(file_name))
+        #logger.debug("submission file_name: " + str(file_name))
         for filename, file in request.FILES.items():
             name = request.FILES[filename].name
-            logger.debug("request.FILES[" + name + "]")
+            #logger.debug("request.FILES[" + name + "]")
 
             if name == file_name:
                 submission_files_dict = dict()
@@ -304,7 +305,7 @@ def get_submission_files(submission_dict, request):
         # if file_name is not found:
         for filename, file in request.FILES.items():
             name = request.FILES[filename].name
-            logger.debug("request.FILES[" + name + "]")
+            #logger.debug("request.FILES[" + name + "]")
             pure_filename = os.path.basename(file_name) # remove path
             if name == pure_filename:
                 submission_files_dict = dict()
@@ -333,33 +334,34 @@ def get_submission_files(submission_dict, request):
         raise Exception("No submission attached")
 
 
-def file_dict2zip(file_dict):
-    tmp_dir = tempfile.mkdtemp()
-
-    try:
-
-        os.chdir(os.path.dirname(tmp_dir))
-        for key in file_dict:
-            logger.debug("file_dict2zip Key: " + key)
-            if os.path.dirname(key) == '':
-                with open(os.path.join(tmp_dir, key), 'w') as f:
-                    f.write(file_dict[key])
-            else:
-                if not os.path.exists(os.path.join(tmp_dir, os.path.dirname(key))):
-                    os.makedirs(os.path.join(tmp_dir, os.path.dirname(key)))
-                with open(os.path.join(tmp_dir, key), 'w') as f:
-                    f.write(file_dict[key])
-
-        submission_zip = shutil.make_archive(base_name="submission", format="zip", root_dir=tmp_dir)
-        submission_zip_fileobj = open(submission_zip, 'rb')
-        return submission_zip_fileobj
-    except IOError as e:
-        raise IOError("IOError:", "An error occurred while open zip-file", e)
-    #except Exception as e:
-    #    raise Exception("zip-creation error:", "An error occurred while creating zip: E125001: "
-    #                    "Couldn't determine absolute path of '.'", e)
-    finally:
-        shutil.rmtree(tmp_dir)
+# compress file dictionary as zip file
+# def file_dict2zip(file_dict):
+#     tmp_dir = tempfile.mkdtemp()
+#
+#     try:
+#
+#         os.chdir(os.path.dirname(tmp_dir))
+#         for key in file_dict:
+#             logger.debug("file_dict2zip Key: " + key)
+#             if os.path.dirname(key) == '':
+#                 with open(os.path.join(tmp_dir, key), 'w') as f:
+#                     f.write(file_dict[key])
+#             else:
+#                 if not os.path.exists(os.path.join(tmp_dir, os.path.dirname(key))):
+#                     os.makedirs(os.path.join(tmp_dir, os.path.dirname(key)))
+#                 with open(os.path.join(tmp_dir, key), 'w') as f:
+#                     f.write(file_dict[key])
+#
+#         submission_zip = shutil.make_archive(base_name="submission", format="zip", root_dir=tmp_dir)
+#         submission_zip_fileobj = open(submission_zip, 'rb')
+#         return submission_zip_fileobj
+#     except IOError as e:
+#         raise IOError("IOError:", "An error occurred while open zip-file", e)
+#     #except Exception as e:
+#     #    raise Exception("zip-creation error:", "An error occurred while creating zip: E125001: "
+#     #                    "Couldn't determine absolute path of '.'", e)
+#     finally:
+#         shutil.rmtree(tmp_dir)
 
 
 # def create_external_task(content_file_obj, server, taskFilename, formatVersion):

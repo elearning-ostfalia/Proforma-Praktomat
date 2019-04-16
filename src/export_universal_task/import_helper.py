@@ -562,11 +562,16 @@ def import_task_v2(task_xml, dict_zip_files=None):
     ns = {"p": format_namespace}
     message = ""
 
-    try:
-        xml_dict = validate_xml(xml=task_xml)
-    except Exception as e:
-        logger.debug(str(type(e))+str(e.args))
-        return json_error_message(json_message="validate_xml error (task.xml): " + str(e.args), http_code=400)
+    # no need to actually validate xml against xsd
+    # (it is only time consuming)
+    schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, XSD_V_2_PATH))
+    xml_dict = schema.to_dict(task_xml)
+
+    # try:
+    #     xml_dict = validate_xml(xml=task_xml)
+    # except Exception as e:
+    #     logger.debug(str(type(e))+str(e.args))
+    #     return json_error_message(json_message="validate_xml error (task.xml): " + str(e.args), http_code=400)
 
     xml_obj = objectify.fromstring(task_xml)
 
@@ -1270,9 +1275,9 @@ def json_error_message(json_message, http_code=None):
 def validate_xml(xml, xml_version=None):
     if xml_version is None:
         schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, XSD_V_2_PATH))
-        try:
-            schema.validate(xml)
-        except Exception as e:
-            logger.error("Schema is not valid: " + str(e))
-            raise Exception("Schema is not valid: " + str(e))
+        #try:
+        #    schema.validate(xml)
+        #except Exception as e:
+        #    logger.error("Schema is not valid: " + str(e))
+        #    raise Exception("Schema is not valid: " + str(e))
     return schema.to_dict(xml)

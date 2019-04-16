@@ -5,6 +5,8 @@ from django.shortcuts import get_object_or_404, render_to_response
 from django.contrib.auth import login
 from django.core.exceptions import ObjectDoesNotExist
 from django.views.decorators.csrf import csrf_exempt
+from django.core.files.storage import default_storage
+
 from accounts.templatetags.in_group import in_group
 from tasks.models import Task
 from accounts.models import User
@@ -22,10 +24,20 @@ import re
 import logging
 import chardet
 import traceback
+#import proforma.api_v2
 
 from solutions.forms import SolutionFormSet
 
 logger = logging.getLogger(__name__)
+
+def get_http_error_page(title, message, callstack):
+    return """%s
+
+    %s
+
+Callstack:
+    %s""" % (title, message, callstack)
+
 
 # internal proforma entry point
 @csrf_exempt  # disable csrf-cookie
@@ -144,7 +156,8 @@ def grader_internal(task_id, files, response_format):
     #print files
     fileDict = dict()
     fileNameList = []
-    fileDict["submission.zip"] = files["submission.zip"]
+    fileDict = files
+    #fileDict["submission.zip"] = files["submission.zip"]
     fileNameList.append("submission.zip")
 
     # DataNameList = []
@@ -214,8 +227,11 @@ def saveSolution(solution, fileDict):
     solution_file = SolutionFile(solution=solution)
     for index in range(len(fileDict)):
         #save solution in enviroment and get the path
-        data = fileDict.values()[index].read()
-        saved_solution = save_file(data, solution_file, fileDict.keys()[index])
+        filename = fileDict.keys()[index]
+        #logger.debug('-> save file ' + filename + ': <' + str(fileDict.values()[index]) + '>')
+        data = fileDict.values()[index]
+        #data = fileDict.values()[index].read()
+        saved_solution = save_file(data, solution_file, filename)
         #remove the upload path /home/ecult/devel_oli/upload
         shorter_saved_solution = saved_solution[len(settings.UPLOAD_ROOT):]  # todo besser +1 und doku
         #remove the beginnning slash -> relative path
@@ -316,6 +332,7 @@ def gradeSolution(solution):
 #     return response
 
 
+
 def save_file(data, solution_file, filename):
     """
 
@@ -330,27 +347,31 @@ def save_file(data, solution_file, filename):
     full_directory = settings.UPLOAD_ROOT + '/SolutionArchive/Task_' + unicode(
         solution.task.id) + '/User_' + solution.author.username + '/Solution_' + unicode(
         solution.id) + '/'      # directory structure from solution.model
-    if not os.path.exists(full_directory):
-        try:
-            os.makedirs(full_directory)
-        except:
-            raise Exception("Unerklärlicher Fehler beim Erzeugen der Datei")
     full_filename = os.path.join(full_directory, filename)
+    path = os.path.dirname(full_filename)
+    if not os.path.exists(path):
+        os.makedirs(path)
+
     if (filename[-3:].upper() == 'ZIP') or (filename[-3:].upper() == 'JAR'):
-        try:
-            fd = open('%s' % (full_filename), 'wb')
-            fd.write(data)
-            fd.close()
-        except:
-            raise Exception("Schreibfehler der Archiv-Datei")
+        fd = open('%s' % (full_filename), 'wb')
+        fd.write(data)
+        fd.close()
     # todo: prüfen ob data == File Object oder Content
     else:
-        try:
-            fd = codecs.open('%s' % (full_filename), 'wb', "utf-8")
-            fd.write(data)
+        #logger.debug('File content class name is ' + data.__class__.__name__)
+        if data.__class__.__name__ == 'InMemoryUploadedFile':
+            with default_storage.open('%s' % (full_filename), 'w') as destination:
+                for chunk in data.chunks():
+                    destination.write(chunk)
+
+            #fd = codecs.open('%s' % (full_filename), 'wb', "utf-8")
+            #fd.write(data)
+            #fd.close()
+        else:
+            # string
+            fd = open('%s' % (full_filename), 'w')
+            fd.write(data.encode("utf-8"))
             fd.close()
-        except:
-            raise Exception("Schreibfehler der Datei")
 
     return full_filename
 
@@ -452,10 +473,7 @@ def grade_task(data, request, submitted_file_name, task):
     #create solution_file
     solution_file = SolutionFile(solution=solution)
     #save solution in environment and get the path
-    try:
-        saved_solution = save_file(data, solution_file, submitted_file_name)
-    except Exception as e:
-        raise e
+    saved_solution = save_file(data, solution_file, submitted_file_name)
 
     #remove the upload path /home/ecult/devel_oli/upload
     shorter_saved_solution = saved_solution[len(settings.UPLOAD_ROOT):]  # todo besser +1 und doku
