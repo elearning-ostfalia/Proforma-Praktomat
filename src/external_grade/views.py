@@ -214,11 +214,8 @@ def saveSolution(solution, fileDict):
     solution_file = SolutionFile(solution=solution)
     for index in range(len(fileDict)):
         #save solution in enviroment and get the path
-        #try:
         data = fileDict.values()[index].read()
         saved_solution = save_file(data, solution_file, fileDict.keys()[index])
-        #except Exception:
-        #    raise Exception
         #remove the upload path /home/ecult/devel_oli/upload
         shorter_saved_solution = saved_solution[len(settings.UPLOAD_ROOT):]  # todo besser +1 und doku
         #remove the beginnning slash -> relative path

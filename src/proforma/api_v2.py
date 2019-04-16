@@ -16,8 +16,8 @@ from django.conf import settings
 
 import os
 import re
-import urllib
-import requests
+#import urllib
+#import requests
 import shutil
 import logging
 import xmlschema
@@ -47,6 +47,9 @@ def grade_api_v2(request,):
     grade_api_v2
     rtype: grade_api_v2
     """
+
+    logger.debug("new grading request")
+
     xml_version = None
     answer_format = "proformav2"
     xml_dict = dict()
