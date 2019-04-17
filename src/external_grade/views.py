@@ -119,9 +119,6 @@ def file_grader_post(request, response_format, task_id=None):
 
     except Exception as inst:
         logger.exception(inst)
-        #print "Exception caught: " + str(type(inst))  # the exception instance
-        #print "Exception caught: " + str(inst.args)  # arguments stored in .args
-        #print "Exception caught: " + str(inst)  # __str__ allows args to be printed directly
         callstack = traceback.format_exc()
         #print "Exception caught Stack Trace: " + str(callstack)  # __str__ allows args to be printed directly
 
@@ -398,47 +395,47 @@ def get_mimetype(txt):
     return 'text/plain'
 
 
-def error_page(error_code):
-    """
-    error_page(error_code)
-    return (LON-CAPA ERROR RESPONSE)
+# def error_page(error_code):
+#     """
+#     error_page(error_code)
+#     return (LON-CAPA ERROR RESPONSE)
+#
+#     error_code 1: task does not exist
+#     error_code 2: no data is send to script
+#     error_code 3: server couldn\'t fulfill the request. (get_data)
+#     """
+#     # todo: instead of using if-statements use switch-statement
+#     if error_code == 1:
+#         award = "ERROR"
+#         message = "task does not exist"
+#     elif error_code == 2:
+#         award = "INTERNAL_ERROR"
+#         message = "no data is send to script"
+#     elif error_code == 3:
+#         award = "INTERNAL_ERROR"
+#         message = "server couldn\'t fulfill the request. (get_data)"
+#     elif error_code == 4:
+#         award = "INTERNAL_ERROR"
+#         message = "server not reachable"
+#     elif error_code == 5:
+#         award = "INTERNAL_ERROR"
+#         message = "file could not saved on praktomat"
+#     else:
+#         award = "INTERNAL_ERROR"
+#         message = "error not specified"
+#     return """<loncapagrade>
+#     <awarddetail>%s</awarddetail>
+#     <message><![CDATA[external_grade: %s]]></message>
+#     <awarded></awarded>
+#     </loncapagrade>""" % (award, message)
 
-    error_code 1: task does not exist
-    error_code 2: no data is send to script
-    error_code 3: server couldn\'t fulfill the request. (get_data)
-    """
-    # todo: instead of using if-statements use switch-statement
-    if error_code == 1:
-        award = "ERROR"
-        message = "task does not exist"
-    elif error_code == 2:
-        award = "INTERNAL_ERROR"
-        message = "no data is send to script"
-    elif error_code == 3:
-        award = "INTERNAL_ERROR"
-        message = "server couldn\'t fulfill the request. (get_data)"
-    elif error_code == 4:
-        award = "INTERNAL_ERROR"
-        message = "server not reachable"
-    elif error_code == 5:
-        award = "INTERNAL_ERROR"
-        message = "file could not saved on praktomat"
-    else:
-        award = "INTERNAL_ERROR"
-        message = "error not specified"
-    return """<loncapagrade>
-    <awarddetail>%s</awarddetail>
-    <message><![CDATA[external_grade: %s]]></message>
-    <awarded></awarded>
-    </loncapagrade>""" % (award, message)
 
-
-def result_page(award, message):
-    return """<loncapagrade>
-    <awarddetail>%s</awarddetail>
-    <message><![CDATA[external_grade: %s]]></message>
-    <awarded></awarded>
-    </loncapagrade>""" % (award, message)
+# def result_page(award, message):
+#     return """<loncapagrade>
+#     <awarddetail>%s</awarddetail>
+#     <message><![CDATA[external_grade: %s]]></message>
+#     <awarded></awarded>
+#     </loncapagrade>""" % (award, message)
 
 
 def authenticate_user(defined_user, request):

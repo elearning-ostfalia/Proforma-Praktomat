@@ -188,16 +188,16 @@ def check_task_title(xml_dict, new_task):
 #def toJSON(task_object):
 #        return json.dumps(task_object, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-def _try(o):
-    try:
-        return o.__dict__
-    except:
-        return str(o)
+# def _try(o):
+#     try:
+#         return o.__dict__
+#     except:
+#         return str(o)
 
 
-def to_json(task_object):
-    return json.dumps(task_object, default=lambda o: _try(o), sort_keys=True, indent=0,
-                      separators=(',', ':')).replace('\n', '')
+# def to_json(task_object):
+#     return json.dumps(task_object, default=lambda o: _try(o), sort_keys=True, indent=0,
+#                       separators=(',', ':')).replace('\n', '')
 
 
 def create_user_check_user(user_name, new_task):
@@ -1272,12 +1272,12 @@ def json_error_message(json_message, http_code=None):
         return HttpResponse(content=json.dumps(json_message), status=http_code, content_type="application/json")
 
 
-def validate_xml(xml, xml_version=None):
-    if xml_version is None:
-        schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, XSD_V_2_PATH))
-        #try:
-        #    schema.validate(xml)
-        #except Exception as e:
-        #    logger.error("Schema is not valid: " + str(e))
-        #    raise Exception("Schema is not valid: " + str(e))
-    return schema.to_dict(xml)
+# def validate_xml(xml, xml_version=None):
+#     if xml_version is None:
+#         schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, XSD_V_2_PATH))
+#         #try:
+#         #    schema.validate(xml)
+#         #except Exception as e:
+#         #    logger.error("Schema is not valid: " + str(e))
+#         #    raise Exception("Schema is not valid: " + str(e))
+#     return schema.to_dict(xml)
