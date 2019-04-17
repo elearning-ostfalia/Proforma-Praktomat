@@ -4,7 +4,7 @@ import tempfile
 import urlparse
 import traceback
 
-
+from lxml import etree
 
 
 
@@ -33,6 +33,7 @@ PARENT_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 #CACHE_PATH = os.path.join(BASE_DIR, "/cache")
 logger = logging.getLogger(__name__)
 
+NAMESPACES = {'dns': 'urn:proforma:v2.0'}
 
 def get_http_error_page(title, message, callstack):
     return """%s
@@ -41,6 +42,9 @@ def get_http_error_page(title, message, callstack):
 
 Callstack:
     %s""" % (title, message, callstack)
+
+
+
 
 def grade_api_v2(request,):
     """
@@ -52,8 +56,6 @@ def grade_api_v2(request,):
 
     xml_version = None
     answer_format = "proformav2"
-    xml_dict = dict()
-    post_content = ""
 
 #    logger.debug('HTTP_USER_AGENT: ' + request.META.get('HTTP_USER_AGENT') +
 #                 '\nHTTP_HOST: ' + request.META.get('HTTP_HOST') +
@@ -64,6 +66,7 @@ def grade_api_v2(request,):
     try:
         # check request
         xml = check_post(request)
+        #logger.debug("got xml")
 
         # debugging uploaded files
         #for field_name, file in request.FILES.items():
@@ -88,28 +91,54 @@ def grade_api_v2(request,):
         #    logger.debug("no version - " + str(xml))
         #    is_valid = validate_xml(xml=xml)
 
-        submission_dict = xml2dict(xml)
+        #logger.debug(xml)
+
+        # note: we use lxml/etree here because it is very fast
+        root = etree.fromstring(xml)
 
         task_file = None
         task_filename = None
-        # check task-type
-        if submission_dict.get("external-task"):
-            # 1. external-task -> uri / http-field
-            task_path = submission_dict["external-task"]["$"]
-            #task_uuid = submission_dict["external-task"]["@uuid"]
+        task_element = root.find(".//dns:external-task", NAMESPACES)
+        if task_element is not None:
+            task_path = task_element.text
             task_file, task_filename = get_external_task(request, task_path)
-        elif submission_dict.get("task"):
-            # 2. task-embedded
-            raise Exception ("embedded task in submission.xml is not supported")
-        elif submission_dict.get("inline-task-zip"):
-            # 3. inline-task-zip
-            raise Exception ("inline-task-zip in submission.xml is not supported")
-            #return "inline-task-zip"
+            #logger.debug('external-task in ' + task_path)
         else:
-            raise Exception ("could not find task in submission.xml")
+            task_element = root.find(".//dns:task", NAMESPACES)
+            if task_element is not None:
+                raise Exception ("embedded task in submission.xml is not supported")
+            else:
+                task_element = root.find(".//dns:inline-task-zip", NAMESPACES)
+                if task_element is not None:
+                    raise Exception ("inline-task-zip in submission.xml is not supported")
+                else:
+                    raise Exception("could not find task in submission.xml")
+        #logger.debug("got task")
+
+
+        # xml2dict is very slow
+        #submission_dict = xml2dict(xml)
+        #logger.debug("xml->dict")
+
+        # # check task-type
+        # if submission_dict.get("external-task"):
+        #     # 1. external-task -> uri / http-field
+        #     task_path = submission_dict["external-task"]["$"]
+        #     #task_uuid = submission_dict["external-task"]["@uuid"]
+        #     task_file, task_filename = get_external_task(request, task_path)
+        # elif submission_dict.get("task"):
+        #     # 2. task-embedded
+        #     raise Exception ("embedded task in submission.xml is not supported")
+        # elif submission_dict.get("inline-task-zip"):
+        #     # 3. inline-task-zip
+        #     raise Exception ("inline-task-zip in submission.xml is not supported")
+        #     #return "inline-task-zip"
+        # else:
+        #     raise Exception ("could not find task in submission.xml")
+
 
         # task_type_dict = check_task_type(submission_dict)
-        submission_files = get_submission_files(submission_dict, request) # returns a dictionary (filename -> contant)
+        submission_files = get_submission_files(root, request) # returns a dictionary (filename -> contant)
         # compress to zip file
         #submission_zip_obj = file_dict2zip(submission_files)
         #submission_zip = {"submission" + ".zip": submission_zip_obj}  # todo name it to the user + course
@@ -222,39 +251,40 @@ def check_post(request):
 #     return HttpResponse(answer_format("error", msg, format))
 
 
-def get_xml_version(submission_xml):
-    pass  # todo check namespace for version
-    return "proforma_v2.0"
+# def get_xml_version(submission_xml):
+#     pass  # todo check namespace for version
+#     return "proforma_v2.0"
 
 
-def validate_xml(xml, xml_version=None):
-    logger.debug("xml_version: " + xml_version)
-    if xml_version is None:
-        logger.debug("PARENT_BASE_DIR: " + PARENT_BASE_DIR)
-        schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, 'xsd/proforma_v2.0.xsd'))
-        try:
-            schema.validate(xml)
-        except Exception as e:
-            logger.error("Schema is not valid: " + str(e))
-            raise Exception("Schema is not valid: " + str(e))
-    else:
-        if settings.PROFORMA_SCHEMA.get(xml_version):
-            logger.debug("try and validate xsd file: " + os.path.join(PARENT_BASE_DIR, settings.PROFORMA_SCHEMA.get(xml_version)))
-            schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, settings.PROFORMA_SCHEMA.get(xml_version)))
-            try:
-                schema.validate(xml)
-            except Exception as e:
-                logger.error("Schema is not valid: " + str(e))
-                raise Exception("Schema is not valid: " + str(e))
-        else:
-            logger.exception("validate_xml: schema ist not supported")
-            raise Exception("schema ist not supported")
+# def validate_xml(xml, xml_version=None):
+#     logger.debug("xml_version: " + xml_version)
+#     if xml_version is None:
+#         logger.debug("PARENT_BASE_DIR: " + PARENT_BASE_DIR)
+#         schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, 'xsd/proforma_v2.0.xsd'))
+#         try:
+#             schema.validate(xml)
+#         except Exception as e:
+#             logger.error("Schema is not valid: " + str(e))
+#             raise Exception("Schema is not valid: " + str(e))
+#     else:
+#         if settings.PROFORMA_SCHEMA.get(xml_version):
+#             logger.debug("try and validate xsd file: " + os.path.join(PARENT_BASE_DIR, settings.PROFORMA_SCHEMA.get(xml_version)))
+#             schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, settings.PROFORMA_SCHEMA.get(xml_version)))
+#             try:
+#                 schema.validate(xml)
+#             except Exception as e:
+#                 logger.error("Schema is not valid: " + str(e))
+#                 raise Exception("Schema is not valid: " + str(e))
+#         else:
+#             logger.exception("validate_xml: schema ist not supported")
+#             raise Exception("schema ist not supported")
+#
+#     logger.debug("XML schema validation succeeded")
+#
+#     return True
 
-    logger.debug("XML schema validation succeeded")
 
-    return True
-
-
+# expensive (i.e. time consuming operation)
 def xml2dict(xml):
     schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, 'xsd/proforma_v2.0.xsd'))  # todo fix this
     xml_dict = xmlschema.to_dict(xml_document=xml, schema=schema)
@@ -274,10 +304,11 @@ def xml2dict(xml):
 #         return None
 
 
-def get_submission_files(submission_dict, request):
-
-    if submission_dict.get("external-submission"):
-        field_name = submission_dict["external-submission"]
+#def get_submission_files(submission_dict, request):
+def get_submission_files(root, request):
+    submission_element = root.find(".//dns:external-submission", NAMESPACES)
+    if submission_element is not None:
+        field_name = submission_element.text
         if not field_name:
             raise Exception("invalid value for external-submission (none)")
 
@@ -317,22 +348,28 @@ def get_submission_files(submission_dict, request):
 
         raise Exception("could not find external submission " + file_name)
 
-    elif submission_dict.get("files"):
-        # todo get a dict of files
-        # embedded-files
-        submission_files_dict = dict()
-        if submission_dict["files"]["file"]:
-            for sub_file in submission_dict["files"]["file"]:
-                filename = sub_file["embedded-txt-file"]["@filename"]
-                try:
-                    file_content = sub_file["embedded-txt-file"]["$"].encode('utf-8')
-                except KeyError:
-                    raise Exception("No submission attached")
-                submission_files_dict.update({filename: file_content})
-            return submission_files_dict
-    else:
+    submission_files_dict = dict()
+    submission_elements = root.findall(".//dns:files/dns:file/dns:embedded-txt-file", NAMESPACES)
+    for sub_file in submission_elements:
+        #logger.debug(sub_file)
+        filename = sub_file.attrib["filename"]
+        file_content = sub_file.text.encode('utf-8')
+        submission_files_dict.update({filename: file_content})
+
+    submission_elements = root.findall(".//dns:files/dns:file/dns:embedded-bin-file", NAMESPACES)
+    if len(submission_elements) > 0:
+        raise Exception("embedded-bin-file in submission is not supported")
+    submission_elements = root.findall(".//dns:files/dns:file/dns:attached-bin-file", NAMESPACES)
+    if len(submission_elements) > 0:
+        raise Exception("attached-bin-file in submission is not supported")
+    submission_elements = root.findall(".//dns:files/dns:file/dns:attached-txt-file", NAMESPACES)
+    if len(submission_elements) > 0:
+        raise Exception("attached-txt-file in submission is not supported")
+
+    if len(submission_files_dict) == 0:
         raise Exception("No submission attached")
 
+    return submission_files_dict
 
 # compress file dictionary as zip file
 # def file_dict2zip(file_dict):
