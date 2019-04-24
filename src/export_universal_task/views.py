@@ -158,16 +158,16 @@ def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
 
 
-def check_task_id(task_id):
-    """
-    check_task_id(task_id)
-    return task object or None
-    """
-    try:
-        task = Task.objects.get(pk=task_id)
-        return task
-    except ObjectDoesNotExist:
-        return None
+# def check_task_id(task_id):
+#     """
+#     check_task_id(task_id)
+#     return task object or None
+#     """
+#     try:
+#         task = Task.objects.get(pk=task_id)
+#         return task
+#     except ObjectDoesNotExist:
+#         return None
 
 
 # @csrf_exempt  # disable csrf-cookie

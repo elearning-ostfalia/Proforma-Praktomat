@@ -209,19 +209,21 @@ def check_post(request):
     encoding = 'utf-8'
     if not request.POST:
 
-        if not request.FILES:
-            raise KeyError("No submission attached")
+        #if not request.FILES:
+        #    raise KeyError("No submission attached")
 
         try:
             # submission.xml in request.Files
             logger.debug("FILES.keys(): " + str(request.FILES.keys()))
             if request.FILES['submission.xml'].name is not None:
-                xml_dict = dict()
-                xml_dict[request.FILES['submission.xml'].name] = request.FILES['submission.xml']
-                logger.debug("xml_dict.keys(): " + str(xml_dict.keys()))
-                xml = xml_dict.popitem()[1].read()
-                xml_decoded = xml.decode(encoding)
-                return xml_decoded
+                #xml_dict = dict()
+                #xml_dict[request.FILES['submission.xml'].name] = request.FILES['submission.xml']
+                #logger.debug("xml_dict.keys(): " + str(xml_dict.keys()))
+                #xml = xml_dict.popitem()[1].read()
+                #xml_decoded = xml.decode(encoding)
+                xml = str(request.FILES['submission.xml'].read()) # convert InMemoryUploadedFile to string
+                #xml_encoded = xml.encode(encoding)
+                return xml # xml_encoded
             elif request.FILES['submission.zip'].name:
                 # todo zip handling -> praktomat zip
                 raise Exception("zip handling is not implemented")
@@ -230,6 +232,7 @@ def check_post(request):
         except MultiValueDictKeyError:
             raise KeyError("No submission attached")
     else:
+        logger.debug("got submission.xml as form data")
         xml = request.POST.get("submission.xml")
 
         # logger.debug('submission' + xml)
@@ -285,10 +288,10 @@ def check_post(request):
 
 
 # expensive (i.e. time consuming operation)
-def xml2dict(xml):
-    schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, 'xsd/proforma_v2.0.xsd'))  # todo fix this
-    xml_dict = xmlschema.to_dict(xml_document=xml, schema=schema)
-    return xml_dict
+# def xml2dict(xml):
+#     schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, 'xsd/proforma_v2.0.xsd'))  # todo fix this
+#     xml_dict = xmlschema.to_dict(xml_document=xml, schema=schema)
+#     return xml_dict
 
 
 # def check_task_type(submission_dict):
@@ -320,12 +323,12 @@ def get_submission_files(root, request):
         if file_name is None:
             raise Exception("missing filename in external-submission")
 
-        #logger.debug("submission file_name: " + str(file_name))
+        logger.debug("submission file_name: " + str(file_name))
         for filename, file in request.FILES.items():
             name = request.FILES[filename].name
-            #logger.debug("request.FILES[" + name + "]")
+            logger.debug("request.FILES[" + filename + "].name = " + name)
 
-            if name == file_name:
+            if filename == file_name:
                 submission_files_dict = dict()
                 file_content = str(file.read().decode(encoding='utf-8', errors='replace'))
                 # logger.debug("submission file content is: " + file_content)
@@ -335,10 +338,10 @@ def get_submission_files(root, request):
         # special handling for filenames containing a relative path:
         # if file_name is not found:
         for filename, file in request.FILES.items():
-            name = request.FILES[filename].name
+            #name = request.FILES[filename].name
             #logger.debug("request.FILES[" + name + "]")
             pure_filename = os.path.basename(file_name) # remove path
-            if name == pure_filename:
+            if filename == pure_filename:
                 submission_files_dict = dict()
                 file_content = str(file.read().decode(encoding='utf-8', errors='replace'))
                 # logger.debug("submission file content is: " + file_content)

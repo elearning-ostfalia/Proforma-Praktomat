@@ -489,30 +489,30 @@ def grade_task(data, request, submitted_file_name, task):
     return result, solution
 
 
-def get_solution(result, result_message, solution):
-    result_message += "<h2>" + "Aufgabe: " + solution.task.title + "</h2>"
-
-    #check for all tests
-    if solution.accepted:
-        result_message += "<p style=\"color:#008500;\">All required tests have been passed.</p>"
-        result_award = "EXACT_ANS"
-    else:
-        result_award = "INCORRECT"
-        result_message += "<p style=\"color:red;\">Not all required tests have been passed.</p>"
-
-    # Details
-    result_message += "<h2>Ergebnisse</h2>"
-    for index in range(len(result)):
-        if result[index].checker.public:
-            result_message += "<h3>" + result[index].checker.title()
-            if result[index].passed:
-                result_message += " : <span style=\"color:#008500;\"> bestanden</span></h3>"
-            else:
-                result_message += " : <span style=\"color:red;\"> nicht bestanden</span></h3>"
-
-            result_message += "<div class=\"log\">log: " + result[index].log + "</div>"
-
-    return result_award, result_message
+# def get_solution(result, result_message, solution):
+#     result_message += "<h2>" + "Aufgabe: " + solution.task.title + "</h2>"
+#
+#     #check for all tests
+#     if solution.accepted:
+#         result_message += "<p style=\"color:#008500;\">All required tests have been passed.</p>"
+#         result_award = "EXACT_ANS"
+#     else:
+#         result_award = "INCORRECT"
+#         result_message += "<p style=\"color:red;\">Not all required tests have been passed.</p>"
+#
+#     # Details
+#     result_message += "<h2>Ergebnisse</h2>"
+#     for index in range(len(result)):
+#         if result[index].checker.public:
+#             result_message += "<h3>" + result[index].checker.title()
+#             if result[index].passed:
+#                 result_message += " : <span style=\"color:#008500;\"> bestanden</span></h3>"
+#             else:
+#                 result_message += " : <span style=\"color:red;\"> nicht bestanden</span></h3>"
+#
+#             result_message += "<div class=\"log\">log: " + result[index].log + "</div>"
+#
+#     return result_award, result_message
 
 
 def get_solution_xml(result, solution, file_name, response_format):
@@ -561,12 +561,12 @@ def get_solution_xml(result, solution, file_name, response_format):
     return loncapa_xml
 
 
-def print_submitted_files(result_message, solution, file_name_string):
-    # print submitted files
-    solutionfiles = solution.solutionfile_set.all()
-    result_message += "<h2>Files</h2>"
-    for index in range(len(solutionfiles)):
-        result_message += "<h3>" + file_name_string + "</h3>"
-        result_message += "<pre>" + solutionfiles[index].content() + "</pre>"
-    return result_message
+# def print_submitted_files(result_message, solution, file_name_string):
+#     # print submitted files
+#     solutionfiles = solution.solutionfile_set.all()
+#     result_message += "<h2>Files</h2>"
+#     for index in range(len(solutionfiles)):
+#         result_message += "<h3>" + file_name_string + "</h3>"
+#         result_message += "<pre>" + solutionfiles[index].content() + "</pre>"
+#     return result_message
 
