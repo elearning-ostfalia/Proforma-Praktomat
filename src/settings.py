@@ -149,8 +149,9 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
+            #'format': '%(asctime)s %(relativeCreated)d [%(process)d] [%(levelname)s] %(module)s %(message)s'
             'format': '%(asctime)s [%(process)d] [%(levelname)s] %(module)s %(message)s'
-        }
+}
     },
     'handlers': {
         'console': {
