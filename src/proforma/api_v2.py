@@ -43,7 +43,7 @@ import logging
 #import xmlschema
 #from requests.exceptions import InvalidSchema
 from export_universal_task.views import import_task_internal
-from external_grade.views import grader_internal
+import grade
 
 #from proforma_taskget.views import login_phantomjs, get_task_from_externtal_server, answer_format_template
 
@@ -172,7 +172,7 @@ def grade_api_v2(request,):
 
         # send submission to grader
         logger.debug('grade submission')
-        grade_result = grader_internal(task_id, submission_files, answer_format)
+        grade_result = grade.grader_internal(task_id, submission_files, answer_format)
         #grade_result = grader_internal(task_id, submission_zip, answer_format)
         logger.debug("grading finished")
         response = HttpResponse()

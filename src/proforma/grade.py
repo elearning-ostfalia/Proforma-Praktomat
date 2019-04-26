@@ -449,7 +449,7 @@ def get_mimetype(txt):
 #         message = "error not specified"
 #     return """<loncapagrade>
 #     <awarddetail>%s</awarddetail>
-#     <message><![CDATA[external_grade: %s]]></message>
+#     <message><![CDATA[grade: %s]]></message>
 #     <awarded></awarded>
 #     </loncapagrade>""" % (award, message)
 
@@ -457,7 +457,7 @@ def get_mimetype(txt):
 # def result_page(award, message):
 #     return """<loncapagrade>
 #     <awarddetail>%s</awarddetail>
-#     <message><![CDATA[external_grade: %s]]></message>
+#     <message><![CDATA[grade: %s]]></message>
 #     <awarded></awarded>
 #     </loncapagrade>""" % (award, message)
 
@@ -570,14 +570,14 @@ def get_solution_xml(result, solution, file_name, response_format):
 
 
     if response_format == "proformav2":
-        loncapa_xml = render_to_string('external_grade/response_v2.xml',
+        loncapa_xml = render_to_string('proforma/response_v2.xml',
                            {"solution": solution,
                             "testResultList": res_arr,
                             "fileName": file_name,
                             "grader": grader,
                             "required_hidden": false_required_hidden_test})
     else:
-        loncapa_xml = render_to_string('external_grade/message.xml',
+        loncapa_xml = render_to_string('proforma/message.xml',
                            {"solution": solution,
                             "testResultList": result,
                             "fileName": file_name,

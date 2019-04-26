@@ -50,41 +50,41 @@ urlpatterns = patterns('',
                        # todo: username sollte @ enthalten
                        # file grader: function / user_name / task_id
                        #url(r'^external_grade/(?P<user_name>[\w\.@\-]{3,60})/(?P<task_id>\d{1,6})$',
-                       #    'external_grade.views.file_grader', name='external_grade'),
+                       #    'proforma.grade.file_grader', name='external_grade'),
                        # file grader: function / domain / user_name / task_id
                        #url(
                        #    r'^external_grade/(?P<domain>[a-zA-Z\_\.\d]{3,32})/\
                        #      (?P<user_name>[\w\.\@\-]{3,60})/(?P<task_id>\d{1,6})$',
-                       #    'external_grade.views.file_grader', name='external_grade'),
+                       #    'proforma.grade.file_grader', name='external_grade'),
                        # file grader: function / lms / domain / user_name / task_id
                        #url(
                        #    r'^external_grade/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<domain>[a-zA-Z\_\.\d]{3,32})/(?P<user_name>[\w\.\@\-]{3,60})/(?P<task_id>\d{1,6})$',
-                       #    'external_grade.views.file_grader', name='external_grade'),
+                       #    'proforma.grade.file_grader', name='external_grade'),
                        # file grader post
                        #url(
-                       #    r'^external_grade/proforma/v1/task/(?P<task_id>\d{1,6})$', 'external_grade.views.file_grader_post'
+                       #    r'^external_grade/proforma/v1/task/(?P<task_id>\d{1,6})$', 'proforma.grade.file_grader_post'
                        #    , name='external_grade_files'),
                        # file grader post
                        # proforma internal
                        url(
-                           r'^external_grade/(?P<response_format>[a-zA-Z\_\.\d]{3,32})/v1/task/(?P<task_id>\d{1,6})$', 'external_grade.views.file_grader_post'
+                           r'^external_grade/(?P<response_format>[a-zA-Z\_\.\d]{3,32})/v1/task/(?P<task_id>\d{1,6})$', 'proforma.grade.file_grader_post'
                            , name='external_grade_files'),
                        # # text grader: function / lms / file_name / task_id
                        # url(
                        #     r'^external_grade_textfield/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<file_name>[a-zA-Z_\.\d]{3,250})/(?P<task_id>\d{1,6})$',
-                       #     'external_grade.views.text_grader', name='external_grade_textfield'),
+                       #     'proforma.grade.text_grader', name='external_grade_textfield'),
                        # # text grader: function / file_name / user_name / task_id
                        # url(
                        #     r'^external_grade_textfield/(?P<file_name>[a-zA-Z\_\.\d]{3,250})/(?P<user_name>[\w\.\@\-]{3,60})/(?P<task_id>\d{1,6})$',
-                       #     'external_grade.views.text_grader', name='external_grade_textfield'),
+                       #     'proforma.grade.text_grader', name='external_grade_textfield'),
                        # # text grader: function / lms / file_name / user_name / task_id
                        # url(
                        #     r'^external_grade_textfield/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<file_name>[a-zA-Z_\.\d]{3,250})/(?P<user_name>[\w\.\@\-]{3,60})/(?P<task_id>\d{1,6})$',
-                       #     'external_grade.views.text_grader', name='external_grade_textfield'),
+                       #     'proforma.grade.text_grader', name='external_grade_textfield'),
                        # # textfield grader
                        # url(
                        #     r'^textfield/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<file_name>[a-zA-Z_\.\d]{3,250})/(?P<task_id>\d{1,6})$',
-                       #     'external_grade.views.text_grader', name='external_grade_textfield'),
+                       #     'proforma.grade.text_grader', name='external_grade_textfield'),
 
                        # export_universal_task
 

@@ -88,7 +88,6 @@ INSTALLED_APPS = (
     'checker',
     'utilities',
     'export_universal_task',
-    'external_grade',
 
     'sessionprofile', #phpBB integration
 )
