@@ -1,28 +1,47 @@
 # -*- coding: utf-8 -*-
-import tempfile
+
+# This file is part of Ostfalia-Praktomat.
+#
+# Copyright (C) 2012-2019 Ostfalia University (eCULT-Team)
+# http://ostfalia.de/cms/de/ecult/
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+#
+# ProFormA-interface V 2.0
+
+
+
+#import tempfile
 #from urllib.parse import urlparse # version 3
-import urlparse
+#import urlparse
 import traceback
 
 from lxml import etree
 
 
 
-#from django.core.serializers import json
 from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
 #from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
+#from django.conf import settings
 
 import os
 import re
-#import urllib
-#import requests
-import shutil
+#import shutil
 import logging
-import xmlschema
-#import pprint
-from requests.exceptions import InvalidSchema
+#import xmlschema
+#from requests.exceptions import InvalidSchema
 from export_universal_task.views import import_task_internal
 from external_grade.views import grader_internal
 
@@ -30,7 +49,6 @@ from external_grade.views import grader_internal
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 PARENT_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-#CACHE_PATH = os.path.join(BASE_DIR, "/cache")
 logger = logging.getLogger(__name__)
 
 NAMESPACES = {'dns': 'urn:proforma:v2.0'}
@@ -143,6 +161,7 @@ def grade_api_v2(request,):
         #submission_zip_obj = file_dict2zip(submission_files)
         #submission_zip = {"submission" + ".zip": submission_zip_obj}  # todo name it to the user + course
 
+        logger.info("grading request for task " + task_filename)
         logger.debug('import task')
         response_data = import_task_internal(task_filename, task_file)
         #print 'result for Task-ID: ' + str(response_data)
