@@ -109,9 +109,9 @@ urlpatterns = patterns('',
                        #     name='importTaskObject'),
                        url(r'^importTask$', 'proforma.task.import_task',
                            name='importTask'),
-                       # url(r'^importTaskObject/V2$', 'proforma.task.importTaskObjectV2',
-                       #     name='importTaskObjectV2'),
-                       # url(r'^importTaskObject/V1.01$', 'proforma.task.import_1_01',
+                       # url(r'^importTaskObject/V2$', 'proforma.task.importTask_0_9_4',
+                       #     name='importTask_0_9_4'),
+                       # url(r'^importTaskObject/V1.01$', 'proforma.task.import_task',
                        #     name='importTaskObjectV1.01'),
 
 # from old middleware
