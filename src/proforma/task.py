@@ -51,9 +51,10 @@ from checker.models import Checker
 from solutions.models import Solution, SolutionFile
 from tasks.models import Task, MediaFile
 from task_helper import check_post_request, import_task_v2, \
-    extract_zip_with_xml_and_zip_dict, import_task as itask
+    extract_zip_with_xml_and_zip_dict #, import_task as itask
 #from VERSION import version
 
+from task_v1_01 import import_task as itask
 
 logger = logging.getLogger(__name__)
 
