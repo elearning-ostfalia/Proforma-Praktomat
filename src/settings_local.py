@@ -183,13 +183,6 @@ LOGGING = {
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
-        'export_universal_task': {
-            'handlers': ['console', 'error-file'],
-            'level': 'ERROR',  # change debug level as appropiate
-            'propagate': False,
-            'maxBytes': 1024*1024*15,  # 15MB
-            'backupCount': 10,  # keep 10 historical versions
-        },
         ## SQL:
         #'django': {
         #    'handlers': ['console', 'error-file', 'file'],

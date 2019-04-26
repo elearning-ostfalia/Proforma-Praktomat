@@ -86,32 +86,32 @@ urlpatterns = patterns('',
                        #     r'^textfield/(?P<lms>[a-zA-Z\_\.\d]{3,32})/(?P<file_name>[a-zA-Z_\.\d]{3,250})/(?P<task_id>\d{1,6})$',
                        #     'proforma.grade.text_grader', name='external_grade_textfield'),
 
-                       # export_universal_task
+                       # task
 
                        # # export as plain xml
-                       # url(r'^export_task/(?P<task_id>\d{1,6})$', 'export_universal_task.views.export',
+                       # url(r'^export_task/(?P<task_id>\d{1,6})$', 'proforma.task.export',
                        #     name='export_task'),
                        # # export zip
-                       # url(r'^export_task/(?P<task_id>\d{1,6})\.zip$', 'export_universal_task.views.export', {'OutputZip':'TRUE'},
+                       # url(r'^export_task/(?P<task_id>\d{1,6})\.zip$', 'proforma.task.export', {'OutputZip':'TRUE'},
                        #     name='export_task'),
                        # # list all available tasks
-                       # url(r'^export_task/list$', 'export_universal_task.views.listTasks',
+                       # url(r'^export_task/list$', 'proforma.task.listTasks',
                        #     name='list_task'),
                        # list some details about specific task
-                       # url(r'^export_task/detail/(?P<task_id>\d{1,6})$', 'export_universal_task.views.detail',
+                       # url(r'^export_task/detail/(?P<task_id>\d{1,6})$', 'proforma.task.detail',
                        #     name='export_task_detail'),
                        # # test_post
-                       # url(r'^testPost$', 'export_universal_task.views.test_post', name='testPost'),
+                       # url(r'^testPost$', 'proforma.task.test_post', name='testPost'),
                        # import task
-                       # url(r'^activateTask/(?P<task_id>\d{1,6})$$', 'export_universal_task.views.activateTasks',
+                       # url(r'^activateTask/(?P<task_id>\d{1,6})$$', 'proforma.task.activateTasks',
                        #     name='activateTasks'),
-                       # url(r'^importTaskObject$', 'export_universal_task.views.importTaskObject',
+                       # url(r'^importTaskObject$', 'proforma.task.importTaskObject',
                        #     name='importTaskObject'),
-                       url(r'^importTask$', 'export_universal_task.views.import_task',
+                       url(r'^importTask$', 'proforma.task.import_task',
                            name='importTask'),
-                       # url(r'^importTaskObject/V2$', 'export_universal_task.views.importTaskObjectV2',
+                       # url(r'^importTaskObject/V2$', 'proforma.task.importTaskObjectV2',
                        #     name='importTaskObjectV2'),
-                       # url(r'^importTaskObject/V1.01$', 'export_universal_task.views.import_1_01',
+                       # url(r'^importTaskObject/V1.01$', 'proforma.task.import_1_01',
                        #     name='importTaskObjectV1.01'),
 
 # from old middleware

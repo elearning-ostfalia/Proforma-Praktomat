@@ -50,7 +50,7 @@ from checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, Anonymit
 from checker.models import Checker
 from solutions.models import Solution, SolutionFile
 from tasks.models import Task, MediaFile
-from export_universal_task.import_helper import check_post_request, import_task_v2, \
+from task_helper import check_post_request, import_task_v2, \
     extract_zip_with_xml_and_zip_dict, import_task as itask
 #from VERSION import version
 

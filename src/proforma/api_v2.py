@@ -42,7 +42,7 @@ import re
 import logging
 #import xmlschema
 #from requests.exceptions import InvalidSchema
-from export_universal_task.views import import_task_internal
+import task
 import grade
 
 #from proforma_taskget.views import login_phantomjs, get_task_from_externtal_server, answer_format_template
@@ -163,7 +163,7 @@ def grade_api_v2(request,):
 
         logger.info("grading request for task " + task_filename)
         logger.debug('import task')
-        response_data = import_task_internal(task_filename, task_file)
+        response_data = task.import_task_internal(task_filename, task_file)
         #print 'result for Task-ID: ' + str(response_data)
         task_id = str(response_data['taskid'])
         message = response_data['message']

@@ -87,7 +87,7 @@ INSTALLED_APPS = (
     'attestation',
     'checker',
     'utilities',
-    'export_universal_task',
+    'proforma',
 
     'sessionprofile', #phpBB integration
 )

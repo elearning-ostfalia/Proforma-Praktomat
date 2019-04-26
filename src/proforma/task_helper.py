@@ -42,7 +42,7 @@ from checker import CheckStyleChecker, JUnitChecker, AnonymityChecker, \
     JavaBuilder, DejaGnu, TextNotChecker, PythonChecker, RemoteSQLChecker, TextChecker, SetlXChecker, \
     CreateFileChecker, CBuilder
 from os.path import dirname
-import export_universal_task.views
+import task
 from solutions.models import Solution, SolutionFile
 from tasks.models import Task
 from django.conf import settings
@@ -92,7 +92,7 @@ def check_visibility(inst, namespace, xml_test=None, public=None):
     else:
         if xml_test.xpath('./p:test-configuration/p:test-meta-data/praktomat:required',
                           namespaces=namespace):
-            inst.required = export_universal_task.views.str2bool(xml_test.xpath('./p:test-configuration/'
+            inst.required = task.str2bool(xml_test.xpath('./p:test-configuration/'
                                                                                 'p:test-meta-data/'
                                                                                 'praktomat:required',
                                                                                 namespaces=namespace)[0].text)
@@ -103,7 +103,7 @@ def check_visibility(inst, namespace, xml_test=None, public=None):
             elif public is True:
                 inst.public = True
             else:
-                inst.public = export_universal_task.views.str2bool(xml_test.xpath('./p:test-configuration/'
+                inst.public = task.str2bool(xml_test.xpath('./p:test-configuration/'
                                                                                   'p:test-meta-data/'
                                                                                   'praktomat:public',
                                                                                   namespaces=namespace)[0].text)
@@ -562,8 +562,7 @@ def create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict):
                           namespaces=ns) and
             xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-returnHtml",
                           namespaces=ns)[0].text):
-            inst.public = export_universal_task.\
-                          views.str2bool(xmlTest.xpath("p:test-configuration/"
+            inst.public = task.str2bool(xmlTest.xpath("p:test-configuration/"
                                                        "p:test-meta-data/"
                                                        "praktomat:config-returnHtml", namespaces=ns)[0].text)
         if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
@@ -617,7 +616,7 @@ def import_task_v2(task_xml, dict_zip_files=None):
     val_order = 1
     inst = None
     # create library and internal-library with create FileChecker
-    val_order = export_universal_task.views.creatingFileCheckerNoDep(create_file_dict, new_task, ns,
+    val_order = task.creatingFileCheckerNoDep(create_file_dict, new_task, ns,
                                                                      val_order, xmlTest=None)
     for xmlTest in xml_obj.tests.iterchildren():
         #try:
@@ -837,7 +836,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
     val_order = 1
     inst = None
     # create library and internal-library with create FileChecker
-    val_order = export_universal_task.views.creatingFileCheckerNoDep(create_file_dict, new_task, ns,
+    val_order = task.creatingFileCheckerNoDep(create_file_dict, new_task, ns,
                                                                      val_order, xmlTest=None)
 
     for xmlTest in xml_task.tests.iterchildren():
@@ -1051,7 +1050,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                                                        "jartest:parameter", namespaces=ns):
                             para_list.append(str(parameter))
                         reg_text = '|'.join(para_list)
-                        is_valid = export_universal_task.views.reg_check(reg_text)
+                        is_valid = task.reg_check(reg_text)
                         if is_valid:
                             inst.regText = reg_text
                         else:
@@ -1199,8 +1198,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                                   namespaces=ns) and
                     xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-returnHtml",
                                   namespaces=ns)[0].text):
-                    inst.public = export_universal_task.\
-                                  views.str2bool(xmlTest.xpath("p:test-configuration/"
+                    inst.public = task.str2bool(xmlTest.xpath("p:test-configuration/"
                                                                "p:test-meta-data/"
                                                                "praktomat:config-returnHtml", namespaces=ns)[0].text)
                 if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
@@ -1239,8 +1237,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                     xmlTest.xpath("p:test-configuration/p:test-meta-data/"
                                   "praktomat:config-returnHtml",
                                   namespaces=ns)[0].text):
-                    inst.returns_html = export_universal_task.\
-                                        views.str2bool(xmlTest.xpath("p:test-configuration/"
+                    inst.returns_html = task.str2bool(xmlTest.xpath("p:test-configuration/"
                                                                      "p:test-meta-data/"
                                                                      "praktomat:config-returnHtml",
                                                                      namespaces=ns)[0].text)
