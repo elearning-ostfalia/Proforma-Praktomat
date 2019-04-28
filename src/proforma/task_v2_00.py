@@ -23,10 +23,8 @@
 import re
 import os
 import tempfile
-import zipfile
 from datetime import datetime
 import json
-from pprint import pprint
 from operator import getitem
 
 import xmlschema
@@ -35,7 +33,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.files import File
 from django.http import HttpResponse
 from lxml import objectify
-from os.path import basename
+
 
 from accounts.models import User
 from checker import CheckStyleChecker, JUnitChecker, AnonymityChecker, \
@@ -43,7 +41,6 @@ from checker import CheckStyleChecker, JUnitChecker, AnonymityChecker, \
     CreateFileChecker, CBuilder
 from os.path import dirname
 import task
-from solutions.models import Solution, SolutionFile
 from tasks.models import Task
 from django.conf import settings
 
@@ -56,131 +53,13 @@ XSD_V_2_PATH = "xsd/proforma_v2.0.xsd"
 SYSUSER = "sys_prod"
 
 
-def creating_file_checker(embedded_file_dict, new_task, ns, val_order, xml_test, required=None):
-    order_counter = 1
-
-    for fileref in xml_test.xpath("p:test-configuration/p:filerefs/p:fileref", namespaces=ns):
-        if embedded_file_dict.get(fileref.attrib.get("refid")) is not None:
-            inst2 = CreateFileChecker.CreateFileChecker.objects.create(task=new_task,
-                                                                       order=val_order,
-                                                                       path=""
-                                                                       )
-            inst2.file = embedded_file_dict.get(fileref.attrib.get("refid"))  # check if the refid is there
-            if dirname(embedded_file_dict.get(fileref.attrib.get("refid")).name) is not None:
-                inst2.path = dirname(embedded_file_dict.get(fileref.attrib.get("refid")).name)
-            else:
-                pass
-
-            if required is False:
-                inst2 = check_visibility(inst=inst2, xml_test=None, namespace=ns, public=False)
-            elif required is True:
-                inst2 = check_visibility(inst=inst2, xml_test=None, namespace=ns, public=True)
-            else:
-                inst2 = check_visibility(inst=inst2, xml_test=None, namespace=ns, public=False)
-            inst2.save()
-            order_counter += 1
-            val_order += 1  # to push the junit-checker behind create-file checkers
-    return val_order
-
-
-def check_visibility(inst, namespace, xml_test=None, public=None):
-    inst.always = True
-
-    if xml_test is None:
-        inst.public = False
-        inst.required = False
-    else:
-        if xml_test.xpath('./p:test-configuration/p:test-meta-data/praktomat:required',
-                          namespaces=namespace):
-            inst.required = task.str2bool(xml_test.xpath('./p:test-configuration/'
-                                                                                'p:test-meta-data/'
-                                                                                'praktomat:required',
-                                                                                namespaces=namespace)[0].text)
-        if xml_test.xpath('./p:test-configuration/p:test-meta-data/praktomat:public',
-                          namespaces=namespace):
-            if public is False:
-                inst.public = False
-            elif public is True:
-                inst.public = True
-            else:
-                inst.public = task.str2bool(xml_test.xpath('./p:test-configuration/'
-                                                                                  'p:test-meta-data/'
-                                                                                  'praktomat:public',
-                                                                                  namespaces=namespace)[0].text)
-    return inst
-
-
-def respond_error_message(message):
-    response = HttpResponse()
-    response.write(message)
-    return response
-
-
-def check_post_request(request, ):
-
-    postdata = None
-    # check request object -> refactor method
-    if request.method != 'POST':
-        message = "No POST-Request"
-        respond_error_message(message=message)
-    else:
-        try:
-            postdata = request.POST.copy()
-        except Exception as e:
-            message = "Error no Files attached. " + str(e)
-            respond_error_message(message=message)
-
-    # it should be one File one xml or one zip
-    if len(postdata) > 1:
-        message = "Only one file is supported"
-        respond_error_message(message=message)
-    else:
-        pass
 
 
 
 
-def extract_zip_with_xml_and_zip_dict(uploaded_file):
-    """
-    return task task.xml with dict of zip_files
-    :param uploaded_file:
-    :return:
-        task_xml -> the task.xml
-        dict_zip_files: dict of the files in the zip
-    """
-    regex = r'(' + '|'.join([
-        r'(^|/)\..*',  # files starting with a dot (unix hidden files)
-        r'__MACOSX/.*',
-        r'^/.*',  # path starting at the root dir
-        r'\.\..*',  # parent folder with '..'
-        r'/$',  # don't unpack folders - the zipfile package will create them on demand
-        r'META-INF/.*'
-    ]) + r')'
 
-    # return task task.xml with dict of zip_files
-    # is_zip = True
-    # ZIP import
-    task_xml = None
-    ignored_file_names_re = re.compile(regex)
-    zip_file = zipfile.ZipFile(uploaded_file, 'r')
-    #zip_file = zipfile.ZipFile(uploaded_file[0], 'r')
-    dict_zip_files = dict()
-    for zipFileName in zip_file.namelist():
-        if not ignored_file_names_re.search(zipFileName):  # unzip only allowed files + wanted file
-            zip_file_name_base = basename(zipFileName)
-            if zip_file_name_base == "task.xml":
-                task_xml = zip_file.open(zipFileName).read()
-            else:
-                t = tempfile.NamedTemporaryFile(delete=True)
-                t.write(zip_file.open(zipFileName).read())  # todo: encoding
-                t.flush()
-                my_temp = File(t)
-                my_temp.name = zipFileName
-                dict_zip_files[zipFileName] = my_temp
 
-    if task_xml is None:
-        raise Exception("Error: Your uploaded zip does not contain a task.xml.")
-    return task_xml, dict_zip_files
+
 
 
 def check_task_description(xml_dict, new_task):
@@ -366,7 +245,7 @@ def create_java_compiler_checker(xmlTest, val_order, new_task, ns):
     except Exception as e:  #XPathEvalError
         pass
     try:
-        inst = check_visibility(inst=inst, namespace=checker_ns, xml_test=xmlTest)
+        inst = task.check_visibility(inst=inst, namespace=checker_ns, xml_test=xmlTest)
     except Exception as e:
         new_task.delete()
         raise e("Error while parsing xml in test - compiler\r\n" + str(e))
@@ -463,11 +342,11 @@ def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
                                   "p:test-meta-data/praktomat:config-testname",
                                   namespaces=checker_ns)[0].text
     if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
-        val_order = creating_file_checker(embedded_file_dict=test_file_dict, new_task=new_task, ns=checker_ns,
+        val_order = task.creating_file_checker(embedded_file_dict=test_file_dict, new_task=new_task, ns=checker_ns,
                                           val_order=val_order, xml_test=xmlTest)
 
     inst.order = val_order
-    inst = check_visibility(inst=inst, namespace=checker_ns, xml_test=xmlTest)
+    inst = task.check_visibility(inst=inst, namespace=checker_ns, xml_test=xmlTest)
     inst.save()
 
 
@@ -517,7 +396,7 @@ def create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_d
             inst.allowedWarnings = xmlTest.xpath("p:test-configuration/"
                                                  "check:java-checkstyle/"
                                                  "check:max-checkstyle-warnings", namespaces=checker_ns)[0]
-        inst = check_visibility(inst=inst, namespace=checker_ns, xml_test=xmlTest)
+        inst = task.check_visibility(inst=inst, namespace=checker_ns, xml_test=xmlTest)
         inst.save()
 
 
@@ -541,7 +420,7 @@ def create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict):
                                               "praktomat:config-testDescription",
                                               namespaces=ns)[0].text
 
-    inst = check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+    inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
     inst.save()
 
 
@@ -567,14 +446,14 @@ def create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict):
             for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
                 if test_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
                     inst.doctest = test_file_dict.get(fileref.fileref.attrib.get("refid"))
-                    inst = check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                    inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                     inst.save()
                 else:
                     inst.delete()
                     message = "No File for python-checker found"
 
 
-def import_task_v2(task_xml, dict_zip_files=None):
+def import_task(task_xml, dict_zip_files=None):
     format_namespace = "urn:proforma:v2.0"
     ns = {"p": format_namespace}
     message = ""

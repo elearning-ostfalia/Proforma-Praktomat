@@ -48,3 +48,27 @@ def grade_api_v1(request):
 @csrf_exempt
 def show_version(request):
     return HttpResponse(VERSION.version)
+
+
+@csrf_exempt  # NOTE: f�r Marcel danach remove;)
+def test_post(request, ):
+    response = HttpResponse()
+
+    if not (request.method == "POST"):
+        response.write("No Post-Request")
+    else:
+        postMessages = request.POST
+        for key, value in postMessages.iteritems():
+            response.write("Key: " + str(key) + " ,Value: " + str(value) + "\r\n")
+        try:
+            if not (request.FILES is None):
+                response.write("List of Files: \r\n")
+                for key, value in request.FILES.iteritems():
+                    response.write("Key: " + str(key) + " ,Value: " + str(value) + "\r\n")
+                    response.write("Content of: " + str(key) + "\r\n")
+                    response.write(request.FILES[key].read() + "\r\n")
+            else:
+                response.write("\r\n\r\n No Files Attached")
+        except Exception:
+            response.write("\r\n\r\n Exception!: " + str(Exception))
+    return response

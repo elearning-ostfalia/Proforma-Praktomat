@@ -42,7 +42,6 @@ from checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, Anonymit
 
 
 import task
-import task_helper
 
 
 logger = logging.getLogger(__name__)
@@ -238,7 +237,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
         try:
             if xmlTest.xpath("p:test-type", namespaces=ns)[0] == "anonymity":
                 inst = AnonymityChecker.AnonymityChecker.objects.create(task=new_task, order=val_order)
-                inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                 inst.save()
 
             elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "c-compilation":
@@ -275,7 +274,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                                                        "praktomat:config-CompilerFilePattern",
                                                        namespaces=ns)[0]
                 try:
-                    inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                    inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                 except Exception as e:
                     new_task.delete()
                     response.write("Error while parsing xml\r\n" + str(e))
@@ -321,7 +320,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                                                        "praktomat:config-CompilerFilePattern",
                                                        namespaces=ns)[0]
                 try:
-                    inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                    inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                 except Exception as e:
                     new_task.delete()
                     response.write("Error while parsing xml\r\n" + str(e))
@@ -333,7 +332,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                     if embedded_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
                         inst = DejaGnu.DejaGnuSetup.objects.create(task=new_task, order=val_order)
                         inst.test_defs = embedded_file_dict.get(fileref.fileref.attrib.get("refid"))
-                        inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                        inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                         inst.save()
                     # todo else
 
@@ -344,7 +343,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                         inst.test_case = embedded_file_dict.get(fileref.fileref.attrib.get("refid"))
                         if xmlTest.xpath("p:title", namespaces=ns)[0] is not None:
                             inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
-                        inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                        inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                         inst.save()
 
             elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "no-type-TextNotChecker":
@@ -378,7 +377,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                     message = "TextNotChecker removed: no max_occurence"
 
                 if fine:
-                    inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                    inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                     inst.save()
                 else:
                     pass
@@ -397,7 +396,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                     inst.delete()
                     message = "Textchecker removed: no config-text"
 
-                inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                 inst.save()
 
             # setlx with jartest
@@ -424,7 +423,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                                                           "praktomat:config-testDescription",
                                                           namespaces=ns)[0].text
 
-                inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                 inst.save()
 
             # checkstyle with jartest todo:version-check check for valid regex
@@ -455,7 +454,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                         inst.allowedWarnings = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
                                                              "praktomat:max-checkstyle-warnings", namespaces=ns)[0]
 
-                    inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                    inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                     inst.save()
 
                 if xmlTest.xpath("p:title", namespaces=ns) is not None:
@@ -469,7 +468,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                                                           "praktomat:config-testDescription",
                                                           namespaces=ns)[0].text
 
-                inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                 inst.save()
 
             elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "unittest" and \
@@ -533,11 +532,11 @@ def import_task(task_xml, dict_zip_files_post=None ):
                                               "p:test-meta-data/praktomat:config-testname",
                                               namespaces=ns)[0].text
                 if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
-                    val_order = task_helper.creating_file_checker(embedded_file_dict=embedded_file_dict, new_task=new_task, ns=ns,
+                    val_order = task.creating_file_checker(embedded_file_dict=embedded_file_dict, new_task=new_task, ns=ns,
                                                       val_order=val_order, xml_test=xmlTest)
 
                 inst.order = val_order
-                inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                 inst.save()
 
             elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "java-checkstyle":
@@ -575,7 +574,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                         inst.allowedErrors = xmlTest.xpath("p:test-configuration/"
                                                            "p:test-meta-data/"
                                                            "praktomat:max-checkstyle-errors", namespaces=ns)[0]
-                    inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                    inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                     inst.save()
 
             elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "python":
@@ -600,7 +599,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                     for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
                         if embedded_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
                             inst.doctest = embedded_file_dict.get(fileref.fileref.attrib.get("refid"))
-                            inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                            inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                             inst.save()
                         else:
                             inst.delete()
@@ -637,10 +636,10 @@ def import_task(task_xml, dict_zip_files_post=None ):
                                                                      "praktomat:config-returnHtml",
                                                                      namespaces=ns)[0].text)
                 if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
-                    val_order = task_helper.creating_file_checker(embedded_file_dict, new_task, ns, val_order, xmlTest)
+                    val_order = task.creating_file_checker(embedded_file_dict, new_task, ns, val_order, xmlTest)
 
                 inst.order = val_order
-                inst = task_helper.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                 inst.save()
 
             else:

@@ -34,15 +34,18 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from django.core.servers.basehttp import FileWrapper
 from django.db import models
-from django.http import HttpResponse
+
 from django.shortcuts import redirect
 from django.template import TemplateSyntaxError
 from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
+from django.core.files import File
 from lxml import etree
 from lxml import objectify
 import logging
-
+import zipfile
+import tempfile
+from os.path import basename
 
 from attestation.models import Rating
 from checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, AnonymityChecker, \
@@ -50,10 +53,9 @@ from checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, Anonymit
 from checker.models import Checker
 from solutions.models import Solution, SolutionFile
 from tasks.models import Task, MediaFile
-from task_helper import check_post_request, import_task_v2, \
-    extract_zip_with_xml_and_zip_dict
 import task_v0_94
 import task_v1_01
+import task_v2_00
 
 
 logger = logging.getLogger(__name__)
@@ -309,6 +311,32 @@ def str2bool(v):
 #     return xmlObject
 
 
+def check_visibility(inst, namespace, xml_test=None, public=None):
+    inst.always = True
+
+    if xml_test is None:
+        inst.public = False
+        inst.required = False
+    else:
+        if xml_test.xpath('./p:test-configuration/p:test-meta-data/praktomat:required',
+                          namespaces=namespace):
+            inst.required = str2bool(xml_test.xpath('./p:test-configuration/'
+                                                                                'p:test-meta-data/'
+                                                                                'praktomat:required',
+                                                                                namespaces=namespace)[0].text)
+        if xml_test.xpath('./p:test-configuration/p:test-meta-data/praktomat:public',
+                          namespaces=namespace):
+            if public is False:
+                inst.public = False
+            elif public is True:
+                inst.public = True
+            else:
+                inst.public = str2bool(xml_test.xpath('./p:test-configuration/'
+                                                                                  'p:test-meta-data/'
+                                                                                  'praktomat:public',
+                                                                                  namespaces=namespace)[0].text)
+    return inst
+
 def testVisibility(inst, xmlTest, namespace, public=None):
     # always is not necessary anymore we want the test everytime
     #if xmlTest.xpath('./test-configuration/test-meta-data/praktomat:always',
@@ -341,17 +369,31 @@ def testVisibility(inst, xmlTest, namespace, public=None):
 
     return inst
 
+def creating_file_checker(embedded_file_dict, new_task, ns, val_order, xml_test, required=None):
+    order_counter = 1
 
-# @csrf_exempt
-# def import_task(request, task_xml, dict_zip_files_post=None):
-#
-#     logger.debug('import_task 1 called')
-#
-#     response = itask(request, task_xml, dict_zip_files_post=None)
-#     return response
+    for fileref in xml_test.xpath("p:test-configuration/p:filerefs/p:fileref", namespaces=ns):
+        if embedded_file_dict.get(fileref.attrib.get("refid")) is not None:
+            inst2 = CreateFileChecker.CreateFileChecker.objects.create(task=new_task,
+                                                                       order=val_order,
+                                                                       path=""
+                                                                       )
+            inst2.file = embedded_file_dict.get(fileref.attrib.get("refid"))  # check if the refid is there
+            if dirname(embedded_file_dict.get(fileref.attrib.get("refid")).name) is not None:
+                inst2.path = dirname(embedded_file_dict.get(fileref.attrib.get("refid")).name)
+            else:
+                pass
 
-
-
+            if required is False:
+                inst2 = check_visibility(inst=inst2, xml_test=None, namespace=ns, public=False)
+            elif required is True:
+                inst2 = check_visibility(inst=inst2, xml_test=None, namespace=ns, public=True)
+            else:
+                inst2 = check_visibility(inst=inst2, xml_test=None, namespace=ns, public=False)
+            inst2.save()
+            order_counter += 1
+            val_order += 1  # to push the junit-checker behind create-file checkers
+    return val_order
 
 def creatingFileChecker(embeddedFileDict, newTask, ns, valOrder, xmlTest):
     orderCounter = 1
@@ -402,6 +444,74 @@ def reg_check(regText):
     return is_valid
 
 
+def extract_zip_with_xml_and_zip_dict(uploaded_file):
+    """
+    return task task.xml with dict of zip_files
+    :param uploaded_file:
+    :return:
+        task_xml -> the task.xml
+        dict_zip_files: dict of the files in the zip
+    """
+    regex = r'(' + '|'.join([
+        r'(^|/)\..*',  # files starting with a dot (unix hidden files)
+        r'__MACOSX/.*',
+        r'^/.*',  # path starting at the root dir
+        r'\.\..*',  # parent folder with '..'
+        r'/$',  # don't unpack folders - the zipfile package will create them on demand
+        r'META-INF/.*'
+    ]) + r')'
+
+    # return task task.xml with dict of zip_files
+    # is_zip = True
+    # ZIP import
+    task_xml = None
+    ignored_file_names_re = re.compile(regex)
+    zip_file = zipfile.ZipFile(uploaded_file, 'r')
+    #zip_file = zipfile.ZipFile(uploaded_file[0], 'r')
+    dict_zip_files = dict()
+    for zipFileName in zip_file.namelist():
+        if not ignored_file_names_re.search(zipFileName):  # unzip only allowed files + wanted file
+            zip_file_name_base = basename(zipFileName)
+            if zip_file_name_base == "task.xml":
+                task_xml = zip_file.open(zipFileName).read()
+            else:
+                t = tempfile.NamedTemporaryFile(delete=True)
+                t.write(zip_file.open(zipFileName).read())  # todo: encoding
+                t.flush()
+                my_temp = File(t)
+                my_temp.name = zipFileName
+                dict_zip_files[zipFileName] = my_temp
+
+    if task_xml is None:
+        raise Exception("Error: Your uploaded zip does not contain a task.xml.")
+    return task_xml, dict_zip_files
+
+
+def respond_error_message(message):
+    response = HttpResponse()
+    response.write(message)
+    return response
+
+def check_post_request(request):
+
+    postdata = None
+    # check request object -> refactor method
+    if request.method != 'POST':
+        message = "No POST-Request"
+        respond_error_message(message=message)
+    else:
+        try:
+            postdata = request.POST.copy()
+        except Exception as e:
+            message = "Error no Files attached. " + str(e)
+            respond_error_message(message=message)
+
+    # it should be one File one xml or one zip
+    if len(postdata) > 1:
+        message = "Only one file is supported"
+        respond_error_message(message=message)
+    else:
+        pass
 
 
 # URI entry point
@@ -473,7 +583,7 @@ def import_task_internal(filename, task_file):
         response_data = task_v1_01.import_task(task_xml, dict_zip_files)
     elif format_namespace_v2_0 in xml_object.nsmap.values():
         logger.debug('handle 2.0 task')
-        response_data = import_task_v2(task_xml, dict_zip_files)
+        response_data = task_v2_00.import_task(task_xml, dict_zip_files)
     else:
         raise Exception("The Exercise could not be imported!\r\nOnly support for the following namespaces: " +
                        format_namespace_v0_9_4 + "\r\n" +
@@ -483,28 +593,7 @@ def import_task_internal(filename, task_file):
     return response_data
 
 
-@csrf_exempt  # NOTE: für Marcel danach remove;)
-def test_post(request, ):
-    response = HttpResponse()
 
-    if not (request.method == "POST"):
-        response.write("No Post-Request")
-    else:
-        postMessages = request.POST
-        for key, value in postMessages.iteritems():
-            response.write("Key: " + str(key) + " ,Value: " + str(value) + "\r\n")
-        try:
-            if not (request.FILES is None):
-                response.write("List of Files: \r\n")
-                for key, value in request.FILES.iteritems():
-                    response.write("Key: " + str(key) + " ,Value: " + str(value) + "\r\n")
-                    response.write("Content of: " + str(key) + "\r\n")
-                    response.write(request.FILES[key].read() + "\r\n")
-            else:
-                response.write("\r\n\r\n No Files Attached")
-        except Exception:
-            response.write("\r\n\r\n Exception!: " + str(Exception))
-    return response
 
 
 
