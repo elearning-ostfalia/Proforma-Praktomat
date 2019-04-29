@@ -56,8 +56,11 @@ SYSUSER = "sys_prod"
 
 
 
-
-
+def set_visibilty(instance):
+    instance.always = True
+    instance.public = True
+    instance.required = False
+    return instance
 
 
 
@@ -245,7 +248,7 @@ def create_java_compiler_checker(xmlTest, val_order, new_task, ns):
     except Exception as e:  #XPathEvalError
         pass
     try:
-        inst = task.check_visibility(inst=inst, namespace=checker_ns, xml_test=xmlTest)
+        inst = set_visibilty(inst)
     except Exception as e:
         new_task.delete()
         raise e("Error while parsing xml in test - compiler\r\n" + str(e))
@@ -346,7 +349,7 @@ def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
                                           val_order=val_order, xml_test=xmlTest)
 
     inst.order = val_order
-    inst = task.check_visibility(inst=inst, namespace=checker_ns, xml_test=xmlTest)
+    inst = set_visibilty(inst)
     inst.save()
 
 
@@ -396,7 +399,7 @@ def create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_d
             inst.allowedWarnings = xmlTest.xpath("p:test-configuration/"
                                                  "check:java-checkstyle/"
                                                  "check:max-checkstyle-warnings", namespaces=checker_ns)[0]
-        inst = task.check_visibility(inst=inst, namespace=checker_ns, xml_test=xmlTest)
+        inst = set_visibilty(inst)
         inst.save()
 
 
@@ -420,7 +423,7 @@ def create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict):
                                               "praktomat:config-testDescription",
                                               namespaces=ns)[0].text
 
-    inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+    inst = set_visibilty(inst)
     inst.save()
 
 
@@ -446,7 +449,7 @@ def create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict):
             for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
                 if test_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
                     inst.doctest = test_file_dict.get(fileref.fileref.attrib.get("refid"))
-                    inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
+                    inst = set_visibilty(inst)
                     inst.save()
                 else:
                     inst.delete()
