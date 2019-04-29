@@ -65,24 +65,23 @@ def set_visibilty(instance):
 
 
 
-def check_task_description(xml_dict, new_task):
+def set_task_description(xml_dict, new_task):
     xml_description = xml_dict.get("description")
     if xml_description is None:
         new_task.description = "No description"
     else:
         new_task.description = xml_description
-    new_task.save()
-    return True
+    #new_task.save()
 
 
-def check_task_title(xml_dict, new_task):
+
+def set_task_title(xml_dict, new_task):
     xml_title = xml_dict.get("title")
     if xml_title is None:
         new_task.title = "No title"
     else:
         new_task.title = xml_title
-    new_task.save()
-    return True
+    #new_task.save()
 
 
 #def toJSON(task_object):
@@ -100,15 +99,12 @@ def check_task_title(xml_dict, new_task):
 #                       separators=(',', ':')).replace('\n', '')
 
 
-def create_user_check_user(user_name, new_task):
+def set_default_user(user_name, new_task):
     try:
         sys_user = User.objects.get(username=user_name)
     except User.DoesNotExist:
         sys_user = User.objects.create_user(username=user_name, email="creator@localhost")
-    except Exception as e:
-        new_task.delete()
-        e("system user does not exist and could not created " + str(e))
-    return sys_user
+    #return sys_user
 
 
 def create_file_dict_func(xml_obj, namespace, external_file_dict=None, ):
@@ -119,52 +115,44 @@ def create_file_dict_func(xml_obj, namespace, external_file_dict=None, ):
     test_file_dict = dict()
     modelsolution_file_dict = dict()
 
-    try:
-        list_of_files = xml_obj.xpath("/p:task/p:files/p:file", namespaces=namespace)
+    list_of_files = xml_obj.xpath("/p:task/p:files/p:file", namespaces=namespace)
 
-        for k in list_of_files:
-            # todo add: embedded-bin-file
-            # todo add: attached-txt-file
-            used_by_grader = k.attrib.get('used-by-grader')
-            if used_by_grader == "true":
-                if k.xpath("p:embedded-txt-file", namespaces=namespace):
-                    t = tempfile.NamedTemporaryFile(delete=True)
-                    t.write(k['embedded-txt-file'].text.encode("utf-8"))
-                    t.flush()
-                    my_temp = File(t)
-                    my_temp.name = k['embedded-txt-file'].attrib.get("filename")
-                    embedded_file_dict[k.attrib.get("id")] = my_temp
-                elif k.xpath("p:attached-bin-file", namespaces=namespace):
-                    filename = k['attached-bin-file'].text
-                    if external_file_dict is None:
-                        raise Exception('no files in zip found')
-                    embedded_file_dict[k.attrib.get("id")] = external_file_dict[filename]
-                else:
-                    raise Exception('unsupported file type in task.xml (embedded-bin-file or attached-txt-file)')
+    for k in list_of_files:
+        # todo add: embedded-bin-file
+        # todo add: attached-txt-file
+        used_by_grader = k.attrib.get('used-by-grader')
+        if used_by_grader == "true":
+            if k.xpath("p:embedded-txt-file", namespaces=namespace):
+                t = tempfile.NamedTemporaryFile(delete=True)
+                t.write(k['embedded-txt-file'].text.encode("utf-8"))
+                t.flush()
+                my_temp = File(t)
+                my_temp.name = k['embedded-txt-file'].attrib.get("filename")
+                embedded_file_dict[k.attrib.get("id")] = my_temp
+            elif k.xpath("p:attached-bin-file", namespaces=namespace):
+                filename = k['attached-bin-file'].text
+                if external_file_dict is None:
+                    raise Exception('no files in zip found')
+                embedded_file_dict[k.attrib.get("id")] = external_file_dict[filename]
+            else:
+                raise Exception('unsupported file type in task.xml (embedded-bin-file or attached-txt-file)')
 
-        create_file_dict = embedded_file_dict
+    create_file_dict = embedded_file_dict
 
-        list_of_test_files = xml_obj.xpath("/p:task/p:tests/p:test/p:test-configuration/"
-                                           "p:filerefs/p:fileref/@refid", namespaces=namespace)
-        for test_ref_id in list_of_test_files:
-            test_ref_id_of_dict = {test_ref_id: create_file_dict.pop(test_ref_id, "")}
-            test_file_dict.update(test_ref_id_of_dict)
+    list_of_test_files = xml_obj.xpath("/p:task/p:tests/p:test/p:test-configuration/"
+                                       "p:filerefs/p:fileref/@refid", namespaces=namespace)
+    for test_ref_id in list_of_test_files:
+        test_ref_id_of_dict = {test_ref_id: create_file_dict.pop(test_ref_id, "")}
+        test_file_dict.update(test_ref_id_of_dict)
 
-        list_of_modelsolution_refs_path = xml_obj.xpath("/p:task/"
-                                                        "p:model-solutions/p:model-solution/p:filerefs/"
-                                                        "p:fileref/@refid", namespaces=namespace)
+    list_of_modelsolution_refs_path = xml_obj.xpath("/p:task/"
+                                                    "p:model-solutions/p:model-solution/p:filerefs/"
+                                                    "p:fileref/@refid", namespaces=namespace)
 
-        for model_solution_id in list_of_modelsolution_refs_path:
-            model_ref_id_of_dict = {model_solution_id: create_file_dict.pop(model_solution_id, "")}
-            modelsolution_file_dict.update(model_solution_id=model_ref_id_of_dict)
-    except Exception as e:
-        raise e
-    except KeyError as e:
-        print e
-        raise e
-    except Exception as e:
-        print e
-        raise e
+    for model_solution_id in list_of_modelsolution_refs_path:
+        model_ref_id_of_dict = {model_solution_id: create_file_dict.pop(model_solution_id, "")}
+        modelsolution_file_dict.update(model_solution_id=model_ref_id_of_dict)
+
     # for uploaded_file in xml_task.xpath("p:files/p:file", namespaces=ns):
     #     if uploaded_file.attrib.get("class") == "internal":
     #         if uploaded_file.attrib.get("type") == "embedded":
@@ -216,45 +204,48 @@ def create_java_compiler_checker(xmlTest, val_order, new_task, ns):
     if xmlTest.xpath("p:title", namespaces=ns) is not None:
             inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
 
-    try:
-        if xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFlags",
-                                    namespaces=checker_ns)[0].text is not None: inst._flags = \
-            xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFlags",
-                                    namespaces=checker_ns)[0].text
-    except Exception as e:
-        pass
-    try:
-        if xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-                         "praktomat:config-CompilerOutputFlags", namespaces=checker_ns)[0].text is not None:
-            inst._output_flags = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-                         "praktomat:config-CompilerOutputFlags", namespaces=checker_ns)[0].text
-    except Exception as e:
-        pass
-    try:
-        if xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerLibs",
-                                   namespaces=checker_ns)[0].text is not None : inst._libs = \
-            xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerLibs",
-                                   namespaces=checker_ns)[0].text
 
-    except Exception as e:
-        pass
-    try:
-        if xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-                         "praktomat:config-CompilerFilePattern",
-                         namespaces=checker_ns)[0] is not None: inst._file_pattern = \
-            xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-                          "praktomat:config-CompilerFilePattern",
-                          namespaces=checker_ns)[0]
-    except Exception as e:  #XPathEvalError
-        pass
-    try:
-        inst = set_visibilty(inst)
-    except Exception as e:
-        new_task.delete()
-        raise e("Error while parsing xml in test - compiler\r\n" + str(e))
+    # try:
+    #     if xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFlags",
+    #                                 namespaces=checker_ns)[0].text is not None:
+    #         inst._flags = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFlags",
+    #                                 namespaces=checker_ns)[0].text
+    # except Exception as e:
+    #     pass
+    # try:
+    #     if xmlTest.xpath("p:test-configuration/p:test-meta-data/"
+    #                      "praktomat:config-CompilerOutputFlags", namespaces=checker_ns)[0].text is not None:
+    #         inst._output_flags = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
+    #                      "praktomat:config-CompilerOutputFlags", namespaces=checker_ns)[0].text
+    # except Exception as e:
+    #     pass
+    # try:
+    #     if xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerLibs",
+    #                                namespaces=checker_ns)[0].text is not None :
+    #         inst._libs = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerLibs",
+    #                                namespaces=checker_ns)[0].text
+    #
+    # except Exception as e:
+    #     pass
+    # try:
+    #     if xmlTest.xpath("p:test-configuration/p:test-meta-data/"
+    #                      "praktomat:config-CompilerFilePattern",
+    #                      namespaces=checker_ns)[0] is not None:
+    #         inst._file_pattern = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFilePattern",
+    #                       namespaces=checker_ns)[0]
+    # except Exception as e:  #XPathEvalError
+    #     pass
+    inst = set_visibilty(inst)
     inst.save()
     pass
 
+
+def get_optional_xml_element_text(xmlTest, xpath, namespaces):
+    try:
+        if xmlTest.xpath(xpath, namespaces=namespaces) is not None:
+            return xmlTest.xpath(xpath, namespaces=namespaces)[0]
+    except:
+        return ""
 
 def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
     checker_ns = ns.copy()
@@ -271,14 +262,16 @@ def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
 
     if xmlTest.xpath("p:title", namespaces=ns) is not None:
             inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
+    inst.test_description = get_optional_xml_element_text(xmlTest, "p:description", ns)
 
+    # old style
+    # if (xmlTest.xpath("p:test-configuration/unit:unittest/unit:main-class",
+    #                   namespaces=checker_ns) and
+    #     xmlTest.xpath("p:test-configuration/unit:unittest/unit:main-class",
+    #                   namespaces=checker_ns)[0].text):
+    #     inst.class_name = xmlTest.xpath("p:test-configuration/unit:unittest/unit:main-class",
+    #                                     namespaces=checker_ns)[0].text
 
-    if (xmlTest.xpath("p:test-configuration/unit:unittest/unit:main-class",
-                      namespaces=checker_ns) and
-        xmlTest.xpath("p:test-configuration/unit:unittest/unit:main-class",
-                      namespaces=checker_ns)[0].text):
-        inst.class_name = xmlTest.xpath("p:test-configuration/unit:unittest/unit:main-class",
-                                        namespaces=checker_ns)[0].text
     if (xmlTest.xpath("p:test-configuration/unit_new:unittest/unit_new:entry-point",
                       namespaces=checker_ns) and
         xmlTest.xpath("p:test-configuration/unit_new:unittest/unit_new:entry-point",
@@ -289,6 +282,7 @@ def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
     #    inst.delete()
     #    raise Exception("unittest main-class not found. Check your namespace")
 
+    # todo: find better handling for calling this twice (bom)
     if xmlTest.xpath("p:test-configuration/unit:unittest[@framework='JUnit']", namespaces=checker_ns):
         if xmlTest.xpath("p:test-configuration/unit:unittest[@framework='JUnit']",
                          namespaces=checker_ns)[0].attrib.get("version"):
@@ -328,22 +322,24 @@ def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
                 inst.delete()
                 raise Exception("JUnit-Version not known: " + str(version))
 
-    if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-testDescription",
-                      namespaces=checker_ns) and
-        xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-testDescription",
-                      namespaces=checker_ns)[0].text):
-        inst.test_description = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-                                              "praktomat:config-testDescription",
-                                              namespaces=checker_ns)[0].text
-    if (xmlTest.xpath("p:test-configuration/"
-                      "p:test-meta-data/praktomat:config-testname",
-                      namespaces=checker_ns) and
-        xmlTest.xpath("p:test-configuration/"
-                      "p:test-meta-data/praktomat:config-testname",
-                      namespaces=checker_ns)[0].text):
-        inst.name = xmlTest.xpath("p:test-configuration/"
-                                  "p:test-meta-data/praktomat:config-testname",
-                                  namespaces=checker_ns)[0].text
+    # if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-testDescription",
+    #                   namespaces=checker_ns) and
+    #     xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-testDescription",
+    #                   namespaces=checker_ns)[0].text):
+    #     inst.test_description = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
+    #                                           "praktomat:config-testDescription",
+    #                                           namespaces=checker_ns)[0].text
+
+    # if (xmlTest.xpath("p:test-configuration/"
+    #                   "p:test-meta-data/praktomat:config-testname",
+    #                   namespaces=checker_ns) and
+    #     xmlTest.xpath("p:test-configuration/"
+    #                   "p:test-meta-data/praktomat:config-testname",
+    #                   namespaces=checker_ns)[0].text):
+    #     inst.name = xmlTest.xpath("p:test-configuration/"
+    #                               "p:test-meta-data/praktomat:config-testname",
+    #                               namespaces=checker_ns)[0].text
+
     if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
         val_order = task.creating_file_checker(embedded_file_dict=test_file_dict, new_task=new_task, ns=checker_ns,
                                           val_order=val_order, xml_test=xmlTest)
@@ -456,6 +452,15 @@ def create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict):
                     message = "No File for python-checker found"
 
 
+# todo???
+# proglang -> e.g Java 1.6 / Python 2.7
+# files : used-by-grader="true"
+
+# model-solutions
+# tests
+#   compiler
+#   JUNIT
+#   Checkstyle
 def import_task(task_xml, dict_zip_files=None):
     format_namespace = "urn:proforma:v2.0"
     ns = {"p": format_namespace}
@@ -464,13 +469,10 @@ def import_task(task_xml, dict_zip_files=None):
     # no need to actually validate xml against xsd
     # (it is only time consuming)
     schema = xmlschema.XMLSchema(os.path.join(PARENT_BASE_DIR, XSD_V_2_PATH))
+    # todo: remove because it is very expensive (bom, about 350ms)
     xml_dict = schema.to_dict(task_xml)
 
-    # try:
-    #     xml_dict = validate_xml(xml=task_xml)
-    # except Exception as e:
-    #     logger.debug(str(type(e))+str(e.args))
-    #     return json_error_message(json_message="validate_xml error (task.xml): " + str(e.args), http_code=400)
+    # xml_dict = validate_xml(xml=task_xml)
 
     xml_obj = objectify.fromstring(task_xml)
 
@@ -478,52 +480,48 @@ def import_task(task_xml, dict_zip_files=None):
                                    description="",
                                    submission_date=datetime.now(),
                                    publication_date=datetime.now())
+    # version that does not affect database
+    # new_task = Task(title="test", description="", submission_date=datetime.now(),
+    #                publication_date=datetime.now())
 
 
-    check_task_title(xml_dict=xml_dict, new_task=new_task)
-    check_task_description(xml_dict=xml_dict, new_task=new_task)
-    check_submission_restriction(xml_dict=xml_dict, new_task=new_task)
     try:
-        create_user_check_user(user_name=SYSUSER, new_task=new_task)
-    except Exception as e:
-        return json_error_message(json_message="create_user_check_user error: " + str(e.args), http_code=400)
+        set_task_title(xml_dict=xml_dict, new_task=new_task)
+        set_task_description(xml_dict=xml_dict, new_task=new_task)
+        set_submission_restriction(xml_dict=xml_dict, new_task=new_task)
+        set_default_user(user_name=SYSUSER, new_task=new_task)
 
-    if dict_zip_files is None:
-        create_file_dict, test_file_dict, list_of_modelsolution_refs_path = create_file_dict_func(xml_obj=xml_obj, namespace=ns)
-    else:
-        create_file_dict, test_file_dict, list_of_modelsolution_refs_path = create_file_dict_func(xml_obj=xml_obj, namespace=ns, external_file_dict=dict_zip_files)
+        if dict_zip_files is None:
+            create_file_dict, test_file_dict, list_of_modelsolution_refs_path = create_file_dict_func(xml_obj=xml_obj, namespace=ns)
+        else:
+            create_file_dict, test_file_dict, list_of_modelsolution_refs_path = create_file_dict_func(xml_obj=xml_obj, namespace=ns, external_file_dict=dict_zip_files)
 
-    val_order = 1
-    inst = None
-    # create library and internal-library with create FileChecker
-    val_order = task.creatingFileCheckerNoDep(create_file_dict, new_task, ns,
-                                                                     val_order, xmlTest=None)
-    for xmlTest in xml_obj.tests.iterchildren():
-        #try:
-        if xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "java-compilation":  # todo check compilation_xsd
-            create_java_compiler_checker(xmlTest, val_order, new_task, ns)
-        elif xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "unittest":
-            create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict)
-        elif xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "java-checkstyle":
-            create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_dict)
-        #elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "jartest" and \
-        #     xmlTest.xpath("p:test-configuration/jartest:jartest[@framework='setlX']", namespaces=ns):
-        #        create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict)
-        elif xmlTest.xpath("proforma:test-type", namespaces=ns)[0] == "python-doctest":
+        val_order = 1
+        #inst = None
+        # create library and internal-library with create FileChecker
+        val_order = task.creatingFileCheckerNoDep(create_file_dict, new_task, ns,
+                                                                         val_order, xmlTest=None)
+        for xmlTest in xml_obj.tests.iterchildren():
+            if xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "java-compilation":  # todo check compilation_xsd
+                logger.debug('** create_java_compiler_checker')
+                create_java_compiler_checker(xmlTest, val_order, new_task, ns)
+            elif xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "unittest":
+                logger.debug('** create_java_unit_checker')
+                create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict)
+            elif xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "java-checkstyle":
+                create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_dict)
+            #elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "jartest" and \
+            #     xmlTest.xpath("p:test-configuration/jartest:jartest[@framework='setlX']", namespaces=ns):
+            #        create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict)
+            elif xmlTest.xpath("proforma:test-type", namespaces=ns)[0] == "python-doctest":
+                logger.debug('** create_python_checker')
                 create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict)
-        #except Exception as e:
-        #    return json_error_message(json_message="create_test error: " + str(e.args), http_code=400) # Karins Versuch
-        #    return HttpResponse(content=to_json(e), content_type="application/json")
-        val_order += 1
-    new_task.save()
-    # proglang -> e.g Java 1.6 / Python 2.7
-    # files : used-by-grader="true"
+            val_order += 1
+    except Exception:
+        new_task.delete()
+        raise
 
-    # model-solutions
-    # tests
-    #   compiler
-    #   JUNIT
-    #   Checkstyle
+    new_task.save()
     response_data = dict()
     response_data['taskid'] = new_task.id
     response_data['message'] = message
@@ -536,7 +534,7 @@ def getitem_from_dict(dataDict, mapList):
 
 
 
-def check_submission_restriction(xml_dict, new_task):
+def set_submission_restriction(xml_dict, new_task):
     path = ['submission-restrictions']
     max_size = None
     restriction = getitem_from_dict(xml_dict, path)
@@ -550,7 +548,7 @@ def check_submission_restriction(xml_dict, new_task):
     # convert to KB
     new_task.max_file_size = int(max_size) / 1024
 
-    new_task.save()
+    #new_task.save()
     # todo add file restrictions
     return True
 

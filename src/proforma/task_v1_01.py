@@ -628,9 +628,9 @@ def import_task(task_xml, dict_zip_files_post=None ):
                     inst.save()
 
             val_order += 1
-    except Exception as e:
+    except Exception:
         new_task.delete()
-        raise e
+        raise
 
     new_task.save()
     response_data = dict()
