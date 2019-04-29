@@ -644,6 +644,15 @@ def import_task(task_xml, dict_zip_files_post=None ):
 
             else:
                 message = "Following Test could not imported\n" + objectify.dump(xmlTest) + "\r\n"
+
+
+            # todo handle this properly!
+            if inst != None and xmlTest.attrib is not None:
+                attributes = xmlTest.attrib
+                if attributes.get("id"):
+                    inst.proforma_id = attributes.get("id")
+                    inst.save()
+
         except Exception as e:
             new_task.delete()
             #response.write("Error while importing tests:" + str(inst) + "\r\n" + str(e))
