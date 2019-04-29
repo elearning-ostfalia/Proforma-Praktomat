@@ -25,7 +25,7 @@
                         {% if testResult.checker.public %}
                         <student-feedback level="info">
                             <title>{{testResult.checker.title}}</title>
-                            <content format="plaintext">{% autoescape off %}<![CDATA[{{ testResult.log }}]]>{% endautoescape %}</content>
+                            <content format="html">{% autoescape off %}<![CDATA[{{ testResult.log }}]]>{% endautoescape %}</content>
                         </student-feedback>
                         {% else %}
                             <teacher-feedback level="info">
