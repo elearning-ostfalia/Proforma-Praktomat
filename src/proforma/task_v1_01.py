@@ -81,23 +81,18 @@ def import_task(task_xml, dict_zip_files_post=None ):
           "jartest": 'urn:proforma:tests:jartest:v1',
           }
 
-    try:
-        encoding = rxcoding.search(xmlexercise, re.IGNORECASE)
-        if (encoding != 'UFT-8' or encoding != 'utf-8') and encoding is not None:
-            xmlexercise = xmlexercise.decode(encoding.group('enc')).encode('utf-8')
-        xml_object = objectify.fromstring(xmlexercise)
+    encoding = rxcoding.search(xmlexercise, re.IGNORECASE)
+    if (encoding != 'UFT-8' or encoding != 'utf-8') and encoding is not None:
+        xmlexercise = xmlexercise.decode(encoding.group('enc')).encode('utf-8')
+    xml_object = objectify.fromstring(xmlexercise)
 
-    except Exception as e:
-        response.write("Error while parsing xml\r\n" + str(e))
-        return response
 
     xml_task = xml_object
     # TODO check against schema
 
     # check Namespace
     if format_namespace not in xml_object.nsmap.values():
-        response.write("The Exercise could not be imported!\r\nOnly support for Namspace: " + format_namespace)
-        return response
+        raise Exception("The Exercise could not be imported!\r\nOnly support for Namspace: " + format_namespace)
 
     # TODO datetime max?
 
@@ -106,135 +101,124 @@ def import_task(task_xml, dict_zip_files_post=None ):
                                    submission_date=datetime.now(),
                                    publication_date=datetime.now())
 
-    # check for submission-restriction
-    if xml_task.find("p:submission-restrictions", namespaces=ns) is None:
-        new_task.delete()
-        response.write("The Exercise could not be imported!\r\nsubmission-restrictions-Part is missing")
-        return response
-    else:
-        if xml_task.xpath("p:submission-restrictions/*[@max-size]", namespaces=ns):
-            new_task.max_file_size = int(xml_task.xpath("p:submission-restrictions/*[@max-size]",
-                                                        namespaces=ns)[0].attrib.get("max-size"))
-        else:
-            new_task.max_file_size = 1000
-
-        if xml_task.xpath("p:meta-data/*[@mime-type-regexp]", namespaces=ns):
-            new_task.supported_file_types = xml_task.xpath("p:meta-data/*[@mime-type-regexp]", namespaces=ns)[0]
-        else:
-            new_task.supported_file_types = ".*"  # all
-
-    # check for embedded or external files
-
-    # Files create dict with internal file objects should also used for external files
-    embedded_file_dict = dict()
-    # external_file_dict = dict()
-    create_file_dict = dict()
-
-    for uploaded_file in xml_task.xpath("p:files/p:file", namespaces=ns):
-        if uploaded_file.attrib.get("class") == "internal":
-            if uploaded_file.attrib.get("type") == "embedded":
-                t = tempfile.NamedTemporaryFile(delete=True)
-                t.write(uploaded_file.text.encode("utf-8"))
-                t.flush()
-                my_temp = File(t)
-                my_temp.name = (uploaded_file.attrib.get("filename"))
-                embedded_file_dict[uploaded_file.attrib.get("id")] = my_temp
-            else:
-                embedded_file_dict[uploaded_file.attrib.get("id")] = \
-                    dict_zip_files[uploaded_file.attrib.get("filename")]
-
-        # all files in this dict were created by CreateFileChecker
-        if (uploaded_file.attrib.get("class") == "library") or \
-           (uploaded_file.attrib.get("class") == "internal-library"):
-            if uploaded_file.attrib.get("type") == "embedded":
-                t = tempfile.NamedTemporaryFile(delete=True)
-                t.write(uploaded_file.text.encode("utf-8"))
-                t.flush()
-                my_temp = File(t)
-                my_temp.name = (uploaded_file.attrib.get("filename"))  # check! basename? i lost the path o not?
-                create_file_dict[uploaded_file.attrib.get("id")] = my_temp
-            else:
-                create_file_dict[uploaded_file.attrib.get("id")] = dict_zip_files[uploaded_file.attrib.get("filename")]
-        # if uploaded_file.attrib.get("type") == "file" and is_zip:
-        #     # 1. check filename with zip_dict -> ID zuweisen
-        #     # elif uploaded_file.attrib.get("class") == "internal":
-        #     # embedded_file_dict[uploaded_file.attrib.get("id")] = zip_file_object.
-        #     for zip_filename in zip_dict:
-        #         if uploaded_file.attrib.get("filename") == zip_filename:
-        #             if (uploaded_file.attrib.get("class") == "library") or \
-        #                     (uploaded_file.attrib.get("class") == "internal-library"):
-        #                 create_file_dict[uploaded_file.attrib.get("id")] = zipFileName.key  # get value of key!
-        #             elif uploaded_file.attrib.get("class") == "internal":
-        #                 #  embedded_file_dict[uploaded_file.attrib.get("id")] = zip_file_object  #todo this will fail
-        #                 pass
-        #             else:
-        #                 new_task.delete()
-        #                 response.write("file class in task.xml is not known")
-        #                 return response
-        #         else:
-        #             new_task.delete()
-        #             response.write("content of zip is not referenced by task.xml")
-        #             return response
-
-    # check if sysuser is created
     try:
-        sys_user = User.objects.get(username=defined_user)
-    except Exception as e:
-        new_task.delete()
-        response.write("System User (" + defined_user + ") does not exist: " + str(e))
-        return response
+        # check for submission-restriction
+        if xml_task.find("p:submission-restrictions", namespaces=ns) is None:
+            raise Exception("The Exercise could not be imported!\r\nsubmission-restrictions-Part is missing")
+        else:
+            if xml_task.xpath("p:submission-restrictions/*[@max-size]", namespaces=ns):
+                new_task.max_file_size = int(xml_task.xpath("p:submission-restrictions/*[@max-size]",
+                                                            namespaces=ns)[0].attrib.get("max-size"))
+            else:
+                new_task.max_file_size = 1000
 
-    # check UUID
-    if xml_task.xpath("/p:task/@uuid", namespaces=ns):
-        pass
-    else:
-        new_task.delete()
-        response.write("No uuid")
-        return response
-    # new model-solution import
-    if xml_task.xpath("p:model-solutions/p:model-solution", namespaces=ns):
+            if xml_task.xpath("p:meta-data/*[@mime-type-regexp]", namespaces=ns):
+                new_task.supported_file_types = xml_task.xpath("p:meta-data/*[@mime-type-regexp]", namespaces=ns)[0]
+            else:
+                new_task.supported_file_types = ".*"  # all
 
-        # check files > file.id with model-solutions > model-solution > filerefs > fileref > refid
-        for modelSolution in xml_task.xpath("p:model-solutions/p:model-solution", namespaces=ns):
-            try:
-                solution = Solution(task=new_task, author=sys_user)
-            except Exception as e:
-                new_task.delete()
-                response.write("Error while importing Solution: " + str(e))
-                return response
+        # check for embedded or external files
 
-            # TODO check more than one solution
-            if modelSolution.xpath("p:filerefs", namespaces=ns):
-                for fileRef in modelSolution.filerefs.iterchildren():
-                    if fileRef.attrib.get("refid") in embedded_file_dict:
-                        solution.save()
-                        solution_file = SolutionFile(solution=solution)
-                        solution_file.file = embedded_file_dict.get(fileRef.attrib.get("refid"))
-                        solution_file.save()
-                        new_task.model_solution = solution
-                    else:
-                        new_task.delete()
-                        response.write("You reference a model-solution to the files but there is no refid!")
-                        return response
-    else:
-        new_task.delete()
-        response.write("No Model Solution attached")
-        return response
+        # Files create dict with internal file objects should also used for external files
+        embedded_file_dict = dict()
+        # external_file_dict = dict()
+        create_file_dict = dict()
 
-    # task name
-    if xml_task.xpath("p:meta-data/p:title", namespaces=ns):
-        new_task.title = xml_task.xpath("p:meta-data/p:title", namespaces=ns)[0].text
-    else:
-        xml_task.title = "unknown exercise"
+        for uploaded_file in xml_task.xpath("p:files/p:file", namespaces=ns):
+            if uploaded_file.attrib.get("class") == "internal":
+                if uploaded_file.attrib.get("type") == "embedded":
+                    t = tempfile.NamedTemporaryFile(delete=True)
+                    t.write(uploaded_file.text.encode("utf-8"))
+                    t.flush()
+                    my_temp = File(t)
+                    my_temp.name = (uploaded_file.attrib.get("filename"))
+                    embedded_file_dict[uploaded_file.attrib.get("id")] = my_temp
+                else:
+                    embedded_file_dict[uploaded_file.attrib.get("id")] = \
+                        dict_zip_files[uploaded_file.attrib.get("filename")]
 
-    val_order = 1
-    inst = None
-    # create library and internal-library with create FileChecker
-    val_order = task.creatingFileCheckerNoDep(create_file_dict, new_task, ns,
-                                                                     val_order, xmlTest=None)
+            # all files in this dict were created by CreateFileChecker
+            if (uploaded_file.attrib.get("class") == "library") or \
+               (uploaded_file.attrib.get("class") == "internal-library"):
+                if uploaded_file.attrib.get("type") == "embedded":
+                    t = tempfile.NamedTemporaryFile(delete=True)
+                    t.write(uploaded_file.text.encode("utf-8"))
+                    t.flush()
+                    my_temp = File(t)
+                    my_temp.name = (uploaded_file.attrib.get("filename"))  # check! basename? i lost the path o not?
+                    create_file_dict[uploaded_file.attrib.get("id")] = my_temp
+                else:
+                    create_file_dict[uploaded_file.attrib.get("id")] = dict_zip_files[uploaded_file.attrib.get("filename")]
+            # if uploaded_file.attrib.get("type") == "file" and is_zip:
+            #     # 1. check filename with zip_dict -> ID zuweisen
+            #     # elif uploaded_file.attrib.get("class") == "internal":
+            #     # embedded_file_dict[uploaded_file.attrib.get("id")] = zip_file_object.
+            #     for zip_filename in zip_dict:
+            #         if uploaded_file.attrib.get("filename") == zip_filename:
+            #             if (uploaded_file.attrib.get("class") == "library") or \
+            #                     (uploaded_file.attrib.get("class") == "internal-library"):
+            #                 create_file_dict[uploaded_file.attrib.get("id")] = zipFileName.key  # get value of key!
+            #             elif uploaded_file.attrib.get("class") == "internal":
+            #                 #  embedded_file_dict[uploaded_file.attrib.get("id")] = zip_file_object  #todo this will fail
+            #                 pass
+            #             else:
+            #                 new_task.delete()
+            #                 response.write("file class in task.xml is not known")
+            #                 return response
+            #         else:
+            #             new_task.delete()
+            #             response.write("content of zip is not referenced by task.xml")
+            #             return response
 
-    for xmlTest in xml_task.tests.iterchildren():
+        # check if sysuser is created
         try:
+            sys_user = User.objects.get(username=defined_user)
+        except Exception as e:
+            raise Exception("System User (" + defined_user + ") does not exist: " + str(e))
+
+        # check UUID
+        if xml_task.xpath("/p:task/@uuid", namespaces=ns):
+            pass
+        else:
+            raise Exception("No uuid")
+        # new model-solution import
+        if xml_task.xpath("p:model-solutions/p:model-solution", namespaces=ns):
+
+            # check files > file.id with model-solutions > model-solution > filerefs > fileref > refid
+            for modelSolution in xml_task.xpath("p:model-solutions/p:model-solution", namespaces=ns):
+                try:
+                    solution = Solution(task=new_task, author=sys_user)
+                except Exception as e:
+                    raise Exception("Error while importing Solution: " + str(e))
+
+                # TODO check more than one solution
+                if modelSolution.xpath("p:filerefs", namespaces=ns):
+                    for fileRef in modelSolution.filerefs.iterchildren():
+                        if fileRef.attrib.get("refid") in embedded_file_dict:
+                            solution.save()
+                            solution_file = SolutionFile(solution=solution)
+                            solution_file.file = embedded_file_dict.get(fileRef.attrib.get("refid"))
+                            solution_file.save()
+                            new_task.model_solution = solution
+                        else:
+                            raise Exception("You reference a model-solution to the files but there is no refid!")
+        else:
+            raise Exception("No Model Solution attached")
+
+        # task name
+        if xml_task.xpath("p:meta-data/p:title", namespaces=ns):
+            new_task.title = xml_task.xpath("p:meta-data/p:title", namespaces=ns)[0].text
+        else:
+            xml_task.title = "unknown exercise"
+
+        val_order = 1
+        inst = None
+        # create library and internal-library with create FileChecker
+        val_order = task.creatingFileCheckerNoDep(create_file_dict, new_task, ns,
+                                                                         val_order, xmlTest=None)
+
+        for xmlTest in xml_task.tests.iterchildren():
+
             if xmlTest.xpath("p:test-type", namespaces=ns)[0] == "anonymity":
                 inst = AnonymityChecker.AnonymityChecker.objects.create(task=new_task, order=val_order)
                 inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
@@ -273,12 +257,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                     inst._file_pattern = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
                                                        "praktomat:config-CompilerFilePattern",
                                                        namespaces=ns)[0]
-                try:
-                    inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
-                except Exception as e:
-                    new_task.delete()
-                    response.write("Error while parsing xml\r\n" + str(e))
-                    return response
+                inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                 inst.save()
 
             elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "java-compilation":
@@ -319,12 +298,7 @@ def import_task(task_xml, dict_zip_files_post=None ):
                     inst._file_pattern = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
                                                        "praktomat:config-CompilerFilePattern",
                                                        namespaces=ns)[0]
-                try:
-                    inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
-                except Exception as e:
-                    new_task.delete()
-                    response.write("Error while parsing xml\r\n" + str(e))
-                    return response
+                inst = task.check_visibility(inst=inst, namespace=ns, xml_test=xmlTest)
                 inst.save()
 
             elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "dejagnu-setup":
@@ -653,12 +627,10 @@ def import_task(task_xml, dict_zip_files_post=None ):
                     inst.proforma_id = attributes.get("id")
                     inst.save()
 
-        except Exception as e:
-            new_task.delete()
-            #response.write("Error while importing tests:" + str(inst) + "\r\n" + str(e))
-            #return response
-            raise e
-        val_order += 1
+            val_order += 1
+    except Exception as e:
+        new_task.delete()
+        raise e
 
     new_task.save()
     response_data = dict()
