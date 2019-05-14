@@ -207,8 +207,9 @@ def grader_internal(task_id, files, response_format):
     #    if user_id else request.user # todo: Ablauf checken vielleicht nur request.user?
     #author = get_object_or_404(User, pk=user_id)
     sysProd = User.objects.get(username=DEFINED_USER)
-
     #solution object for submission
+    logger.debug("save solution")
+
     solution = Solution(task=task, author=sysProd)
     #save the solution model in the database
     solution.save()
@@ -217,6 +218,7 @@ def grader_internal(task_id, files, response_format):
     # todo: copy from solution/views -> files from form could use default checks
     # formset = SolutionFormSet(solution, request.FILES, instance=solution)
     saveSolution(solution, fileDict)
+    logger.debug("grade solution")
     result, solution = gradeSolution(solution)
     lcxml = get_solution_xml(result, solution, fileNameList, response_format)
 
@@ -241,11 +243,14 @@ def initSolution(request, task):
 
 
 def saveSolution(solution, fileDict):
-    #create solution_file
-    solution_file = SolutionFile(solution=solution)
+
     for index in range(len(fileDict)):
+        # create solution_file
+        solution_file = SolutionFile(solution=solution)
+
         #save solution in enviroment and get the path
         filename = fileDict.keys()[index]
+        logger.debug('save file ' + filename)
         #logger.debug('-> save file ' + filename + ': <' + str(fileDict.values()[index]) + '>')
         data = fileDict.values()[index]
         #data = fileDict.values()[index].read()
@@ -266,7 +271,6 @@ def gradeSolution(solution):
     #get result object
     logger.debug('get results...')
     result = solution.allCheckerResults()
-    logger.debug('ok')
     return result, solution
 
 
@@ -377,9 +381,8 @@ def save_file(data, solution_file, filename):
         fd = open('%s' % (full_filename), 'wb')
         fd.write(data)
         fd.close()
-    # todo: prüfen ob data == File Object oder Content
     else:
-        #logger.debug('File content class name is ' + data.__class__.__name__)
+        logger.debug('File content class name is ' + data.__class__.__name__)
         if data.__class__.__name__ == 'InMemoryUploadedFile':
             with default_storage.open('%s' % (full_filename), 'w') as destination:
                 for chunk in data.chunks():
@@ -388,6 +391,15 @@ def save_file(data, solution_file, filename):
             #fd = codecs.open('%s' % (full_filename), 'wb', "utf-8")
             #fd.write(data)
             #fd.close()
+        elif data.__class__.__name__ == 'File':
+            logger.debug('File name is ' + data.name)
+            logger.debug('full_filename name is ' + full_filename)
+            tmp = default_storage.save(full_filename, data)
+            logger.debug('save returned ' + tmp)
+
+            # fd = codecs.open('%s' % (full_filename), 'wb', "utf-8")
+                # fd.write(data)
+                # fd.close()
         else:
             # string
             fd = open('%s' % (full_filename), 'w')
@@ -566,8 +578,13 @@ def get_solution_xml(result, solution, file_name, response_format):
             #    # todo if fail add Error-Message
                 logger.error('Checker None FAILED!')
             else:
+                logger.debug("remove Checker: " + str(res_arr[indexReverse].checker))
                 res_arr.remove(res_arr[indexReverse])
 
+
+    logger.debug("Remaining Checkers: ")
+    for index in range(len(res_arr)):
+        logger.debug("Checker: " + str(res_arr[index].checker))
 
     if response_format == "proformav2":
         loncapa_xml = render_to_string('proforma/response_v2.xml',

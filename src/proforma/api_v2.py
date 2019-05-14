@@ -33,6 +33,7 @@ from lxml import etree
 
 from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
+from django.core.files import File
 #from django.views.decorators.csrf import csrf_exempt
 #from django.conf import settings
 
@@ -44,6 +45,8 @@ import logging
 #from requests.exceptions import InvalidSchema
 import task
 import grade
+import zipfile
+import tempfile
 
 #from proforma_taskget.views import login_phantomjs, get_task_from_externtal_server, answer_format_template
 
@@ -118,8 +121,7 @@ def grade_api_v2(request,):
         task_filename = None
         task_element = root.find(".//dns:external-task", NAMESPACES)
         if task_element is not None:
-            task_path = task_element.text
-            task_file, task_filename = get_external_task(request, task_path)
+            task_file, task_filename = get_external_task(request, task_element.text)
             #logger.debug('external-task in ' + task_path)
         else:
             task_element = root.find(".//dns:task", NAMESPACES)
@@ -138,28 +140,8 @@ def grade_api_v2(request,):
         #submission_dict = xml2dict(xml)
         #logger.debug("xml->dict")
 
-        # # check task-type
-        # if submission_dict.get("external-task"):
-        #     # 1. external-task -> uri / http-field
-        #     task_path = submission_dict["external-task"]["$"]
-        #     #task_uuid = submission_dict["external-task"]["@uuid"]
-        #     task_file, task_filename = get_external_task(request, task_path)
-        # elif submission_dict.get("task"):
-        #     # 2. task-embedded
-        #     raise Exception ("embedded task in submission.xml is not supported")
-        # elif submission_dict.get("inline-task-zip"):
-        #     # 3. inline-task-zip
-        #     raise Exception ("inline-task-zip in submission.xml is not supported")
-        #     #return "inline-task-zip"
-        # else:
-        #     raise Exception ("could not find task in submission.xml")
-
-
         # task_type_dict = check_task_type(submission_dict)
         submission_files = get_submission_files(root, request) # returns a dictionary (filename -> contant)
-        # compress to zip file
-        #submission_zip_obj = file_dict2zip(submission_files)
-        #submission_zip = {"submission" + ".zip": submission_zip_obj}  # todo name it to the user + course
 
         logger.info("grading request for task " + task_filename)
         logger.debug('import task')
@@ -349,12 +331,39 @@ def get_submission_files(root, request):
 
             if filename == file_name:
                 submission_files_dict = dict()
-                file_content = str(file.read().decode(encoding='utf-8', errors='replace'))
-                # logger.debug("submission file content is: " + file_content)
-                submission_files_dict.update({file_name: file_content})
-                return submission_files_dict
+                if name.lower().endswith('.zip'):
+                    # uncompress submission
+                    regex = r'(' + '|'.join([
+                        r'/$',  # don't unpack folders - the zipfile package will create them on demand
+                    ]) + r')'
+                    ignored_file_names_re = re.compile(regex)
 
-        # special handling for filenames containing a relative path:
+                    zip_file = zipfile.ZipFile(file, 'r')
+                    for zipFileName in zip_file.namelist():
+                        if not ignored_file_names_re.search(zipFileName):  # unzip only allowed files + wanted file
+                            t = tempfile.NamedTemporaryFile(delete=True)
+                            t.write(zip_file.open(zipFileName).read())  # todo: encoding
+                            t.flush()
+                            my_temp = File(t)
+                            my_temp.name = zipFileName
+                            submission_files_dict[zipFileName] = my_temp
+
+                    return submission_files_dict
+
+
+                elif name.lower().endswith('.jar'):
+                    # read binary file
+                    logger.debug("submission file is a JAR file")
+                    file_content = str(file.read())
+                    submission_files_dict.update({file_name: file_content})
+                    return submission_files_dict
+                else:
+                    file_content = str(file.read().decode(encoding='utf-8', errors='replace'))
+                    # logger.debug("submission file content is: " + file_content)
+                    submission_files_dict.update({file_name: file_content})
+                    return submission_files_dict
+
+        # special handling for filenames containing a relative path (Java):
         # if file_name is not found:
         for filename, file in request.FILES.items():
             #name = request.FILES[filename].name
