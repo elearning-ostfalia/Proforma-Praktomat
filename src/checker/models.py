@@ -9,6 +9,7 @@ import time
 import shutil
 import sys
 import resource
+import logging
 
 from django.conf import settings
 from django.db import models
@@ -26,6 +27,7 @@ from functools import partial
 from multiprocessing import Pool
 from django import db
 
+logger = logging.getLogger(__name__)
 
 def execute(command, working_directory, environment_variables={}, use_default_user_configuration=True, timeout=None,
             fileseeklimit=None):
@@ -106,6 +108,10 @@ def execute_arglist(args, working_directory, environment_variables={}, use_defau
     else:
         command = []
     command += args[:]
+
+    concatenatedString = ' '.join(command)
+    logger.debug('execute in ' + working_directory)
+    logger.debug('command :' + concatenatedString)
     # stderr = subprocess32.STDOUT if join_stderr_stdout else subprocess32.PIPE
 
     # TODO: Dont even read in output longer than fileseeklimit. This might be most conveniently done by supplying a file like object instead of PIPE

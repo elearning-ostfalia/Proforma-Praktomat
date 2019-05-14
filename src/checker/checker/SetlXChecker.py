@@ -3,6 +3,8 @@
 from pipes import quote
 import os
 import re
+import logging
+
 from django.conf import settings
 
 from django.db import models
@@ -10,6 +12,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.html import escape
 from checker.models import Checker, CheckerResult, CheckerFileField, execute, execute_arglist, truncated_log
 from utilities.file_operations import *
+
+logger = logging.getLogger(__name__)
 
 RXSECURE = re.compile(r"(deleteFile|appendFile|load|readFile|writeFile|stop|assert|trace|ask|\brun\b|eval|execute)",
                       re.MULTILINE)
@@ -39,7 +43,6 @@ class SetlXChecker(Checker):
     def conCat(self, testdir, studentSubmission, testFile):
         with open(os.path.join(testdir, "concat.stlx"), 'w+') as concat:
             concat.write(studentSubmission + self.testFile.read())
-        return concat
         return concat
 
     def run(self, env):
