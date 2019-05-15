@@ -3,10 +3,9 @@ version: '3'
 # perform the following steps in buuild the docker container images: 
 # 0.a) fill subfolder 'extra' with needed additional libraries for grading (e.g. JUNIT)
 #   b) adjust src/settings_docker.py to your needs
-# 1. docker-compose build
-# 2. docker-compose up
-# 3. docker exec -ti praktomat ./init_database.sh
-# step 3 is needed in order to initialise the database
+# 1. docker-compose up
+# 2. docker exec -ti praktomat ./init_database.sh
+# step 2 is needed in order to initialise the database
 
 
 services:

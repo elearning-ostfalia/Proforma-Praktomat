@@ -13,9 +13,11 @@ Docker
 
 In order to set up the docker composition execute the following steps:
 
-* build the docker images (call 'docker-compose build')
+* fill the extra folder with libraries you need for grading 
+    (e.g. junit-xxx.jar, hamcrest-core-xxx.jar, checkstyle-xxx.jar....) 
+    and adjust your settings_docker.py 
 
-* start the docker containers (call 'docker-compose up')
+* build and start the docker containers (call 'docker-compose up')
 
 * initialise the docker containers (call 'docker exec -ti praktomat ./init_database.sh')
 
