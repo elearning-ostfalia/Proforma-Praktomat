@@ -40,6 +40,7 @@ from django.template import TemplateSyntaxError
 from django.template.loader import render_to_string
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files import File
+from django.http import HttpResponse
 from lxml import etree
 from lxml import objectify
 import logging
@@ -395,25 +396,7 @@ def creating_file_checker(embedded_file_dict, new_task, ns, val_order, xml_test,
             val_order += 1  # to push the junit-checker behind create-file checkers
     return val_order
 
-def creatingFileChecker(embeddedFileDict, newTask, ns, valOrder, xmlTest):
-    orderCounter = 1
-    for fileref in xmlTest.xpath("proforma:test-configuration/proforma:filerefs/proforma:fileref", namespaces=ns):
-        if embeddedFileDict.get(fileref.attrib.get("refid")) is not None:
-            inst2 = CreateFileChecker.CreateFileChecker.objects.create(task=newTask,
-                                                                       order=valOrder,
-                                                                       path=""
-            )
-            inst2.file = embeddedFileDict.get(fileref.attrib.get("refid")) #check if the refid is there
-            if dirname(embeddedFileDict.get(fileref.attrib.get("refid")).name) is not None:
-                inst2.path = dirname(embeddedFileDict.get(fileref.attrib.get("refid")).name)
-            else:
-                pass
 
-            inst2 = testVisibility(inst2, xmlTest, ns, False)
-            inst2.save()
-            orderCounter += 1
-            valOrder += 1  #to push the junit-checker behind create-file checkers
-    return valOrder
 
 
 def creatingFileCheckerNoDep(FileDict, newTask, ns, valOrder, xmlTest):
@@ -568,6 +551,7 @@ def import_task_internal(filename, task_file):
 
     encoding = rxcoding.search(task_xml, re.IGNORECASE)
     if (encoding != 'UFT-8' or encoding != 'utf-8') and encoding is not None:
+        print ('dumme if-Anweisung gefunden')
         task_xml = task_xml.decode(encoding.group('enc')).encode('utf-8')
     xml_object = objectify.fromstring(task_xml)
 

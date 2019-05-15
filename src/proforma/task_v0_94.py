@@ -24,6 +24,7 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.core.files import File
+from django.views.decorators.csrf import csrf_exempt
 
 from datetime import datetime
 from lxml import objectify
@@ -45,8 +46,28 @@ import task
 logger = logging.getLogger(__name__)
 
 
-@csrf_exempt
-def importTask(task_xml, dict_zip_files): #request, ):
+def creatingFileChecker(embeddedFileDict, newTask, ns, valOrder, xmlTest):
+    orderCounter = 1
+    for fileref in xmlTest.xpath("proforma:test-configuration/proforma:filerefs/proforma:fileref", namespaces=ns):
+        if embeddedFileDict.get(fileref.attrib.get("refid")) is not None:
+            inst2 = CreateFileChecker.CreateFileChecker.objects.create(task=newTask,
+                                                                       order=valOrder,
+                                                                       path=""
+            )
+            inst2.file = embeddedFileDict.get(fileref.attrib.get("refid")) #check if the refid is there
+            if dirname(embeddedFileDict.get(fileref.attrib.get("refid")).name) is not None:
+                inst2.path = dirname(embeddedFileDict.get(fileref.attrib.get("refid")).name)
+            else:
+                pass
+
+            inst2 = task.testVisibility(inst2, xmlTest, ns, False)
+            inst2.save()
+            orderCounter += 1
+            valOrder += 1  #to push the junit-checker behind create-file checkers
+    return valOrder
+
+
+def importTask(task_xml, dict_zip_files):
     """
     importTaskObject(request)
     return response
@@ -456,7 +477,7 @@ def importTask(task_xml, dict_zip_files): #request, ):
                                           "proforma:test-meta-data/praktomat:config-testname",
                                           namespaces=ns)[0].text
             if xmlTest.xpath("proforma:test-configuration/proforma:filerefs", namespaces=ns):
-                valOrder = task.creatingFileChecker(embeddedFileDict, newTask, ns, valOrder, xmlTest)
+                valOrder = creatingFileChecker(embeddedFileDict, newTask, ns, valOrder, xmlTest)
 
             inst.order = valOrder
             inst = task.testVisibility(inst, xmlTest, ns)
@@ -537,7 +558,7 @@ def importTask(task_xml, dict_zip_files): #request, ):
                                                            "praktomat:config-returnHtml",
                                                            namespaces=ns)[0].text)
             if xmlTest.xpath("proforma:test-configuration/proforma:filerefs", namespaces=ns):
-                valOrder = task.creatingFileChecker(embeddedFileDict, newTask, ns, valOrder, xmlTest)
+                valOrder = creatingFileChecker(embeddedFileDict, newTask, ns, valOrder, xmlTest)
 
             inst.order = valOrder
             inst = task.testVisibility(inst, xmlTest, ns)
