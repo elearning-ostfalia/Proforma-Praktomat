@@ -83,3 +83,9 @@ For submitting more than one file you have the folloeing options:
 Sample for http-file:
 
         de/ostfalia/sample/User.java,de/ostfalia/sample/File.java
+
+You can also try: 
+
+        User.java,File.java
+        
+Praktomat tries and guesses the relative Java path name from the package declared in the source code.

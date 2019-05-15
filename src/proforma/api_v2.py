@@ -309,6 +309,30 @@ def get_submission_xml(request):
 
 
 
+# try and guess the correct JAVA path name derived from the package that
+# is declared in the source code
+def find_package_path(file_content):
+    # remove comment with /* */
+    file_content = re.sub(r'\/\*[\s\S]*?\*\/', '', file_content, re.MULTILINE)
+    file_content = re.sub(r'\/\/.*', '', file_content, re.MULTILINE)
+
+    pattern = re.compile('package([\s\S]*?);')
+    m = pattern.search(file_content)
+    try:
+        package = m.group(2).strip()
+    except:
+        try:
+            package = m.group(1).strip()
+        except:
+            logger.debug("no package found")
+            return
+
+    package = re.sub('\.', '/', package)
+    logger.debug("package path: " + package)
+    return package
+
+
+
 def get_submission_file_from_request(searched_file_name, request):
 
     logger.debug("search submission file: " + searched_file_name)
@@ -343,6 +367,23 @@ def get_submission_file_from_request(searched_file_name, request):
                 logger.debug("submission file is a JAR file")
                 file_content = str(file.read())
                 submission_files_dict.update({searched_file_name: file_content})
+                return submission_files_dict
+            elif name.lower().endswith('.java'):
+                # special handling for single java files
+                # add package name to filename
+                logger.debug("special handling for java file")
+                file_content = file.read()
+
+                short_filename = os.path.basename(searched_file_name)
+                if short_filename == searched_file_name: # short filename
+                    package = find_package_path(file_content)
+                    file_content = file_content.decode('utf-8')
+                    short_filename =  package + '/' + searched_file_name
+                    submission_files_dict.update({short_filename: file_content})
+                else:
+                    file_content = file_content.decode('utf-8')
+                    submission_files_dict.update({searched_file_name: file_content})
+
                 return submission_files_dict
             else:
                 file_content = file.read().decode('utf-8')
