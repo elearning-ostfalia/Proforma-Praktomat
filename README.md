@@ -43,7 +43,8 @@ A typical grading HTTP request in CURL is
     curl -X POST --form submission.xml=@submission.xml -F "{solutionfilename}=@{solutionfile}" -F "{taskfilename}=@{taskfile}" http://localhost:8010/api/v2/submissions
 
 with the following 'submission.xml'
-    
+
+  
     <?xml version="1.0" encoding="utf-8"?>
     <submission xmlns="urn:proforma:v2.0">
         <external-task uuid="{UUID}">http-file:{taskfilename}</external-task>
@@ -59,9 +60,24 @@ with the following 'submission.xml'
         </result-spec>
     </submission>"
 
-'submission.xml' can be transferred as a separate file or simply as data.
+'submission.xml' can be transferred as a separate file or simply as data. 
+Files are sent as normal 'file upload'.
  
 Note that embedding the submission file(s) into submission.xml as embedded-txt-file is also supported.
 
-A sample for a timestamp is: "2019-04-03T01:01:01+01:00". 
+A sample for a timestamp is: 
 
+        2019-04-03T01:01:01+01:00 
+
+
+### Submission with more than one file
+
+For submitting more than one file you have the folloeing options: 
+
+* create a list of embedded text files in the files section
+* send one zip file containing all submission files
+* set http-file as file name list (comma separated without blanks) and using standard file upload 
+
+Sample for http-file:
+
+        de/ostfalia/sample/User.java,de/ostfalia/sample/File.java

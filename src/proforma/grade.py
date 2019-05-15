@@ -387,21 +387,16 @@ def save_file(data, solution_file, filename):
             with default_storage.open('%s' % (full_filename), 'w') as destination:
                 for chunk in data.chunks():
                     destination.write(chunk)
-
-            #fd = codecs.open('%s' % (full_filename), 'wb', "utf-8")
-            #fd.write(data)
-            #fd.close()
         elif data.__class__.__name__ == 'File':
             logger.debug('File name is ' + data.name)
             logger.debug('full_filename name is ' + full_filename)
             tmp = default_storage.save(full_filename, data)
             logger.debug('save returned ' + tmp)
-
-            # fd = codecs.open('%s' % (full_filename), 'wb', "utf-8")
-                # fd.write(data)
-                # fd.close()
         else:
             # string
+            #fd = codecs.open('%s' % (full_filename), 'wb', "utf-8")
+            #fd.write(data)
+            #fd.close()
             fd = open('%s' % (full_filename), 'w')
             fd.write(data.encode("utf-8"))
             fd.close()

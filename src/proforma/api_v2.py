@@ -86,7 +86,7 @@ def grade_api_v2(request,):
     # create task and get Id
     try:
         # check request
-        xml = check_post(request)
+        xml = get_submission_xml(request)
         #logger.debug("got xml")
 
         # debugging uploaded files
@@ -197,7 +197,7 @@ def get_external_task(request, task_uri):
 
 
 
-def check_post(request):
+def get_submission_xml(request):
     """
     check the POST-Object
     1. could be just a submission.xml
@@ -308,83 +308,96 @@ def check_post(request):
 #         return None
 
 
-#def get_submission_files(submission_dict, request):
+
+def get_submission_file_from_request(searched_file_name, request):
+
+    logger.debug("search submission file: " + searched_file_name)
+
+    for filename, file in request.FILES.items():
+        name = request.FILES[filename].name
+        logger.debug("request.FILES[" + filename + "].name = " + name)
+
+        if filename == searched_file_name:
+            submission_files_dict = dict()
+            if name.lower().endswith('.zip'):
+                # uncompress submission
+                regex = r'(' + '|'.join([
+                    r'/$',  # don't unpack folders - the zipfile package will create them on demand
+                ]) + r')'
+                ignored_file_names_re = re.compile(regex)
+
+                zip_file = zipfile.ZipFile(file, 'r')
+                for zipFileName in zip_file.namelist():
+                    if not ignored_file_names_re.search(zipFileName):  # unzip only allowed files + wanted file
+                        t = tempfile.NamedTemporaryFile(delete=True)
+                        t.write(zip_file.open(zipFileName).read())  # todo: encoding
+                        t.flush()
+                        my_temp = File(t)
+                        my_temp.name = zipFileName
+                        submission_files_dict[zipFileName] = my_temp
+
+                return submission_files_dict
+
+            elif name.lower().endswith('.jar'):
+                # read binary file
+                logger.debug("submission file is a JAR file")
+                file_content = str(file.read())
+                submission_files_dict.update({searched_file_name: file_content})
+                return submission_files_dict
+            else:
+                file_content = file.read().decode('utf-8')
+                submission_files_dict.update({searched_file_name: file_content})
+                return submission_files_dict
+
+
+    # logger.debug("not found => relative path?: " + searched_file_name)
+    #
+    # # special handling for filenames containing a relative path (Java):
+    # # if file_name is not found:
+    # for filename, file in request.FILES.items():
+    #     # name = request.FILES[filename].name
+    #     # logger.debug("request.FILES[" + name + "]")
+    #     pure_filename = os.path.basename(searched_file_name)  # remove path
+    #     if filename == pure_filename:
+    #         submission_files_dict = dict()
+    #         file_content = file.read().decode('utf-8')
+    #         submission_files_dict.update({searched_file_name: file_content})
+    #         return submission_files_dict
+
+    raise Exception("could not find external submission " + searched_file_name)
+
 def get_submission_files(root, request):
     submission_element = root.find(".//dns:external-submission", NAMESPACES)
     if submission_element is not None:
+        # handle external submission
         field_name = submission_element.text
         if not field_name:
             raise Exception("invalid value for external-submission (none)")
 
+        # extract filename (list)
         m = re.match(r"(http\-file\:)(?P<file_name>.+)", field_name)
         if not m:
             raise Exception("unsupported external-submission: " + field_name)
-
-        file_name = m.group('file_name')
-        if file_name is None:
+        file_names = m.group('file_name')
+        if file_names is None:
             raise Exception("missing filename in external-submission")
 
-        logger.debug("submission file_name: " + str(file_name))
-        for filename, file in request.FILES.items():
-            name = request.FILES[filename].name
-            logger.debug("request.FILES[" + filename + "].name = " + name)
-
-            if filename == file_name:
-                submission_files_dict = dict()
-                if name.lower().endswith('.zip'):
-                    # uncompress submission
-                    regex = r'(' + '|'.join([
-                        r'/$',  # don't unpack folders - the zipfile package will create them on demand
-                    ]) + r')'
-                    ignored_file_names_re = re.compile(regex)
-
-                    zip_file = zipfile.ZipFile(file, 'r')
-                    for zipFileName in zip_file.namelist():
-                        if not ignored_file_names_re.search(zipFileName):  # unzip only allowed files + wanted file
-                            t = tempfile.NamedTemporaryFile(delete=True)
-                            t.write(zip_file.open(zipFileName).read())  # todo: encoding
-                            t.flush()
-                            my_temp = File(t)
-                            my_temp.name = zipFileName
-                            submission_files_dict[zipFileName] = my_temp
-
-                    return submission_files_dict
-
-
-                elif name.lower().endswith('.jar'):
-                    # read binary file
-                    logger.debug("submission file is a JAR file")
-                    file_content = str(file.read())
-                    submission_files_dict.update({file_name: file_content})
-                    return submission_files_dict
-                else:
-                    file_content = str(file.read().decode(encoding='utf-8', errors='replace'))
-                    # logger.debug("submission file content is: " + file_content)
-                    submission_files_dict.update({file_name: file_content})
-                    return submission_files_dict
-
-        # special handling for filenames containing a relative path (Java):
-        # if file_name is not found:
-        for filename, file in request.FILES.items():
-            #name = request.FILES[filename].name
-            #logger.debug("request.FILES[" + name + "]")
-            pure_filename = os.path.basename(file_name) # remove path
-            if filename == pure_filename:
-                submission_files_dict = dict()
-                file_content = str(file.read().decode(encoding='utf-8', errors='replace'))
-                # logger.debug("submission file content is: " + file_content)
-                submission_files_dict.update({file_name: file_content})
-                return submission_files_dict
-
-
-        raise Exception("could not find external submission " + file_name)
+        logger.debug("submission filename(s): " + str(file_names))
+        # filename may be a list of filenames
+        names = str(file_names).split(',')
+        submission_files_dict = dict()
+        for searched_file_name in names:
+            # collect all files
+            submission_files_dict.update(get_submission_file_from_request(searched_file_name, request))
+        return submission_files_dict
 
     submission_files_dict = dict()
     submission_elements = root.findall(".//dns:files/dns:file/dns:embedded-txt-file", NAMESPACES)
     for sub_file in submission_elements:
         #logger.debug(sub_file)
         filename = sub_file.attrib["filename"]
-        file_content = sub_file.text.encode('utf-8')
+        #logger.debug('classname is ' + sub_file.text.__class__.__name__)
+        file_content = sub_file.text  # no need to encode because it is already a Unicode object
         submission_files_dict.update({filename: file_content})
 
     submission_elements = root.findall(".//dns:files/dns:file/dns:embedded-bin-file", NAMESPACES)
