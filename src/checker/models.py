@@ -110,7 +110,7 @@ def execute_arglist(args, working_directory, environment_variables={}, use_defau
     command += args[:]
 
     concatenatedString = ' '.join(command)
-    logger.debug('execute in ' + working_directory)
+    logger.debug('execute command in ' + working_directory + ':')
     logger.debug('command :' + concatenatedString)
     # stderr = subprocess32.STDOUT if join_stderr_stdout else subprocess32.PIPE
 

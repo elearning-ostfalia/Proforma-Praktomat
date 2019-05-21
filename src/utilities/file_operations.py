@@ -3,8 +3,11 @@
 import os
 import grp
 import tempfile
+import logging
 from django.conf import settings
 from utilities import encoding
+
+logger = logging.getLogger(__name__)
 
 gid = None
 if (settings.USEPRAKTOMATTESTER):
@@ -47,6 +50,7 @@ def create_file(path, content, replace=[], override=True):
 
 def copy_file(from_file_path, to_file_path, replace=[], override=True):
     """ """
+    logger.debug('copy file from ' + from_file_path + ' to ' + to_file_path)
     with open(from_file_path) as fd:
         content = encoding.get_unicode(fd.read())
     create_file(to_file_path, content, replace=replace, override=override)

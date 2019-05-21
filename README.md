@@ -13,19 +13,25 @@ Docker
 
 In order to set up the docker composition execute the following steps:
 
-* fill the extra folder with libraries you need for grading 
-    (e.g. junit-xxx.jar, hamcrest-core-xxx.jar, checkstyle-xxx.jar....) 
-    and adjust your settings_docker.py 
+1. Download and copy all libraries you need for grading 
+    (e.g. junit-4.12.jar, hamcrest-core-1.3.jar, checkstyle-7.6-all.jar, ....) 
+    and adjust your settings_docker.py (JAVA_LIBS, CHECKSTYLE_VER)
 
-* build and start the docker containers (call 'docker-compose up')
+2. build and start the docker containers
 
-* initialise the docker containers (call 'docker exec -ti praktomat ./init_database.sh')
+        docker-compose up
 
-Then Praktomat is available on port 80 in your web browser.  
+3. initialise the docker containes (i.e. create database schema)
+    
+        docker exec -ti praktomat ./init_database.sh
+
+Then Praktomat is available on port 80 in your web browser:  
 
         http://localhost
 
-If you only want to use the Praktomat as a grading back-end the appropriate URI is
+For login see the credentials in your docker-compose.yml file (SUPERUSER and PASSWORD). 
+
+If you only want to use Praktomat as a grading back-end the appropriate URI is
 
         http://localhost:80/api/v2/submissions
 
@@ -74,18 +80,18 @@ A sample for a timestamp is:
 
 ### Submission with more than one file
 
-For submitting more than one file you have the folloeing options: 
+For submitting more than one file you have the following options: 
 
 * create a list of embedded text files in the files section
-* send one zip file containing all submission files
-* set http-file as file name list (comma separated without blanks) and using standard file upload 
+* send one zip file containing all submission files (relative paths needed in Java)
+* set http-file as file name list (comma separated without blanks) and use standard file upload 
 
-Sample for http-file:
+Sample for http-file for Java submission files:
 
-        de/ostfalia/sample/User.java,de/ostfalia/sample/File.java
+        http-file:de/ostfalia/sample/User.java,de/ostfalia/sample/File.java
 
-You can also try: 
+You can also omit the relative path for Java source files: 
 
-        User.java,File.java
+        http-file:User.java,File.java
         
-Praktomat tries and guesses the relative Java path name from the package declared in the source code.
+Praktomat parses the source code in order to determine the package which results in the relative path.
