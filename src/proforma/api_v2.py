@@ -47,6 +47,7 @@ import task
 import grade
 import zipfile
 import tempfile
+import VERSION
 
 #from proforma_taskget.views import login_phantomjs, get_task_from_externtal_server, answer_format_template
 
@@ -61,8 +62,10 @@ def get_http_error_page(title, message, callstack):
 
     %s
 
+Praktomat: %s
+
 Callstack:
-    %s""" % (title, message, callstack)
+    %s""" % (title, message, VERSION.version, callstack)
 
 
 
@@ -325,7 +328,7 @@ def find_package_path(file_content):
             package = m.group(1).strip()
         except:
             logger.debug("no package found")
-            return
+            return ''
 
     package = re.sub('\.', '/', package)
     logger.debug("package path: " + package)
@@ -377,16 +380,20 @@ def get_submission_file_from_request(searched_file_name, request):
                 short_filename = os.path.basename(searched_file_name)
                 if short_filename == searched_file_name: # short filename
                     package = find_package_path(file_content)
-                    file_content = file_content.decode('utf-8')
-                    short_filename =  package + '/' + searched_file_name
+                    logger.debug('classname is ' + file_content.__class__.__name__)
+##                    file_content = file_content.decode('utf-8')
+                    if len(package) > 0:
+                        short_filename =  package + '/' + searched_file_name
+                    else:
+                        short_filename = searched_file_name
                     submission_files_dict.update({short_filename: file_content})
                 else:
-                    file_content = file_content.decode('utf-8')
+##                    file_content = file_content.decode('utf-8')
                     submission_files_dict.update({searched_file_name: file_content})
 
                 return submission_files_dict
             else:
-                file_content = file.read().decode('utf-8')
+                file_content = file.read() ##.decode('utf-8')
                 submission_files_dict.update({searched_file_name: file_content})
                 return submission_files_dict
 
@@ -408,6 +415,8 @@ def get_submission_file_from_request(searched_file_name, request):
     raise Exception("could not find external submission " + searched_file_name)
 
 def get_submission_files(root, request):
+    ## TODO: read binary if possible and write binary without conversion
+
     submission_element = root.find(".//dns:external-submission", NAMESPACES)
     if submission_element is not None:
         # handle external submission

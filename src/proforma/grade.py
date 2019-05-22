@@ -392,13 +392,21 @@ def save_file(data, solution_file, filename):
             logger.debug('full_filename name is ' + full_filename)
             tmp = default_storage.save(full_filename, data)
             logger.debug('save returned ' + tmp)
+        elif data.__class__.__name__ == 'str':
+            fd = open('%s' % (full_filename), 'w')
+            fd.write(data)
+            fd.close()
+        elif data.__class__.__name__ == 'unicode':
+            fd = open('%s' % (full_filename), 'w')
+            fd.write(data.encode("utf-8"))
+            fd.close()
         else:
             # string
             #fd = codecs.open('%s' % (full_filename), 'wb', "utf-8")
             #fd.write(data)
             #fd.close()
             fd = open('%s' % (full_filename), 'w')
-            fd.write(data.encode("utf-8"))
+            fd.write(data) ## .encode("utf-8"))
             fd.close()
 
     return full_filename
