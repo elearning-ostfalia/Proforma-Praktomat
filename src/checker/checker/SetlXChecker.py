@@ -41,9 +41,19 @@ class SetlXChecker(Checker):
             return True
 
     def conCat(self, testdir, studentSubmission, testFile):
-        with open(os.path.join(testdir, "concat.stlx"), 'w+') as concat:
-            concat.write(studentSubmission + self.testFile.read())
-        return concat
+        if studentSubmission.__class__.__name__ != 'unicode':
+            raise Exception('unsupported class ' + studentSubmission.__class__.__name__)
+
+        import codecs
+        with codecs.open(os.path.join(testdir, "concat.stlx"), encoding='utf-8', mode='w+') as concat:
+            logger.debug('studentSubmission class name is ' + studentSubmission.__class__.__name__)
+            f = codecs.open(self.testFile.path, encoding='utf-8')
+            testfile_content = f.read()
+            sequence = [studentSubmission, testfile_content]
+            output = ''.join(sequence)
+            concat.write(output)
+            return concat
+
 
     def run(self, env):
 
@@ -68,14 +78,15 @@ class SetlXChecker(Checker):
                 result.set_log("Bitte keine IO-Befehle verwenden")
                 return result
             else:
+                pass
                 #concat test
-                try:
-                    concatFile = self.conCat(test_dir, content, self.testFile)
-                except UnicodeEncodeError:
-                    result.set_passed(False)
-                    result.set_log("Special characters can pose a problem. Vermeiden Sie Umlaute im Source Code "
-                                   "und verwenden Sie kein <, > oder & in XML Dokumenten.")
-                    return result
+                #try:
+                concatFile = self.conCat(test_dir, content, self.testFile)
+                #except UnicodeEncodeError:
+                #    result.set_passed(False)
+                #    result.set_log("Special characters can pose a problem. Vermeiden Sie Umlaute im Source Code "
+                #                   "und verwenden Sie kein <, > oder & in XML Dokumenten.")
+                #    return result
 
 
         # complete test

@@ -196,10 +196,11 @@ def create_java_compiler_checker(xmlTest, val_order, new_task, ns):
                                                   _output_flags="",
                                                   _file_pattern=r"^.*\.[jJ][aA][vV][aA]$"
                                                   )
-    if xmlTest.attrib is not None:
-        attributes = xmlTest.attrib
-        if attributes.get("id"):
-            inst.proforma_id = attributes.get("id")
+    inst.proforma_id = xmlTest.attrib.get("id") # required attribute!!
+    #if xmlTest.attrib is not None:
+    #    attributes = xmlTest.attrib
+    #    if attributes.get("id"):
+    #        inst.proforma_id = attributes.get("id")
     # first check if path exist, second if the element is empty, third import the value
     if xmlTest.xpath("p:title", namespaces=ns) is not None:
             inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
@@ -254,11 +255,12 @@ def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
     checker_ns['unit'] = 'urn:proforma:tests:unittest:v1'
 
     inst = JUnitChecker.JUnitChecker.objects.create(task=new_task, order=val_order)
+    inst.proforma_id = xmlTest.attrib.get("id") # required attribute!!
 
-    if xmlTest.attrib is not None:
-        attributes = xmlTest.attrib
-        if attributes.get("id"):
-            inst.proforma_id = attributes.get("id")
+    #if xmlTest.attrib is not None:
+    #    attributes = xmlTest.attrib
+    #    if attributes.get("id"):
+    #        inst.proforma_id = attributes.get("id")
 
     if xmlTest.xpath("p:title", namespaces=ns) is not None:
             inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
@@ -353,17 +355,20 @@ def create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_d
     checker_ns = ns.copy()
     checker_ns['praktomat'] = 'urn:proforma:praktomat:v0.2'
     checker_ns['check'] = 'urn:proforma:tests:java-checkstyle:v1.1'
-    
+
+    inst = None
     for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
         if test_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
             inst = CheckStyleChecker.CheckStyleChecker.objects.create(task=new_task, order=val_order)
             inst.configuration = test_file_dict.get(fileref.fileref.attrib.get("refid"))
         if xmlTest.xpath("p:title", namespaces=checker_ns) is not None:
             inst.name = xmlTest.xpath("p:title", namespaces=checker_ns)[0]
-        if xmlTest.attrib is not None:
-            attributes = xmlTest.attrib
-            if attributes.get("id"):
-                inst.proforma_id = attributes.get("id")
+        #if xmlTest.attrib is not None:
+        #    attributes = xmlTest.attrib
+        #    if attributes.get("id"):
+        #        inst.proforma_id = attributes.get("id")
+        inst.proforma_id = xmlTest.attrib.get("id")  # required attribute!!
+
         if xmlTest.xpath("p:test-configuration/praktomat:version", namespaces=checker_ns):
             checkstyle_version = re.split('\.', xmlTest.xpath("p:test-configuration/"
                                           "praktomat:version", namespaces=checker_ns)[0].text)
@@ -400,24 +405,20 @@ def create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_d
 
 
 def create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict):
+    inst = None
     for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
         if test_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
+            if inst is not None:
+                raise Exception("Setlx: more than one referenced file per test is not supported")
+
             inst = SetlXChecker.SetlXChecker.objects.create(task=new_task, order=val_order)
             inst.testFile = test_file_dict.get(fileref.fileref.attrib.get("refid"))
 
-    if xmlTest.xpath("p:title", namespaces=ns) is not None:
-        if inst is None:
-            raise Exception("Error in JARTest")
-        else:
-            inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
-
-    if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-testDescription",
-                      namespaces=ns) and
-        xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-testDescription",
-                      namespaces=ns)[0].text):
-        inst.test_description = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-                                              "praktomat:config-testDescription",
-                                              namespaces=ns)[0].text
+    if xmlTest.xpath("p:title", namespaces=ns) is not None: # optional or required?
+        inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
+    #inst.name = get_optional_xml_element_text(xmlTest, "p:title", ns)
+    inst.test_description = get_optional_xml_element_text(xmlTest, "p:description", ns)
+    inst.proforma_id = xmlTest.attrib.get("id") # required attribute!!
 
     inst = set_visibilty(inst)
     inst.save()
@@ -502,18 +503,18 @@ def import_task(task_xml, dict_zip_files=None):
         val_order = task.creatingFileCheckerNoDep(create_file_dict, new_task, ns,
                                                                          val_order, xmlTest=None)
         for xmlTest in xml_obj.tests.iterchildren():
-            if xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "java-compilation":  # todo check compilation_xsd
+            testtype = xmlTest.xpath("p:test-type", namespaces=ns)[0].text
+            if testtype == "java-compilation":  # todo check compilation_xsd
                 logger.debug('** create_java_compiler_checker')
                 create_java_compiler_checker(xmlTest, val_order, new_task, ns)
-            elif xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "unittest":
+            elif testtype == "unittest":
                 logger.debug('** create_java_unit_checker')
                 create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict)
-            elif xmlTest.xpath("p:test-type", namespaces=ns)[0].text == "java-checkstyle":
+            elif testtype == "java-checkstyle":
                 create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_dict)
-            #elif xmlTest.xpath("p:test-type", namespaces=ns)[0] == "jartest" and \
-            #     xmlTest.xpath("p:test-configuration/jartest:jartest[@framework='setlX']", namespaces=ns):
-            #        create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict)
-            elif xmlTest.xpath("proforma:test-type", namespaces=ns)[0] == "python-doctest":
+            elif testtype == "setlx": # and xmlTest.xpath("p:test-configuration/jartest:jartest[@framework='setlX']", namespaces=ns):
+                create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict)
+            elif testtype == "python-doctest":
                 logger.debug('** create_python_checker')
                 create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict)
             val_order += 1
