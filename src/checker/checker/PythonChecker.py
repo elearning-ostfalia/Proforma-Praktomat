@@ -50,8 +50,9 @@ class PythonChecker(Checker):
             return False
 
     def checkSubmission(self, submission):
-        if RXSECURE.search(submission) or RXCODING.search(submission) or RXSHEBANG.search(submission):
-            return True
+        if RXSECURE.search(submission) or RXSHEBANG.search(submission):
+        #  if RXSECURE.search(submission) or RXCODING.search(submission) or RXSHEBANG.search(submission):
+                return True
         else:
             return False
 

@@ -186,9 +186,17 @@ def create_file_dict_func(xml_obj, namespace, external_file_dict=None, ):
     return create_file_dict, test_file_dict, modelsolution_file_dict
 
 
+def set_test_base_parameters(inst, xmlTest, ns):
+    if xmlTest.xpath("p:title", namespaces=ns) is not None:
+        inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
+    #if (xmlTest.xpath("p:title", namespaces=ns) and xmlTest.xpath("p:title", namespaces=ns)[0].text):
+    #    inst.name = xmlTest.xpath("p:title", namespaces=ns)[0].text
+    inst.test_description = get_optional_xml_element_text(xmlTest, "p:description", ns)
+    inst.proforma_id = xmlTest.attrib.get("id")  # required attribute!!
+
 def create_java_compiler_checker(xmlTest, val_order, new_task, ns):
     checker_ns = ns.copy()
-    checker_ns['praktomat'] = 'urn:proforma:praktomat:v0.2'
+    #checker_ns['praktomat'] = 'urn:proforma:praktomat:v0.2'
 
     inst = JavaBuilder.JavaBuilder.objects.create(task=new_task,
                                                   order=val_order,
@@ -196,46 +204,18 @@ def create_java_compiler_checker(xmlTest, val_order, new_task, ns):
                                                   _output_flags="",
                                                   _file_pattern=r"^.*\.[jJ][aA][vV][aA]$"
                                                   )
-    inst.proforma_id = xmlTest.attrib.get("id") # required attribute!!
+
+    set_test_base_parameters(inst, xmlTest, ns)
+    #inst.proforma_id = xmlTest.attrib.get("id") # required attribute!!
     #if xmlTest.attrib is not None:
     #    attributes = xmlTest.attrib
     #    if attributes.get("id"):
     #        inst.proforma_id = attributes.get("id")
     # first check if path exist, second if the element is empty, third import the value
-    if xmlTest.xpath("p:title", namespaces=ns) is not None:
-            inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
+    #if xmlTest.xpath("p:title", namespaces=ns) is not None:
+    #        inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
 
 
-    # try:
-    #     if xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFlags",
-    #                                 namespaces=checker_ns)[0].text is not None:
-    #         inst._flags = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFlags",
-    #                                 namespaces=checker_ns)[0].text
-    # except Exception as e:
-    #     pass
-    # try:
-    #     if xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-    #                      "praktomat:config-CompilerOutputFlags", namespaces=checker_ns)[0].text is not None:
-    #         inst._output_flags = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-    #                      "praktomat:config-CompilerOutputFlags", namespaces=checker_ns)[0].text
-    # except Exception as e:
-    #     pass
-    # try:
-    #     if xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerLibs",
-    #                                namespaces=checker_ns)[0].text is not None :
-    #         inst._libs = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerLibs",
-    #                                namespaces=checker_ns)[0].text
-    #
-    # except Exception as e:
-    #     pass
-    # try:
-    #     if xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-    #                      "praktomat:config-CompilerFilePattern",
-    #                      namespaces=checker_ns)[0] is not None:
-    #         inst._file_pattern = xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-CompilerFilePattern",
-    #                       namespaces=checker_ns)[0]
-    # except Exception as e:  #XPathEvalError
-    #     pass
     inst = set_visibilty(inst)
     inst.save()
     pass
@@ -247,6 +227,14 @@ def get_optional_xml_element_text(xmlTest, xpath, namespaces):
             return xmlTest.xpath(xpath, namespaces=namespaces)[0]
     except:
         return ""
+
+def get_required_xml_element_text(xmlTest, xpath, namespaces):
+    try:
+        if xmlTest.xpath(xpath, namespaces=namespaces) is not None:
+            return xmlTest.xpath(xpath, namespaces=namespaces)[0]
+    except:
+        raise Exception('XML error: cannot find ' + xpath)
+
 
 def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
     checker_ns = ns.copy()
@@ -324,24 +312,6 @@ def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
                 inst.delete()
                 raise Exception("JUnit-Version not known: " + str(version))
 
-    # if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-testDescription",
-    #                   namespaces=checker_ns) and
-    #     xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-testDescription",
-    #                   namespaces=checker_ns)[0].text):
-    #     inst.test_description = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-    #                                           "praktomat:config-testDescription",
-    #                                           namespaces=checker_ns)[0].text
-
-    # if (xmlTest.xpath("p:test-configuration/"
-    #                   "p:test-meta-data/praktomat:config-testname",
-    #                   namespaces=checker_ns) and
-    #     xmlTest.xpath("p:test-configuration/"
-    #                   "p:test-meta-data/praktomat:config-testname",
-    #                   namespaces=checker_ns)[0].text):
-    #     inst.name = xmlTest.xpath("p:test-configuration/"
-    #                               "p:test-meta-data/praktomat:config-testname",
-    #                               namespaces=checker_ns)[0].text
-
     if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
         val_order = task.creating_file_checker(embedded_file_dict=test_file_dict, new_task=new_task, ns=checker_ns,
                                           val_order=val_order, xml_test=xmlTest)
@@ -353,35 +323,18 @@ def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
 
 def create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_dict):
     checker_ns = ns.copy()
-    checker_ns['praktomat'] = 'urn:proforma:praktomat:v0.2'
+    #checker_ns['praktomat'] = 'urn:proforma:praktomat:v0.2'
     checker_ns['check'] = 'urn:proforma:tests:java-checkstyle:v1.1'
 
     inst = None
     for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
-        if test_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
-            inst = CheckStyleChecker.CheckStyleChecker.objects.create(task=new_task, order=val_order)
-            inst.configuration = test_file_dict.get(fileref.fileref.attrib.get("refid"))
-        if xmlTest.xpath("p:title", namespaces=checker_ns) is not None:
-            inst.name = xmlTest.xpath("p:title", namespaces=checker_ns)[0]
-        #if xmlTest.attrib is not None:
-        #    attributes = xmlTest.attrib
-        #    if attributes.get("id"):
-        #        inst.proforma_id = attributes.get("id")
-        inst.proforma_id = xmlTest.attrib.get("id")  # required attribute!!
+        if test_file_dict.get(fileref.fileref.attrib.get("refid")) is None:
+            raise Exception('No File for checkstyle-checker found')
+        inst = CheckStyleChecker.CheckStyleChecker.objects.create(task=new_task, order=val_order)
+        inst.configuration = test_file_dict.get(fileref.fileref.attrib.get("refid"))
+        set_test_base_parameters(inst, xmlTest, ns)
 
-        if xmlTest.xpath("p:test-configuration/praktomat:version", namespaces=checker_ns):
-            checkstyle_version = re.split('\.', xmlTest.xpath("p:test-configuration/"
-                                          "praktomat:version", namespaces=checker_ns)[0].text)
-            if int(checkstyle_version[0]) == 7 and int(checkstyle_version[1]) == 6:
-                inst.check_version = 'check-7.6'
-            elif int(checkstyle_version[0]) == 6 and int(checkstyle_version[1]) == 2:
-                inst.check_version = 'check-6.2'
-            elif int(checkstyle_version[0]) == 5 and int(checkstyle_version[1]) == 4:
-                inst.check_version = 'check-5.4'
-            else:
-                inst.delete()
-                raise Exception("Checkstyle-Version is not supported: " + str(checkstyle_version))
-        elif xmlTest.xpath("p:test-configuration/check:java-checkstyle",
+        if xmlTest.xpath("p:test-configuration/check:java-checkstyle",
                            namespaces=checker_ns)[0].attrib.get("version"):
             checkstyle_version = re.split('\.', xmlTest.xpath("p:test-configuration/"
                                           "check:java-checkstyle", namespaces=checker_ns)[0].attrib.get("version"))
@@ -409,48 +362,31 @@ def create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict):
     for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
         if test_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
             if inst is not None:
+                inst.delete()
                 raise Exception("Setlx: more than one referenced file per test is not supported")
 
             inst = SetlXChecker.SetlXChecker.objects.create(task=new_task, order=val_order)
             inst.testFile = test_file_dict.get(fileref.fileref.attrib.get("refid"))
 
-    if xmlTest.xpath("p:title", namespaces=ns) is not None: # optional or required?
-        inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
-    #inst.name = get_optional_xml_element_text(xmlTest, "p:title", ns)
-    inst.test_description = get_optional_xml_element_text(xmlTest, "p:description", ns)
-    inst.proforma_id = xmlTest.attrib.get("id") # required attribute!!
-
+    set_test_base_parameters(inst, xmlTest, ns)
     inst = set_visibilty(inst)
     inst.save()
 
 
+
 def create_python_checker(xmlTest, val_order, new_task, ns, test_file_dict):
-        inst = PythonChecker.PythonChecker.objects.create(task=new_task, order=val_order)
-        if (xmlTest.xpath("p:title", namespaces=ns) and
-           xmlTest.xpath("p:title", namespaces=ns)[0].text):
-            inst.name = xmlTest.xpath("p:title", namespaces=ns)[0].text
-        if (xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-                          "praktomat:config-remove-regex", namespaces=ns) and
-            xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-remove-regex",
-                          namespaces=ns)[0].text):
-            inst.remove = xmlTest.xpath("p:test-configuration/p:test-meta-data/"
-                                        "praktomat:config-remove-regex", namespaces=ns)[0].text
-        if (xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-returnHtml",
-                          namespaces=ns) and
-            xmlTest.xpath("p:test-configuration/p:test-meta-data/praktomat:config-returnHtml",
-                          namespaces=ns)[0].text):
-            inst.public = task.str2bool(xmlTest.xpath("p:test-configuration/"
-                                                       "p:test-meta-data/"
-                                                       "praktomat:config-returnHtml", namespaces=ns)[0].text)
-        if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
-            for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
-                if test_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
-                    inst.doctest = test_file_dict.get(fileref.fileref.attrib.get("refid"))
-                    inst = set_visibilty(inst)
-                    inst.save()
-                else:
-                    inst.delete()
-                    message = "No File for python-checker found"
+    inst = PythonChecker.PythonChecker.objects.create(task=new_task, order=val_order)
+    set_test_base_parameters(inst, xmlTest, ns)
+    if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
+        for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=ns):
+            if test_file_dict.get(fileref.fileref.attrib.get("refid")) is not None:
+                inst.doctest = test_file_dict.get(fileref.fileref.attrib.get("refid"))
+            else:
+                inst.delete()
+                raise Exception("No File for python-checker found")
+
+    inst = set_visibilty(inst)
+    inst.save()
 
 
 # todo???
