@@ -53,6 +53,31 @@ XSD_V_2_PATH = "xsd/proforma_v2.0.xsd"
 SYSUSER = "sys_prod"
 
 
+def get_optional_xml_attribute_text(xmlTest, xpath, attrib, namespaces):
+    if xmlTest.xpath(xpath, namespaces=namespaces) is None:
+        return ""
+
+    try:
+        return xmlTest.xpath(xpath, namespaces=namespaces)[0].attrib.get(attrib)
+    except:
+        return ""
+
+def get_optional_xml_element_text(xmlTest, xpath, namespaces):
+    try:
+        if xmlTest.xpath(xpath, namespaces=namespaces) is not None:
+            return xmlTest.xpath(xpath, namespaces=namespaces)[0]
+    except:
+        return ""
+
+def get_required_xml_element_text(xmlTest, xpath, namespaces, msg):
+    if xmlTest.xpath(xpath, namespaces=namespaces) is None:
+        raise Exception('Task XML error: ' + msg + ' is missing')
+
+    text = xmlTest.xpath(xpath, namespaces=namespaces)[0].text
+
+    if text is None or len(text) == 0:
+        raise Exception('Task XML error: ' + msg + ' must not be empty')
+    return text
 
 
 
@@ -206,111 +231,55 @@ def create_java_compiler_checker(xmlTest, val_order, new_task, ns):
                                                   )
 
     set_test_base_parameters(inst, xmlTest, ns)
-    #inst.proforma_id = xmlTest.attrib.get("id") # required attribute!!
-    #if xmlTest.attrib is not None:
-    #    attributes = xmlTest.attrib
-    #    if attributes.get("id"):
-    #        inst.proforma_id = attributes.get("id")
     # first check if path exist, second if the element is empty, third import the value
     #if xmlTest.xpath("p:title", namespaces=ns) is not None:
     #        inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
-
 
     inst = set_visibilty(inst)
     inst.save()
     pass
 
 
-def get_optional_xml_element_text(xmlTest, xpath, namespaces):
-    try:
-        if xmlTest.xpath(xpath, namespaces=namespaces) is not None:
-            return xmlTest.xpath(xpath, namespaces=namespaces)[0]
-    except:
-        return ""
-
-def get_required_xml_element_text(xmlTest, xpath, namespaces):
-    try:
-        if xmlTest.xpath(xpath, namespaces=namespaces) is not None:
-            return xmlTest.xpath(xpath, namespaces=namespaces)[0]
-    except:
-        raise Exception('XML error: cannot find ' + xpath)
 
 
 def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
     checker_ns = ns.copy()
-    checker_ns['praktomat'] = 'urn:proforma:praktomat:v0.2'
     checker_ns['unit_new'] = 'urn:proforma:tests:unittest:v1.1'
     checker_ns['unit'] = 'urn:proforma:tests:unittest:v1'
 
     inst = JUnitChecker.JUnitChecker.objects.create(task=new_task, order=val_order)
-    inst.proforma_id = xmlTest.attrib.get("id") # required attribute!!
+    set_test_base_parameters(inst, xmlTest, ns)
+    #if xmlTest.xpath("p:title", namespaces=ns) is not None:
+    #        inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
+    #inst.test_description = geget_required_xml_element_textt_optional_xml_element_text(xmlTest, "p:description", ns)
 
-    #if xmlTest.attrib is not None:
-    #    attributes = xmlTest.attrib
-    #    if attributes.get("id"):
-    #        inst.proforma_id = attributes.get("id")
+    inst.class_name = get_required_xml_element_text(xmlTest,
+        "p:test-configuration/unit_new:unittest/unit_new:entry-point", checker_ns, 'JUnit entrypoint')
 
-    if xmlTest.xpath("p:title", namespaces=ns) is not None:
-            inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
-    inst.test_description = get_optional_xml_element_text(xmlTest, "p:description", ns)
-
-    # old style
-    # if (xmlTest.xpath("p:test-configuration/unit:unittest/unit:main-class",
-    #                   namespaces=checker_ns) and
-    #     xmlTest.xpath("p:test-configuration/unit:unittest/unit:main-class",
-    #                   namespaces=checker_ns)[0].text):
-    #     inst.class_name = xmlTest.xpath("p:test-configuration/unit:unittest/unit:main-class",
-    #                                     namespaces=checker_ns)[0].text
-
-    if (xmlTest.xpath("p:test-configuration/unit_new:unittest/unit_new:entry-point",
-                      namespaces=checker_ns) and
-        xmlTest.xpath("p:test-configuration/unit_new:unittest/unit_new:entry-point",
-                      namespaces=checker_ns)[0].text):
-        inst.class_name = xmlTest.xpath("p:test-configuration/unit_new:unittest/unit_new:entry-point",
-                                        namespaces=checker_ns)[0].text
-    #else:
-    #    inst.delete()
-    #    raise Exception("unittest main-class not found. Check your namespace")
-
-    # todo: find better handling for calling this twice (bom)
+    junit_version = ''
     if xmlTest.xpath("p:test-configuration/unit:unittest[@framework='JUnit']", namespaces=checker_ns):
-        if xmlTest.xpath("p:test-configuration/unit:unittest[@framework='JUnit']",
-                         namespaces=checker_ns)[0].attrib.get("version"):
-            version = re.split('\.', xmlTest.xpath("p:test-configuration/"
-                                                   "unit:unittest[@framework='JUnit']",
-                                                   namespaces=checker_ns)[0].attrib.get("version"))
-
-            if int(version[0]) == 3:
-                inst.junit_version = 'junit3'
-            elif int(version[0]) == 4:
-                if str(version[1]) == "12-gruendel":
-                    inst.junit_version = 'junit4.12-gruendel'
-                elif str(version[1]) == "12":
-                    inst.junit_version = 'junit4.12'
-                else:
-                    inst.junit_version = 'junit4'
-            else:
-                inst.delete()
-                raise Exception("JUnit-Version not known: " + str(version))
+        junit_version = get_optional_xml_attribute_text(xmlTest,
+            "p:test-configuration/unit:unittest[@framework='JUnit']", "version", checker_ns)
     elif xmlTest.xpath("p:test-configuration/unit_new:unittest[@framework='JUnit']", namespaces=checker_ns):
-        if xmlTest.xpath("p:test-configuration/unit_new:unittest[@framework='JUnit']",
-                         namespaces=checker_ns)[0].attrib.get("version"):
-            version = re.split('\.', xmlTest.xpath("p:test-configuration/"
-                                                   "unit_new:unittest[@framework='JUnit']",
-                                                   namespaces=checker_ns)[0].attrib.get("version"))
+        junit_version = get_optional_xml_attribute_text(xmlTest,
+            "p:test-configuration/unit_new:unittest[@framework='JUnit']", "version", checker_ns)
 
-            if int(version[0]) == 3:
-                inst.junit_version = 'junit3'
-            elif int(version[0]) == 4:
-                if str(version[1]) == "12-gruendel":
-                    inst.junit_version = 'junit4.12-gruendel'
-                elif str(version[1]) == "12":
-                    inst.junit_version = 'junit4.12'
-                else:
-                    inst.junit_version = 'junit4'
-            else:
-                inst.delete()
-                raise Exception("JUnit-Version not known: " + str(version))
+    if len(junit_version) == 0:
+        raise Exception('Task XML error: Junit Version is missing')
+
+    version = re.split('\.', junit_version)
+    if int(version[0]) == 3:
+        inst.junit_version = 'junit3'
+    elif int(version[0]) == 4:
+        if str(version[1]) == "12-gruendel":
+            inst.junit_version = 'junit4.12-gruendel'
+        elif str(version[1]) == "12":
+            inst.junit_version = 'junit4.12'
+        else:
+            inst.junit_version = 'junit4'
+    else:
+        inst.delete()
+        raise Exception("JUnit-Version is not supported: " + str(version))
 
     if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
         val_order = task.creating_file_checker(embedded_file_dict=test_file_dict, new_task=new_task, ns=checker_ns,

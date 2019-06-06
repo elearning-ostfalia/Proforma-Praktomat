@@ -384,10 +384,7 @@ def creating_file_checker(embedded_file_dict, new_task, ns, val_order, xml_test,
                 inst2.path = dirname(embedded_file_dict.get(fileref.attrib.get("refid")).name)
             else:
                 pass
-
-            if required is False:
-                inst2 = check_visibility(inst=inst2, xml_test=None, namespace=ns, public=False)
-            elif required is True:
+            if required is True:
                 inst2 = check_visibility(inst=inst2, xml_test=None, namespace=ns, public=True)
             else:
                 inst2 = check_visibility(inst=inst2, xml_test=None, namespace=ns, public=False)
