@@ -53,6 +53,9 @@ XSD_V_2_PATH = "xsd/proforma_v2.0.xsd"
 SYSUSER = "sys_prod"
 
 
+class TaskXmlException(Exception):
+    pass
+
 def get_optional_xml_attribute_text(xmlTest, xpath, attrib, namespaces):
     if xmlTest.xpath(xpath, namespaces=namespaces) is None:
         return ""
@@ -71,12 +74,12 @@ def get_optional_xml_element_text(xmlTest, xpath, namespaces):
 
 def get_required_xml_element_text(xmlTest, xpath, namespaces, msg):
     if xmlTest.xpath(xpath, namespaces=namespaces) is None:
-        raise Exception('Task XML error: ' + msg + ' is missing')
+        raise TaskXmlException(msg + ' is missing')
 
     text = xmlTest.xpath(xpath, namespaces=namespaces)[0].text
 
     if text is None or len(text) == 0:
-        raise Exception('Task XML error: ' + msg + ' must not be empty')
+        raise TaskXmlException(msg + ' must not be empty')
     return text
 
 
@@ -219,6 +222,39 @@ def set_test_base_parameters(inst, xmlTest, ns):
     inst.test_description = get_optional_xml_element_text(xmlTest, "p:description", ns)
     inst.proforma_id = xmlTest.attrib.get("id")  # required attribute!!
 
+
+def create_testfiles(file_dict, new_task, ns, val_order, xml_test, firstHandler = None, inst = None):
+    order_counter = 1
+
+    count = 0
+    for fileref in xml_test.xpath("p:test-configuration/p:filerefs/p:fileref", namespaces=ns):
+        refid = fileref.attrib.get("refid")
+        if file_dict.get(refid) is None:
+            raise TaskXmlException('cannot find file with id = ' + refid)
+        logger.debug('handle test file ' + refid)
+        if count == 0:
+            if firstHandler is not None:
+                logger.debug('handle first test file ')
+                firstHandler(inst, file_dict.get(refid))
+            count = count +1
+        else:
+            logger.debug('create normal test file')
+            inst2 = CreateFileChecker.CreateFileChecker.objects.create(task=new_task,
+                                                                       order=val_order,
+                                                                       path=""
+                                                                       )
+            inst2.file = file_dict.get(refid)  # check if the refid is there
+            if dirname(file_dict.get(refid).name) is not None:
+                inst2.path = dirname(file_dict.get(refid).name)
+            inst2.always = True
+            inst2.public = False
+            inst2.required = False
+            inst2.save()
+            order_counter += 1
+            val_order += 1  # to push the junit-checker behind create-file checkers
+    return val_order
+
+
 def create_java_compiler_checker(xmlTest, val_order, new_task, ns):
     checker_ns = ns.copy()
     #checker_ns['praktomat'] = 'urn:proforma:praktomat:v0.2'
@@ -290,40 +326,54 @@ def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
     inst.save()
 
 
+def set_checkstyle_config(inst, value):
+    inst.configuration = value
+
 def create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_dict):
     checker_ns = ns.copy()
     #checker_ns['praktomat'] = 'urn:proforma:praktomat:v0.2'
     checker_ns['check'] = 'urn:proforma:tests:java-checkstyle:v1.1'
 
-    inst = None
-    for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
-        if test_file_dict.get(fileref.fileref.attrib.get("refid")) is None:
-            raise Exception('No File for checkstyle-checker found')
-        inst = CheckStyleChecker.CheckStyleChecker.objects.create(task=new_task, order=val_order)
-        inst.configuration = test_file_dict.get(fileref.fileref.attrib.get("refid"))
-        set_test_base_parameters(inst, xmlTest, ns)
+    inst = CheckStyleChecker.CheckStyleChecker.objects.create(task=new_task, order=val_order)
+    set_test_base_parameters(inst, xmlTest, ns)
+    if xmlTest.xpath("p:test-configuration/check:java-checkstyle",
+                     namespaces=checker_ns)[0].attrib.get("version"):
+        checkstyle_version = re.split('\.',
+                                      xmlTest.xpath("p:test-configuration/check:java-checkstyle",
+                                                          namespaces=checker_ns)[0].attrib.get("version"))
+        if int(checkstyle_version[0]) == 7 and int(checkstyle_version[1]) == 6:
+            inst.check_version = 'check-7.6'
+        elif int(checkstyle_version[0]) == 6 and int(checkstyle_version[1]) == 2:
+            inst.check_version = 'check-6.2'
+        elif int(checkstyle_version[0]) == 5 and int(checkstyle_version[1]) == 4:
+            inst.check_version = 'check-5.4'
+        else:
+            inst.delete()
+            raise Exception("Checkstyle-Version is not supported: " + str(checkstyle_version))
 
-        if xmlTest.xpath("p:test-configuration/check:java-checkstyle",
-                           namespaces=checker_ns)[0].attrib.get("version"):
-            checkstyle_version = re.split('\.', xmlTest.xpath("p:test-configuration/"
-                                          "check:java-checkstyle", namespaces=checker_ns)[0].attrib.get("version"))
-            if int(checkstyle_version[0]) == 7 and int(checkstyle_version[1]) == 6:
-                inst.check_version = 'check-7.6'
-            elif int(checkstyle_version[0]) == 6 and int(checkstyle_version[1]) == 2:
-                inst.check_version = 'check-6.2'
-            elif int(checkstyle_version[0]) == 5 and int(checkstyle_version[1]) == 4:
-                inst.check_version = 'check-5.4'
-            else:
-                inst.delete()
-                raise Exception("Checkstyle-Version is not supported: " + str(checkstyle_version))
+    if xmlTest.xpath("p:test-configuration/check:java-checkstyle/"
+                     "check:max-checkstyle-warnings", namespaces=checker_ns):
+        inst.allowedWarnings = xmlTest.xpath("p:test-configuration/"
+                                             "check:java-checkstyle/"
+                                             "check:max-checkstyle-warnings", namespaces=checker_ns)[0]
+    inst = set_visibilty(inst)
 
-        if xmlTest.xpath("p:test-configuration/check:java-checkstyle/"
-                         "check:max-checkstyle-warnings", namespaces=checker_ns):
-            inst.allowedWarnings = xmlTest.xpath("p:test-configuration/"
-                                                 "check:java-checkstyle/"
-                                                 "check:max-checkstyle-warnings", namespaces=checker_ns)[0]
-        inst = set_visibilty(inst)
-        inst.save()
+    create_testfiles(test_file_dict, new_task, ns, val_order, xmlTest, set_checkstyle_config, inst)
+    # count = 0
+    # for fileref in xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
+    #     if test_file_dict.get(fileref.fileref.attrib.get("refid")) is None:
+    #         raise Exception('No File for checkstyle-checker found')
+    #     if count == 0 :
+    #         logger.debug('handle first checkstyle file')
+    #         inst.configuration = test_file_dict.get(fileref.fileref.attrib.get("refid"))
+    #         count = 1
+    #     else:
+    #         logger.debug('handle checkstyle with more than one referred file')
+    #         val_order = task.creating_file_checker(embedded_file_dict=test_file_dict, new_task=new_task, ns=checker_ns,
+    #                                                val_order=val_order, xml_test=xmlTest)
+
+    inst.order = val_order
+    inst.save()
 
 
 def create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict):
