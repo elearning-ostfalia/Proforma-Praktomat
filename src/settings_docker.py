@@ -128,7 +128,7 @@ CHECKSTYLE_VER = {'check-6.2': '/praktomat/extra/checkstyle-6.2-all.jar',
                   'check-7.6': '/praktomat/extra/checkstyle-7.6-all.jar',
                   'check-5.4': '/praktomat/extra/checkstyle-7.6-all.jar'}
 JCFDUMP = 'jcf-dump'
-SETLXJAR = '/praktomat/extra/setlX.jar'
+SETLXJAR = '/praktomat/extra/setlX-2.7.jar'
 
 
 # Enable to run all scripts (checker) as the unix user 'tester'. Therefore put 'tester' as well
@@ -139,6 +139,11 @@ SETLXJAR = '/praktomat/extra/setlX.jar'
 # "developer	ALL=(tester)NOPASSWD:ALL"
 USEPRAKTOMATTESTER = False
 
+# whether JUNIT (or other unit tests) send detailed test results
+DETAILED_UNITTEST_OUTPUT = True
+#JUNIT_RUN_LISTENER = 'de.ostfalia.zell.praktomat.TextListener'
+JUNIT_RUN_LISTENER = 'de.ostfalia.zell.praktomat.JunitProFormAListener'
+JUNIT_RUN_LISTENER_LIB = '/praktomat/extra/JunitRunListener.jar'
 
 LOGGING = {
     'version': 1,
@@ -175,15 +180,21 @@ LOGGING = {
     'loggers': {
         'proforma': {
             'handlers': ['console', 'file'],
-            'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'propagate': False,
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'checker': {
             'handlers': ['console', 'error-file'],
-            'level': 'ERROR',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,  # keep 10 historical versions
+        },
+        'utilities': {
+            'handlers': ['console', 'error-file'],
+            'level': 'DEBUG',  # change debug level as appropiate
+            'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         ## SQL:
@@ -195,7 +206,7 @@ LOGGING = {
         #},
         'django.request': {
             'handlers': ['console', 'error-file', 'file'],
-            'level': 'INFO',  # change debug level as appropiate
+            'level': 'DEBUG',  # change debug level as appropiate
             'propagate': False,
             'maxBytes': 1024*1024*4,  # 15MB
             'backupCount': 10,  # keep 10 historical versions

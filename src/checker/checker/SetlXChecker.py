@@ -78,10 +78,9 @@ class SetlXChecker(Checker):
                 result.set_log("Bitte keine IO-Befehle verwenden")
                 return result
             else:
-                pass
                 #concat test
                 #try:
-                concatFile = self.conCat(test_dir, content, self.testFile)
+                self.conCat(test_dir, content, self.testFile)
                 #except UnicodeEncodeError:
                 #    result.set_passed(False)
                 #    result.set_log("Special characters can pose a problem. Vermeiden Sie Umlaute im Source Code "

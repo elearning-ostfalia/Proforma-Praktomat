@@ -12,6 +12,10 @@ from solutions.models import Solution
 
 from checker.compiler.JavaBuilder import JavaBuilder
 
+
+import logging
+logger = logging.getLogger(__name__)
+
 RXFAIL = re.compile(r"^(.*)(FAILURES!!!|your program crashed|cpu time limit exceeded|"
                     r"ABBRUCH DURCH ZEITUEBERSCHREITUNG|Could not find class|Killed|"
                     r"failures|Class not found|Exception in thread)(.*)$", re.MULTILINE)
@@ -56,6 +60,7 @@ class JUnitChecker(Checker):
 
     def run(self, env):
 
+        logger.debug('JUNIT Checker build')
         java_builder = JavaBuilder(_flags="", _libs=self.junit_version,
                                    _file_pattern=r"^.*\.[jJ][aA][vV][aA]$",
                                    _output_flags="")
@@ -63,12 +68,16 @@ class JUnitChecker(Checker):
         build_result = java_builder.run(env)
 
         if not build_result.passed:
+            logger.info('could not compile JUNIT test')
             result = CheckerResult(checker=self)
             result.set_passed(False)
+            #result.set_internal_error(True)
             result.set_log('<pre>' + escape(self.test_description) +
                            '\n\n======== Test Results ======\n\n</pre><br/>\n' +
                            unicode(build_result.log))
             return result
+
+        logger.debug('JUNIT Checker run')
 
         environ = dict()
 
@@ -77,23 +86,52 @@ class JUnitChecker(Checker):
         script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
         environ['POLICY'] = os.path.join(script_dir, "junit.policy")
 
-        cmd = [settings.JVM_SECURE, "-classpath", settings.JAVA_LIBS[self.junit_version] + ":.",
-               self.runner(), self.class_name]
-        [output, error, exitcode, timed_out] = execute_arglist(cmd, env.tmpdir(),
-                                                               environment_variables=environ,
-                                                               use_default_user_configuration=True,
-                                                               timeout=settings.TEST_TIMEOUT,
-                                                               fileseeklimit=settings.TEST_MAXFILESIZE,
-                                                               extradirs=[script_dir])
+        use_run_listener = False
+        if settings.DETAILED_UNITTEST_OUTPUT:
+            if self.junit_version != 'junit4.12-gruendel':
+                use_run_listener = True
+            else:
+                logger.debug('do not use Run Listener because of gruendel addon')
 
-        result = CheckerResult(checker=self)
-        (output, truncated) = truncated_log(output)
-        output = '<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
-                 escape(output) + '</pre>'
-        result.set_log(output, timed_out=timed_out, truncated=truncated)
-        result.set_passed(not exitcode and not timed_out and self.output_ok(output) and not truncated)
+        if not use_run_listener:
+            # without listener
+            cmd = [settings.JVM_SECURE, "-classpath", settings.JAVA_LIBS[self.junit_version] + ":.",
+                   self.runner(), self.class_name]
+            [output, error, exitcode, timed_out] = execute_arglist(cmd, env.tmpdir(),
+                                                                   environment_variables=environ,
+                                                                   use_default_user_configuration=True,
+                                                                   timeout=settings.TEST_TIMEOUT,
+                                                                   fileseeklimit=settings.TEST_MAXFILESIZE,
+                                                                   extradirs=[script_dir])
 
-        return result
+
+            result = CheckerResult(checker=self)
+            (output, truncated) = truncated_log(output)
+            output = '<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
+                     escape(output) + '</pre>'
+            result.set_log(output, timed_out=timed_out, truncated=truncated)
+            result.set_passed(not exitcode and not timed_out and self.output_ok(output) and not truncated)
+
+            return result
+        else:
+            # with listener
+            cmd = [settings.JVM_SECURE, "-classpath", settings.JAVA_LIBS[self.junit_version] + ":.:" + settings.JUNIT_RUN_LISTENER_LIB,
+                   settings.JUNIT_RUN_LISTENER, self.class_name]
+
+            [output, error, exitcode, timed_out] = execute_arglist(cmd, env.tmpdir(),
+                                                                   environment_variables=environ,
+                                                                   use_default_user_configuration=True,
+                                                                   timeout=settings.TEST_TIMEOUT,
+                                                                   fileseeklimit=settings.TEST_MAXFILESIZE,
+                                                                   extradirs=[script_dir])
+
+            result = CheckerResult(checker=self)
+            # todo: Unterscheiden zwischen Textlistener (altes Log-Format) und Proforma-Listener (neues Format)
+            result.set_log(output, timed_out=timed_out, truncated=False, log_format=CheckerResult.PROFORMA_SUBTESTS)
+            # todo: handle endless sloop
+            #result.set_passed(not exitcode and not timed_out and self.output_ok(output) and not truncated)
+
+            return result
 
 #class JUnitCheckerForm(AlwaysChangedModelForm):
 #	def __init__(self, **args):
