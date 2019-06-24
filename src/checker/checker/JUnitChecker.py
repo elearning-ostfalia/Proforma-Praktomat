@@ -94,44 +94,43 @@ class JUnitChecker(Checker):
                 logger.debug('do not use Run Listener because of gruendel addon')
 
         if not use_run_listener:
-            # without listener
-            cmd = [settings.JVM_SECURE, "-classpath", settings.JAVA_LIBS[self.junit_version] + ":.",
-                   self.runner(), self.class_name]
-            [output, error, exitcode, timed_out] = execute_arglist(cmd, env.tmpdir(),
-                                                                   environment_variables=environ,
-                                                                   use_default_user_configuration=True,
-                                                                   timeout=settings.TEST_TIMEOUT,
-                                                                   fileseeklimit=settings.TEST_MAXFILESIZE,
-                                                                   extradirs=[script_dir])
-
-
-            result = CheckerResult(checker=self)
-            (output, truncated) = truncated_log(output)
-            output = '<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
-                     escape(output) + '</pre>'
-            result.set_log(output, timed_out=timed_out, truncated=truncated)
-            result.set_passed(not exitcode and not timed_out and self.output_ok(output) and not truncated)
-
-            return result
+            classpath = settings.JAVA_LIBS[self.junit_version] + ":."
+            runner = self.runner()
         else:
-            # with listener
-            cmd = [settings.JVM_SECURE, "-classpath", settings.JAVA_LIBS[self.junit_version] + ":.:" + settings.JUNIT_RUN_LISTENER_LIB,
-                   settings.JUNIT_RUN_LISTENER, self.class_name]
+            classpath = settings.JAVA_LIBS[self.junit_version] + ":.:" + settings.JUNIT_RUN_LISTENER_LIB
+            runner = settings.JUNIT_RUN_LISTENER
 
-            [output, error, exitcode, timed_out] = execute_arglist(cmd, env.tmpdir(),
-                                                                   environment_variables=environ,
-                                                                   use_default_user_configuration=True,
-                                                                   timeout=settings.TEST_TIMEOUT,
-                                                                   fileseeklimit=settings.TEST_MAXFILESIZE,
-                                                                   extradirs=[script_dir])
+        cmd = [settings.JVM_SECURE, "-classpath", classpath, runner, self.class_name]
+        [output, error, exitcode, timed_out] = execute_arglist(cmd, env.tmpdir(),
+                                                               environment_variables=environ,
+                                                               use_default_user_configuration=True,
+                                                               timeout=settings.TEST_TIMEOUT,
+                                                               fileseeklimit=settings.TEST_MAXFILESIZE,
+                                                               extradirs=[script_dir])
+        result = CheckerResult(checker=self)
+        if (timed_out or not use_run_listener):
+            # no detailed results
+            if timed_out:
+                logger.error('Execution timeout')
 
-            result = CheckerResult(checker=self)
+            if use_run_listener:
+                # clean log for timeout with Run Listener
+                output = ''
+                truncated = False
+            else:
+                (output, truncated) = truncated_log(output)
+                output = '<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
+                     escape(output) + '</pre>'
+
+            result.set_log(output, timed_out=timed_out, truncated=truncated)
+            logger.debug(' passed = ' + str(not exitcode and not timed_out and self.output_ok(output) and not truncated))
+            result.set_passed(not exitcode and not timed_out and self.output_ok(output) and not truncated)
+        else:
+            # detailed results
             # todo: Unterscheiden zwischen Textlistener (altes Log-Format) und Proforma-Listener (neues Format)
             result.set_log(output, timed_out=timed_out, truncated=False, log_format=CheckerResult.PROFORMA_SUBTESTS)
-            # todo: handle endless sloop
-            #result.set_passed(not exitcode and not timed_out and self.output_ok(output) and not truncated)
 
-            return result
+        return result
 
 #class JUnitCheckerForm(AlwaysChangedModelForm):
 #	def __init__(self, **args):
