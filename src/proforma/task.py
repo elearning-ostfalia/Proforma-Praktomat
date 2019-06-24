@@ -547,9 +547,12 @@ def import_task_internal(filename, task_file):
         task_xml = task_file[0].read()  # todo check name
 
     encoding = rxcoding.search(task_xml, re.IGNORECASE)
-    if (encoding != 'UFT-8' or encoding != 'utf-8') and encoding is not None:
-        print ('dumme if-Anweisung gefunden')
-        task_xml = task_xml.decode(encoding.group('enc')).encode('utf-8')
+    if encoding is not None:
+        enc = encoding.group('enc')
+        if enc.lower() == 'utf-8':
+            task_xml = task_xml.decode(enc).encode('utf-8')
+        else:
+            logger.error('unexpected encoding found: ' + enc)
     xml_object = objectify.fromstring(task_xml)
 
     #xml_task = xml_object
