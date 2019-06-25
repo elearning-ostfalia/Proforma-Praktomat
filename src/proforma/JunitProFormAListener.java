@@ -1,6 +1,7 @@
 package de.ostfalia.zell.praktomat;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.text.NumberFormat;
 import java.util.List;
@@ -34,7 +35,7 @@ public class JunitProFormAListener extends RunListener {
     private Element subtestsResponse;
     private int counterFailed = 0;
     
-//    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    private ByteArrayOutputStream baos = null; 
     
     
     // parameters of current test
@@ -47,7 +48,11 @@ public class JunitProFormAListener extends RunListener {
 
     public JunitProFormAListener() {
     	writer = System.out;
-        //System.setOut(new PrintStream(baos));    	
+        // redirect stdout and stderr
+        baos = new ByteArrayOutputStream();        
+        System.setOut(new PrintStream(baos));           
+        System.setErr(new PrintStream(baos));         	
+
     }
 
     public JunitProFormAListener(PrintStream writer) {
@@ -69,6 +74,13 @@ public class JunitProFormAListener extends RunListener {
     
     @Override
     public void testRunFinished(Result result) {
+        try {
+			baos.close();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
     	
         // Transform Document to XML String
         TransformerFactory tf = TransformerFactory.newInstance();
@@ -76,7 +88,8 @@ public class JunitProFormAListener extends RunListener {
 		try {
 			transformer = tf.newTransformer();
 	        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-	        transformer.setOutputProperty(OutputKeys.INDENT, "yes");	        
+	        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+	        transformer.setOutputProperty(OutputKeys.ENCODING, "utf-8");	        
 	        StringWriter xmlWriter = new StringWriter();
 	        DOMSource root = new DOMSource(doc);
 	        transformer.transform(root, new StreamResult(writer));
@@ -99,6 +112,8 @@ public class JunitProFormAListener extends RunListener {
     public void testStarted(Description description) {
     	String title = "";
     	String desc = new String(description.toString());
+    	//desc.getAnnotation()
+    	
     	desc = desc.substring(0, desc.indexOf("("));
         for (String w : desc.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) {
         	if (title.isEmpty() && w.equalsIgnoreCase("test"))
@@ -150,11 +165,27 @@ public class JunitProFormAListener extends RunListener {
         Element xmlTitle = doc.createElement("title");
         feedbackTitle.appendChild(xmlTitle);    
         xmlTitle.appendChild(doc.createTextNode(title));        
+        
+      
     }
 
     @Override
     public void testFinished(Description description) {
         // todo: bei failed noch den Fehlertext
+    	
+    	String consoleOutput = baos.toString();
+    	consoleOutput = consoleOutput.trim();
+    	if (consoleOutput.length() > 0) {
+    		//consoleOutput = consoleOutput.replace("&#13;", "\n");
+    		
+            Element feedback = doc.createElement("student-feedback");        
+            feedbackList.appendChild(feedback);
+            Element content = doc.createElement("content");
+            content.setAttribute("format", "plaintext");        
+            feedback.appendChild(content);                		
+            content.appendChild(doc.createTextNode(consoleOutput));  
+    	}
+        baos.reset();
 
     	if (passed) {
             score.appendChild(doc.createTextNode("1.0"));    		
@@ -274,6 +305,9 @@ public class JunitProFormAListener extends RunListener {
     public static void main(String[] args) {
         if (args.length == 0) {
         	System.err.println("Invalid argument number. Usage: program testclass (without extension)");
+        	// sample:
+        	// proforma.MyStringTest
+        	// de.ostfalia.gdp.ss19.s1.KegelVolumenTest
 	        System.exit(1);			 			
         }
 		JUnitCore core= new JUnitCore();
@@ -284,8 +318,9 @@ public class JunitProFormAListener extends RunListener {
 			core.run(Class.forName(args[0]));
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
-			System.err.println(e.getMessage());
-	    	System.err.println("Class " + args[0] + " not found. Usage: program testclass (without extension)");
+			System.err.println("class not found: " + e.getMessage());
+	    	//System.err.println("class parameter " + args[0]");
+	    	System.out.println("Usage: program testclass (without extension)");
 	        System.exit(1);			 			
 		}
 	}    
