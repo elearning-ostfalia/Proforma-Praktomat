@@ -16,15 +16,14 @@ RUN apt-get update && apt-get install -y locales && locale-gen de_DE.UTF-8
 ENV LANG de_DE.UTF-8
 ENV LC_ALL de_DE.UTF-8
 
-RUN apt-get install -y swig libxml2-dev libxslt1-dev python2.7 python-dev python-pip libpq-dev locales wget
+RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python2.7 python-dev python-pip libpq-dev locales wget cron
 
 
-
+# Java:
 # install OpenJDK (only needed if you want to run Java Compiler checker)
-RUN apt-get update && apt-get install -y default-jdk
-
 # install checkstyle (only needed if you want to run Checkstyle checker)
-RUN apt-get install -y checkstyle
+RUN apt-get update && apt-get install -y default-jdk checkstyle
+
 
 # && apt-get autoremove -y
 
@@ -42,6 +41,7 @@ ADD . /praktomat
 
 RUN mkdir -p /praktomat/upload
 
+
 # COPY src/ src/
 # COPY extra extra/
 # COPY media media/
@@ -54,6 +54,10 @@ RUN pip uninstall staticfiles
 RUN apt-get clean
 RUN rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
 
+# create cron job for deleting temporary files
+COPY cron.conf /etc/cron.d/praktomat-cron
+#RUN chmod 0644 /etc/cron.d/praktomat-cron
+RUN crontab /etc/cron.d/praktomat-cron
 
 # run entrypoint.sh
 ENTRYPOINT ["/praktomat/src/entrypoint.sh"]

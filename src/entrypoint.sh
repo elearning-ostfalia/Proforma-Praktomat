@@ -2,8 +2,7 @@
 
 echo "Docker entrypoint used"
 
-# this script is executed in each worker 
-# => do not initialise database here !
+
 
 
 if [ "$DATABASE" = "postgres" ]
@@ -19,10 +18,16 @@ fi
 
 echo "assume that database is started"
 
+echo start cron
+
+cron -f &
+
 #python manage.py flush --no-input
 #python manage.py migrate
 #python manage.py collectstatic --no-input
 
 cd /praktomat/src
 
+# this script is executed in each worker 
+# => do not initialise database here !
 exec "$@"
