@@ -88,10 +88,10 @@ class JUnitChecker(Checker):
 
         use_run_listener = False
         if settings.DETAILED_UNITTEST_OUTPUT:
-            if self.junit_version != 'junit4.12-gruendel':
+            #if self.junit_version != 'junit4.12-gruendel':
                 use_run_listener = True
-            else:
-                logger.debug('do not use Run Listener because of gruendel addon')
+            #else:
+            #    logger.debug('do not use Run Listener because of gruendel addon')
 
         if not use_run_listener:
             classpath = settings.JAVA_LIBS[self.junit_version] + ":."
