@@ -13,17 +13,18 @@ Docker
 
 In order to set up the docker composition execute the following steps:
 
-1. Download and copy all libraries you need for grading 
-    (e.g. junit-4.12.jar, hamcrest-core-1.3.jar, checkstyle-7.6-all.jar, ....) 
-    and adjust your settings_docker.py (JAVA_LIBS, CHECKSTYLE_VER)
+1. Download and copy all libraries you need for grading into the extra folder 
+    (e.g. junit-4.12.jar, hamcrest-core-1.3.jar, checkstyle-7.6-all.jar, ....)
+     
+2. Check and adjust your settings_docker.py (JAVA_LIBS, CHECKSTYLE_VER)
 
-2. build and start the docker containers
+3. Run the docker containers
 
         docker-compose up
 
-3. initialise the docker containes (i.e. create database schema)
-    
-        docker exec -ti praktomat ./init_database.sh
+
+<!--
+TODO: The Web-Interface seems to be buggy.  
 
 Then Praktomat is available on port 80 in your web browser:  
 
@@ -31,7 +32,8 @@ Then Praktomat is available on port 80 in your web browser:
 
 For login see the credentials in your docker-compose.yml file (SUPERUSER and PASSWORD). 
 
-If you only want to use Praktomat as a grading back-end the appropriate URI is
+-->
+If you want to use Praktomat as a grading back-end the appropriate URI is
 
         http://localhost:80/api/v2/submissions
 

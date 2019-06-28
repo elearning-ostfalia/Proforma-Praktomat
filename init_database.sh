@@ -1,14 +1,13 @@
 #!/bin/bash
 DATABASE_INITIALISED=0
 
-
-
+echo "create database"
 
 if [ -e "$HOME/.DATABASE_INITIALISED" ];  then
-    echo "Database is already initialised"    
+    echo "Database is already created"
     exit 0
-else
-    echo "Initialise Database"
+#else
+#    echo "Initialise Database"
 fi
 
 echo "syncing database"
@@ -27,9 +26,8 @@ echo "migrate checker"
 python ./src/manage.py migrate checker || exit
 
 echo "create users"
-echo "from django.contrib.auth.models import User; User.objects.create_superuser('$SUPERUSER', '$EMAIL', '$PASSWORD')" | python ./src/manage.py shell --plain 
-echo "from django.contrib.auth.models import User; User.objects.create_user('sys_prod', '$EMAIL', '$PASSWORD')" | python ./src/manage.py shell --plain 
-
+echo "from django.contrib.auth.models import User; User.objects.create_superuser('$SUPERUSER', '$EMAIL', '$PASSWORD')" | python ./src/manage.py shell --plain
+echo "from django.contrib.auth.models import User; User.objects.create_user('sys_prod', '$EMAIL', '$PASSWORD')" | python ./src/manage.py shell --plain
 
 # update media folder for nginx to serve static django files
 echo "collect static files for webserver"

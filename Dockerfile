@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y locales && locale-gen de_DE.UTF-8
 ENV LANG de_DE.UTF-8
 ENV LC_ALL de_DE.UTF-8
 
-RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python2.7 python-dev python-pip libpq-dev locales wget cron
+RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python2.7 python-dev python-pip libpq-dev locales wget cron netcat
 
 
 # Java:
@@ -60,6 +60,6 @@ COPY cron.conf /etc/cron.d/praktomat-cron
 RUN crontab /etc/cron.d/praktomat-cron
 
 # run entrypoint.sh
-ENTRYPOINT ["/praktomat/src/entrypoint.sh"]
+ENTRYPOINT ["/praktomat/entrypoint.sh"]
 
 
