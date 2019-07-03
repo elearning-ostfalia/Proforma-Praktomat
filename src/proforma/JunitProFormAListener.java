@@ -7,6 +7,9 @@ import java.text.NumberFormat;
 import java.util.List;
 
 import java.io.StringWriter;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -27,13 +30,22 @@ import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
+// support for Ostfalia JunitAddOn without needing to import classes from there:
+//declare a new annotation named TestDescription
+@Retention(RetentionPolicy.RUNTIME)
+@interface TestDescription {
+	String value();
+}
+
 
 public class JunitProFormAListener extends RunListener {
 
+	
     private final PrintStream writer;
     private Document doc = null;
     private Element subtestsResponse;
     private int counterFailed = 0;
+    private String testClassname = "";
     
     private ByteArrayOutputStream baos = null; 
     
@@ -43,7 +55,7 @@ public class JunitProFormAListener extends RunListener {
     private int counter = 0;
     Element score;
     Element feedbackList;
-    Element feedbackTitle;    
+    Element studentFeedback;    
     
 
     public JunitProFormAListener() {
@@ -59,6 +71,10 @@ public class JunitProFormAListener extends RunListener {
         this.writer = writer;
     }
 
+    public void setTestclassname(String testclassname) {
+    	this.testClassname = testclassname;
+    }
+    
     @Override    
     public void testRunStarted(Description description) throws ParserConfigurationException {
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
@@ -111,11 +127,10 @@ public class JunitProFormAListener extends RunListener {
     @Override
     public void testStarted(Description description) {
     	String title = "";
-    	String desc = new String(description.toString());
-    	//desc.getAnnotation()
+    	String descTitle = new String(description.toString());
     	
-    	desc = desc.substring(0, desc.indexOf("("));
-        for (String w : desc.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) {
+    	descTitle = descTitle.substring(0, descTitle.indexOf("("));
+        for (String w : descTitle.split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")) {
         	if (title.isEmpty() && w.equalsIgnoreCase("test"))
         		continue;
         	
@@ -160,12 +175,23 @@ public class JunitProFormAListener extends RunListener {
         testResult.appendChild(feedbackList);
         
         
-        feedbackTitle = doc.createElement("student-feedback");        
-        feedbackList.appendChild(feedbackTitle);
-        Element xmlTitle = doc.createElement("title");
-        feedbackTitle.appendChild(xmlTitle);    
-        xmlTitle.appendChild(doc.createTextNode(title));        
+        studentFeedback = doc.createElement("student-feedback");        
+        feedbackList.appendChild(studentFeedback);
         
+        Element xmlTitle = doc.createElement("title");
+        studentFeedback.appendChild(xmlTitle);    
+        xmlTitle.appendChild(doc.createTextNode(title));        
+
+    	TestDescription annotation = description.getAnnotation(TestDescription.class);
+    	if (annotation != null) {
+        	String annoDescription = annotation.value();    
+            if (!annoDescription.isEmpty()) {
+                Element xmlDesc = doc.createElement("content");
+                studentFeedback.appendChild(xmlDesc);    
+                xmlDesc.appendChild(doc.createTextNode(annoDescription));                	
+            }        	
+    	}
+       
       
     }
 
@@ -189,44 +215,129 @@ public class JunitProFormAListener extends RunListener {
 
     	if (passed) {
             score.appendChild(doc.createTextNode("1.0"));    		
-            feedbackTitle.setAttribute("level", "info");
+            studentFeedback.setAttribute("level", "info");
         }
     	else {
             score.appendChild(doc.createTextNode("0.0"));            		
-            feedbackTitle.setAttribute("level", "error");
+            studentFeedback.setAttribute("level", "error");
     	}
     }
     
+    private StackTraceElement[]  stripStackTrace(StackTraceElement[] elements) { 
+    	Class<?> testclass;
+		try {
+			testclass = Class.forName(this.testClassname);
+	    	int i = 0;
+	        for (StackTraceElement element : elements) {
+				Class<?> clazz;
+				clazz = Class.forName(element.getClassName());
+				i++;
+				if (testclass == clazz) {
+					// found => remove tail
+			    	StackTraceElement[] newStacktrace = new StackTraceElement[i];
+			    	System.arraycopy( elements, 0, newStacktrace, 0, i);
+			    	return newStacktrace;
+				}
+	        }			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+		}
+    	
+		return elements;    	
+    }
+    
+    private void createFeedback(String title, String content, boolean teacher) {
+    	Element xmlFeedback = null;
+    	if (teacher)
+    		xmlFeedback = doc.createElement("teacher-feedback");
+    	else 
+    		xmlFeedback = doc.createElement("student-feedback");
+    		
+        feedbackList.appendChild(xmlFeedback);
+        
+    	Element xmlTitle = doc.createElement("title");
+    	xmlFeedback.appendChild(xmlTitle);    
+    	xmlTitle.appendChild(doc.createTextNode(title));        
+
+    	Element xmlContent = doc.createElement("content");
+    	xmlContent.setAttribute("format", "plaintext");        
+    	xmlFeedback.appendChild(xmlContent);           		
+    	xmlContent.appendChild(doc.createTextNode(content));      	
+    }
     
     @Override
     public void testFailure(Failure failure) {
-        Element xmlFailure = doc.createElement("content");
-        xmlFailure.setAttribute("format", "plaintext");        
-        feedbackTitle.appendChild(xmlFailure);
+    	Description d = failure.getDescription();
+        //String failureText = failure.toString();
+        String message = failure.getMessage();
+        String testHeader = failure.getTestHeader();
+        Throwable exception  = failure.getException();
+        //Throwable cause1 = exception.getCause();
         
-        if (failure.getMessage() != null)
-        	xmlFailure.appendChild(doc.createTextNode(failure.getMessage()));
-        else
-        	xmlFailure.appendChild(doc.createTextNode("N/A"));
+        String exceptionText = exception.toString(); // name of exception
         
+        boolean showStackTraceToStudent = true;
+        StackTraceElement[] strippedStacktrace = this.stripStackTrace(failure.getException().getStackTrace());
+        String stackTraceString = "";
+        for (StackTraceElement s : strippedStacktrace) {
+        	stackTraceString = stackTraceString + s.toString() + "\n";
+        }  
+        stackTraceString = stackTraceString +  "[...]\n";
+        
+        if (strippedStacktrace.length > 0) {
+        	if (strippedStacktrace[0].getClassName().startsWith("org.junit.")) {
+        		// Function Error in Test Code
+        		// => do not show stack trace to student
+        		showStackTraceToStudent = false;
+        		exceptionText = message; 
+        	} else {
+        		// assume coding error: 
+        		// check if the exception occured inside student code
+                // this.createFeedback("Stack Trace", stackTraceString, false);        		
+        	}
+        } 
+        
+           	
+    	// create student feedback        
+        if (exceptionText != null) {
+        	if (studentFeedback.getElementsByTagName("content").getLength() == 0) {
+        		// append content to existing student-feedback
+                Element xmlFailure = doc.createElement("content");
+                xmlFailure.setAttribute("format", "plaintext");        
+                studentFeedback.appendChild(xmlFailure);
+            	xmlFailure.appendChild(doc.createTextNode(exceptionText));
+            	//xmlFailure.appendChild(doc.createTextNode("EXCEPTION TEXT: " + exceptionText));
+        	} else {
+                this.createFeedback("", exceptionText, false); // no title        		
+        	}
+        	
+        	
+        } else {
+            // this.createFeedback("Exception text", "N/A", true);
+        }
+
+        
+        // create teacher feedback with additional stack trace
+        //this.createFeedback("Message", exceptionText, true);
+        this.createFeedback("Stack Trace:", stackTraceString, !showStackTraceToStudent);
+        
+/*        
         Element teacherFeedback = doc.createElement("teacher-feedback");        
         feedbackList.appendChild(teacherFeedback);
-        Element xmlTitle = doc.createElement("title");
-        teacherFeedback.appendChild(xmlTitle);    
-        xmlTitle.appendChild(doc.createTextNode("Exception"));        
+        
+        	Element xmlTitle = doc.createElement("title");
+        	teacherFeedback.appendChild(xmlTitle);    
+        	xmlTitle.appendChild(doc.createTextNode("Stack Trace"));        
 
-        Element xmlException = doc.createElement("content");
-        xmlException.setAttribute("format", "plaintext");        
-        teacherFeedback.appendChild(xmlException);     
-        String teacherText = failure.toString() + "\n" + 
-        		failure.getTrace(); 
+        	Element xmlException = doc.createElement("content");
+        	xmlException.setAttribute("format", "plaintext");        
+        	teacherFeedback.appendChild(xmlException);    
+        	String teacherText = "";
+        	teacherText = exceptionText + "\n" + failure.getTrace();        
         		
-        xmlException.appendChild(doc.createTextNode(teacherText));  
-        
-        
-        // writer.append("\n");
-        //printFailure(failure, "    Failure: ");    	
-        // getWriter().println();
+        	xmlException.appendChild(doc.createTextNode(teacherText));  
+*/        
         
         passed = false;  
         counterFailed++;      
@@ -308,12 +419,14 @@ public class JunitProFormAListener extends RunListener {
         	// sample:
         	// proforma.MyStringTest
         	// de.ostfalia.gdp.ss19.s1.KegelVolumenTest
+        	// de.ostfalia.zell.isPalindromTask.PalindromTest
 	        System.exit(1);			 			
         }
 		JUnitCore core= new JUnitCore();
 		JunitProFormAListener listener = new JunitProFormAListener();
 		core.addListener(listener);
-
+		listener.setTestclassname(args[0]);
+				
 		try {
 			core.run(Class.forName(args[0]));
 		} catch (ClassNotFoundException e) {
