@@ -68,7 +68,7 @@ def get_optional_xml_attribute_text(xmlTest, xpath, attrib, namespaces):
 def get_optional_xml_element_text(xmlTest, xpath, namespaces):
     try:
         if xmlTest.xpath(xpath, namespaces=namespaces) is not None:
-            return xmlTest.xpath(xpath, namespaces=namespaces)[0]
+            return xmlTest.xpath(xpath, namespaces=namespaces)[0].text
     except:
         return ""
 
@@ -216,7 +216,7 @@ def create_file_dict_func(xml_obj, namespace, external_file_dict=None, ):
 
 def set_test_base_parameters(inst, xmlTest, ns):
     if xmlTest.xpath("p:title", namespaces=ns) is not None:
-        inst.name = xmlTest.xpath("p:title", namespaces=ns)[0]
+        inst.name = xmlTest.xpath("p:title", namespaces=ns)[0].text
     #if (xmlTest.xpath("p:title", namespaces=ns) and xmlTest.xpath("p:title", namespaces=ns)[0].text):
     #    inst.name = xmlTest.xpath("p:title", namespaces=ns)[0].text
     inst.test_description = get_optional_xml_element_text(xmlTest, "p:description", ns)
