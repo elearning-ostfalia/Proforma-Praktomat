@@ -8,17 +8,36 @@ to be used as a grading back-end in e.g. learning management systems.
 The code is currently only used as a 'docker composition'. 
 So the installation manual is not up-to-date.
 
-Docker 
-============
+## Programming Languages 
 
-In order to set up the docker composition execute the following steps:
+The following programming languages and test frameworks are provided with the ProFormA interface.
 
-1. Download and copy all libraries you need for grading into the extra folder 
-    (e.g. junit-4.12.jar, hamcrest-core-1.3.jar, checkstyle-7.6-all.jar, ....)
-     
-2. Check and adjust your settings_docker.py (JAVA_LIBS, CHECKSTYLE_VER)
 
-3. Run the docker containers
+| Language      | Test Framework | 
+| :---:        |    :----:   |         
+| Java      | Compiler,  Junit 4, Checkstyle      | 
+| SetlX   | Test, Syntax Check        | 
+| Python 2   | Doctest        | 
+
+## Docker 
+
+
+In order to set up the docker composition go through the following steps:
+
+ 1. Download and copy all libraries you need for grading into the extra folder:
+
+| Test Framework      | library |
+| :---        |    :----   |         
+| JUnit      | junit-4.12.jar,    hamcrest-core-1.3.jar   |
+| Checkstyle      | checkstyle-5.4-all.jar      | 
+|       | checkstyle-6.2-all.jar      | 
+|       | checkstyle-7.6-all.jar      | 
+| SetlX   | setlX-2.7.jar        | 
+
+        
+ 2. Check and adjust your settings_docker.py (JAVA_LIBS, CHECKSTYLE_VER, SETLXJAR)
+
+ 3. Run the docker containers
 
         docker-compose up
 
@@ -43,8 +62,7 @@ or (circumventing the web server)
 
 
 
-ProFormA API (CURL)
-============
+## ProFormA API (CURL)
 
 The supported ProFormA format version is 2.0. 
 
