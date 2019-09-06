@@ -84,6 +84,7 @@ class JUnitChecker(Checker):
         environ['UPLOAD_ROOT'] = settings.UPLOAD_ROOT
         environ['JAVA'] = settings.JVM
         script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
+        logger.debug('JUNIT script_dir is' + script_dir)
         environ['POLICY'] = os.path.join(script_dir, "junit.policy")
 
         use_run_listener = False
@@ -107,28 +108,48 @@ class JUnitChecker(Checker):
                                                                timeout=settings.TEST_TIMEOUT,
                                                                fileseeklimit=settings.TEST_MAXFILESIZE,
                                                                extradirs=[script_dir])
-        result = CheckerResult(checker=self)
-        if (timed_out or not use_run_listener):
-            # no detailed results
-            if timed_out:
-                logger.error('Execution timeout')
+        logger.debug('JUNIT output:' + str(output))
+        logger.debug('JUNIT error:' + str(error))
+        logger.debug('JUNIT exitcode:' + str(exitcode))
 
+        result = CheckerResult(checker=self)
+        truncated = False
+        # show normal console output in case of:
+        # - timeout (created by Checker)
+        # - not using RunListener
+        # - exitcode <> 0 with RunListener (means internal error)
+        if timed_out:
+            # ERROR: Execution timed out
+            logger.error('Execution timeout')
             if use_run_listener:
                 # clean log for timeout with Run Listener
                 output = ''
                 truncated = False
-            else:
-                (output, truncated) = truncated_log(output)
-                output = '<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
-                     escape(output) + '</pre>'
+            (output, truncated) = truncated_log(output)
+            result.set_log(output, timed_out=True, truncated=truncated)
+            result.set_passed(False)
+            return result
 
-            result.set_log(output, timed_out=timed_out, truncated=truncated)
-            logger.debug(' passed = ' + str(not exitcode and not timed_out and self.output_ok(output) and not truncated))
-            result.set_passed(not exitcode and not timed_out and self.output_ok(output) and not truncated)
+        if use_run_listener:
+            # RUN LISTENER
+            if exitcode == 0:
+                # normal detailed results
+                # todo: Unterscheiden zwischen Textlistener (altes Log-Format) und Proforma-Listener (neues Format)
+                result.set_log(output, timed_out=timed_out, truncated=False, log_format=CheckerResult.PROFORMA_SUBTESTS)
+            else:
+                result.set_internal_error(True)
+                # no XML output => truncate
+                (output, truncated) = truncated_log(output)
+                result.set_log("RunListener Error: " + output, timed_out=timed_out, truncated=truncated)
         else:
-            # detailed results
-            # todo: Unterscheiden zwischen Textlistener (altes Log-Format) und Proforma-Listener (neues Format)
-            result.set_log(output, timed_out=timed_out, truncated=False, log_format=CheckerResult.PROFORMA_SUBTESTS)
+            # show standard log output
+            (output, truncated) = truncated_log(output)
+            output = '<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
+                 escape(output) + '</pre>'
+            result.set_log(output, timed_out=timed_out, truncated=truncated)
+
+        logger.debug(' passed = ' + str(not exitcode and not timed_out and self.output_ok(output) and not truncated))
+        result.set_passed(not exitcode and self.output_ok(output) and not truncated)
 
         return result
 
