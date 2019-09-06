@@ -88,6 +88,26 @@ public class JunitProFormAListener extends RunListener {
         //testResponse.appendChild(subtestsResponse);          
     }
     
+/*    
+    public void testRunAbortedWithException(Exception e) {
+    String xml = "        <test-result>" + 
+    		"          <result is-internal-error=\"true\">" + 
+    		"            <score>0.0</score>" + 
+    		"          </result>" + 
+    		"          <feedback-list>" + 
+    		"            <student-feedback level=\"debug\">" + 
+    		"              <title>JUnit</title>\r\n" + 
+    		"              <content format=\"html\">Fake Message</content>" + 
+    		"            </student-feedback>" + 
+    		"            <teacher-feedback level=\"debug\">" + 
+    		"              <title>JUnit</title>" + 
+    		"              <content format=\"plaintext\">content18</content>" + 
+    		"            </teacher-feedback>" + 
+    		"          </feedback-list>" + 
+    		"        </test-result>";	
+    }
+    */
+    
     @Override
     public void testRunFinished(Result result) {
         try {
@@ -422,6 +442,9 @@ public class JunitProFormAListener extends RunListener {
         	// de.ostfalia.zell.isPalindromTask.PalindromTest
 	        System.exit(1);			 			
         }
+        PrintStream originalOut = System.out;
+        PrintStream originalErr = System.err;
+        
 		JUnitCore core= new JUnitCore();
 		JunitProFormAListener listener = new JunitProFormAListener();
 		core.addListener(listener);
@@ -430,11 +453,22 @@ public class JunitProFormAListener extends RunListener {
 		try {
 			core.run(Class.forName(args[0]));
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
+			// reset redirection
+	        System.setOut(originalOut);           
+	        System.setErr(originalErr);    
+	        
 			System.err.println("class not found: " + e.getMessage());
-	    	//System.err.println("class parameter " + args[0]");
-	    	System.out.println("Usage: program testclass (without extension)");
+	    	//System.out.println("Usage: program testclass (without extension)");
 	        System.exit(1);			 			
+		} catch (Exception e) {
+			// reset redirection
+	        System.setOut(originalOut);           
+	        System.setErr(originalErr);    
+	        
+			System.err.println(e.getMessage());
+	        System.exit(1);				
 		}
+		
+        System.exit(0);			
 	}    
 }
