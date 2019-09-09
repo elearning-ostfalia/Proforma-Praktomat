@@ -457,7 +457,7 @@ public class JunitProFormAListener extends RunListener {
 	        System.setOut(originalOut);           
 	        System.setErr(originalErr);    
 	        
-			System.err.println("class not found: " + e.getMessage());
+			System.err.println("JUnit entry point not found: " + e.getMessage());
 	    	//System.out.println("Usage: program testclass (without extension)");
 	        System.exit(1);			 			
 		} catch (Exception e) {

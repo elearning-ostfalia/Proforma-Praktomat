@@ -108,7 +108,7 @@ class JUnitChecker(Checker):
                                                                timeout=settings.TEST_TIMEOUT,
                                                                fileseeklimit=settings.TEST_MAXFILESIZE,
                                                                extradirs=[script_dir])
-        logger.debug('JUNIT output:' + str(output))
+        # logger.debug('JUNIT output:' + str(output))
         logger.debug('JUNIT error:' + str(error))
         logger.debug('JUNIT exitcode:' + str(exitcode))
 
