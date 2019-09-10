@@ -149,6 +149,29 @@ def file_grader_post(request, response_format, task_id=None):
         return response
 
 
+# try and guess the correct JAVA path name derived from the package that
+# is declared in the source code
+def find_java_package_path(file_content):
+    # logger.debug('file_content' + file_content)
+    # remove comment with /* */
+    file_content = re.sub(r'\/\*[\s\S]*?\*\/', '', file_content, re.MULTILINE)
+    file_content = re.sub(r'\/\/.*', '', file_content, re.MULTILINE)
+
+    pattern = re.compile('package([\s\S]*?);')
+    m = pattern.search(file_content)
+    try:
+        package = m.group(2).strip()
+    except:
+        try:
+            package = m.group(1).strip()
+        except:
+            logger.debug("no package found")
+            return ''
+
+    package = re.sub('\.', '/', package)
+    logger.debug("package path: " + package)
+    return package
+
 def grader_internal(task_id, files, response_format):
     # check if task exist
     if not check_task_id(task_id):
@@ -389,9 +412,25 @@ def save_file(data, solution_file, filename):
                     destination.write(chunk)
         elif data.__class__.__name__ == 'File':
             logger.debug('File name is ' + data.name)
+            if full_filename.lower().endswith('.java'):
+                # special handling for java files:
+                # check for package and move to appropriate path
+                short_filename = os.path.basename(filename)
+                if filename == short_filename:
+                    # filename does not contain a package yet
+                    data.seek(0) # set file pointer to the beginning of the file
+                    file_content = data.read()
+                    # logger.debug('look for package path ')
+                    package = find_java_package_path(file_content)
+                    if len(package) > 0:
+                        logger.debug('prepend package path ' + package)
+                        full_filename = os.path.join(full_directory,  package + '/' + filename)
+
             logger.debug('full_filename name is ' + full_filename)
             tmp = default_storage.save(full_filename, data)
             logger.debug('save returned ' + tmp)
+
+
         elif data.__class__.__name__ == 'str':
             fd = open('%s' % (full_filename), 'w')
             fd.write(data)
@@ -488,44 +527,44 @@ def authenticate_user(defined_user, request):
         return None
 
 
-def grade_task(data, request, submitted_file_name, task):
-    #create author_object for submitting data
-    user_id = None
-    author = get_object_or_404(User,
-                               pk=user_id) if user_id else request.user # todo: Ablauf checken vielleicht nur request.user?
-    #get model_solution
-    modelSolution = task.model_solution
-    #add model_solutionpath to submission file
-    #modelSolutionFileObj = SolutionFile.objects.get(pk=task.model_solution_id) # really? create FileObject
-    modelSolutionFileObj = SolutionFile(solution=modelSolution)
-    modelSolutionFilenamePath = modelSolutionFileObj.file.name
-    unwantedPath = "SolutionArchive/Task_" + str(task.id) + "/User_" + str(author.username) + "/Solution_" + \
-                   str(task.model_solution_id) + "/"
-    modelSolutionPath = os.path.dirname(modelSolutionFilenamePath[len(unwantedPath):])
-    submitted_file_name = os.path.join(modelSolutionPath, submitted_file_name)
-    solution = Solution(task=task, author=author)
-    #save the solution model in the database
-    solution.save()
-    #create solution_file
-    solution_file = SolutionFile(solution=solution)
-    #save solution in environment and get the path
-    saved_solution = save_file(data, solution_file, submitted_file_name)
-
-    #remove the upload path /home/ecult/devel_oli/upload
-    shorter_saved_solution = saved_solution[len(settings.UPLOAD_ROOT):]  # todo besser +1 und doku
-    #remove the beginnning slash -> relative path
-    super_short_solution = shorter_saved_solution[1:]
-    #save solution file
-    solution_file.file = super_short_solution
-    solution_file.save()
-    run_all_checker = bool(
-        User.objects.filter(id=user_id, tutorial__tutors__pk=request.user.id) or
-        in_group(request.user, 'Trainer'))  # true show also hidden tests
-    #start the checking process
-    solution.check(run_all_checker)
-    #get result object
-    result = solution.allCheckerResults()
-    return result, solution
+# def grade_task(data, request, submitted_file_name, task):
+#     #create author_object for submitting data
+#     user_id = None
+#     author = get_object_or_404(User,
+#                                pk=user_id) if user_id else request.user # todo: Ablauf checken vielleicht nur request.user?
+#     #get model_solution
+#     modelSolution = task.model_solution
+#     #add model_solutionpath to submission file
+#     #modelSolutionFileObj = SolutionFile.objects.get(pk=task.model_solution_id) # really? create FileObject
+#     modelSolutionFileObj = SolutionFile(solution=modelSolution)
+#     modelSolutionFilenamePath = modelSolutionFileObj.file.name
+#     unwantedPath = "SolutionArchive/Task_" + str(task.id) + "/User_" + str(author.username) + "/Solution_" + \
+#                    str(task.model_solution_id) + "/"
+#     modelSolutionPath = os.path.dirname(modelSolutionFilenamePath[len(unwantedPath):])
+#     submitted_file_name = os.path.join(modelSolutionPath, submitted_file_name)
+#     solution = Solution(task=task, author=author)
+#     #save the solution model in the database
+#     solution.save()
+#     #create solution_file
+#     solution_file = SolutionFile(solution=solution)
+#     #save solution in environment and get the path
+#     saved_solution = save_file(data, solution_file, submitted_file_name)
+#
+#     #remove the upload path /home/ecult/devel_oli/upload
+#     shorter_saved_solution = saved_solution[len(settings.UPLOAD_ROOT):]  # todo besser +1 und doku
+#     #remove the beginnning slash -> relative path
+#     super_short_solution = shorter_saved_solution[1:]
+#     #save solution file
+#     solution_file.file = super_short_solution
+#     solution_file.save()
+#     run_all_checker = bool(
+#         User.objects.filter(id=user_id, tutorial__tutors__pk=request.user.id) or
+#         in_group(request.user, 'Trainer'))  # true show also hidden tests
+#     #start the checking process
+#     solution.check(run_all_checker)
+#     #get result object
+#     result = solution.allCheckerResults()
+#     return result, solution
 
 
 # def get_solution(result, result_message, solution):

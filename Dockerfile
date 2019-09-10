@@ -22,7 +22,11 @@ RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python2.7
 # Java:
 # install OpenJDK (only needed if you want to run Java Compiler checker)
 # install checkstyle (only needed if you want to run Checkstyle checker)
-RUN apt-get update && apt-get install -y default-jdk checkstyle
+# install OpenJFK for GUI tests
+RUN apt-get update && apt-get install -y default-jdk checkstyle openjfx
+#RUN apt-get update && apt-get install -y openjdk-8-jdk openjfx checkstyle
+ 
+
 
 
 # && apt-get autoremove -y
