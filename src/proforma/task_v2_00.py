@@ -181,35 +181,6 @@ def create_file_dict_func(xml_obj, namespace, external_file_dict=None, ):
         model_ref_id_of_dict = {model_solution_id: create_file_dict.pop(model_solution_id, "")}
         modelsolution_file_dict.update(model_solution_id=model_ref_id_of_dict)
 
-    # for uploaded_file in xml_task.xpath("p:files/p:file", namespaces=ns):
-    #     if uploaded_file.attrib.get("class") == "internal":
-    #         if uploaded_file.attrib.get("type") == "embedded":
-    #             t = tempfile.NamedTemporaryFile(delete=True)
-    #             t.write(uploaded_file.text.encode("utf-8"))
-    #             t.flush()
-    #             my_temp = File(t)
-    #             my_temp.name = (uploaded_file.attrib.get("filename"))
-    #             embedded_file_dict[uploaded_file.attrib.get("id")] = my_temp
-    #         else:
-    #             embedded_file_dict[uploaded_file.attrib.get("id")] = \
-    #                 dict_zip_files[uploaded_file.attrib.get("filename")]
-    #
-    #     # all files in this dict were created by CreateFileChecker
-    #     if (uploaded_file.attrib.get("class") == "library") or \
-    #        (uploaded_file.attrib.get("class") == "internal-library"):
-    #         if uploaded_file.attrib.get("type") == "embedded":
-    #             t = tempfile.NamedTemporaryFile(delete=True)
-    #             t.write(uploaded_file.text.encode("utf-8"))
-    #             t.flush()
-    #             my_temp = File(t)
-    #             my_temp.name = (uploaded_file.attrib.get("filename"))  # check! basename? i lost the path o not?
-    #             create_file_dict[uploaded_file.attrib.get("id")] = my_temp
-    #         else:
-    #             create_file_dict[uploaded_file.attrib.get("id")] = dict_zip_files[uploaded_file.attrib.get("filename")]
-
-    # dict of test + files
-    # dict of model_solution
-
     # dict of test_file_ids
     return create_file_dict, test_file_dict, modelsolution_file_dict
 
@@ -338,18 +309,29 @@ def create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_d
     set_test_base_parameters(inst, xmlTest, ns)
     if xmlTest.xpath("p:test-configuration/check:java-checkstyle",
                      namespaces=checker_ns)[0].attrib.get("version"):
-        checkstyle_version = re.split('\.',
-                                      xmlTest.xpath("p:test-configuration/check:java-checkstyle",
-                                                          namespaces=checker_ns)[0].attrib.get("version"))
-        if int(checkstyle_version[0]) == 7 and int(checkstyle_version[1]) == 6:
-            inst.check_version = 'check-7.6'
-        elif int(checkstyle_version[0]) == 6 and int(checkstyle_version[1]) == 2:
-            inst.check_version = 'check-6.2'
-        elif int(checkstyle_version[0]) == 5 and int(checkstyle_version[1]) == 4:
-            inst.check_version = 'check-5.4'
+        # checkstyle_version = re.split('\.',
+        #                              xmlTest.xpath("p:test-configuration/check:java-checkstyle",
+        #                                                  namespaces=checker_ns)[0].attrib.get("version"))
+        checkstyle_ver = xmlTest.xpath("p:test-configuration/check:java-checkstyle", namespaces=checker_ns)[0].\
+            attrib.get("version")
+        checkstyle_ver = checkstyle_ver.strip()
+        logger.debug('checkstyle version: ' + checkstyle_ver)
+
+        supported_versions = {'5.4', '6.2', '7.6', '8.23'}
+        if checkstyle_ver in supported_versions:
+            inst.check_version = 'check-' + checkstyle_ver
+
+        # if int(checkstyle_version[0]) == 8 and int(checkstyle_version[1]) == 2 and int(checkstyle_version[2]) == 3:
+        #     inst.check_version = 'check-8.23'
+        # elif int(checkstyle_version[0]) == 7 and int(checkstyle_version[1]) == 6:
+        #     inst.check_version = 'check-7.6'
+        # elif int(checkstyle_version[0]) == 6 and int(checkstyle_version[1]) == 2:
+        #     inst.check_version = 'check-6.2'
+        # elif int(checkstyle_version[0]) == 5 and int(checkstyle_version[1]) == 4:
+        #     inst.check_version = 'check-5.4'
         else:
             inst.delete()
-            raise Exception("Checkstyle-Version is not supported: " + str(checkstyle_version))
+            raise Exception("Checkstyle-Version is not supported: " + str(checkstyle_ver))
 
     if xmlTest.xpath("p:test-configuration/check:java-checkstyle/"
                      "check:max-checkstyle-warnings", namespaces=checker_ns):
@@ -436,10 +418,6 @@ def import_task(task_xml, dict_zip_files=None):
                                    description="",
                                    submission_date=datetime.now(),
                                    publication_date=datetime.now())
-    # version that does not affect database
-    # new_task = Task(title="test", description="", submission_date=datetime.now(),
-    #                publication_date=datetime.now())
-
 
     try:
         set_task_title(xml_dict=xml_dict, new_task=new_task)

@@ -124,7 +124,8 @@ JAVA_LIBS = {'junit3': '<path-to>/extra/junit-3.8.jar',
              '<path-to>/extra/hamcrest-core-1.3.jar'}
 CHECKSTYLE_VER = {'check-6.2': '<path-to>/extra/checkstyle-6.2-all.jar',
                   'check-7.6': '<path-to>/extra/checkstyle-7.6-all.jar',
-                  'check-5.4': '<path-to>/extra/checkstyle-7.6-all.jar'}
+                  'check-5.4': '<path-to>/extra/checkstyle-7.6-all.jar',
+                  'check-8.23': '<path-to>/extra/checkstyle-8.23-all.jar'}
 JCFDUMP = 'jcf-dump'
 SETLXJAR = '<path-to>/extra/setlX.jar'
 
