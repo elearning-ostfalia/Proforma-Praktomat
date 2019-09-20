@@ -113,13 +113,14 @@ JVM = 'java'
 JVM_SECURE = '<path-to>/src/checker/scripts/java'
 FORTRAN_BINARY = 'g77'
 DEJAGNU_RUNTEST = 'runtest'
-CHECKSTYLEALLJAR = '<path-to>/extra/checkstyle-6.2-all.jar'
+CHECKSTYLEALLJAR = '<path-to>/extra/checkstyle-8.23-all.jar'
 JUNIT38 = 'junit'
 JAVA_LIBS = {'junit3': '<path-to>/extra/junit-3.8.jar',
              'junit4': '<path-to>/extra/junit-4.10.jar',
+             'junit4.10': '<path-to>/extra/junit-4.10.jar',
              'junit4.12': '<path-to>/extra/junit-4.12.jar:'
              '<path-to>/extra/hamcrest-core-1.3.jar',
-             'junit4.12-gruendel': '<path-to>/extra/junit-4.12.jar' 
+             'junit4.12-gruendel': '<path-to>/extra/junit-4.12.jar:' 
              '<path-to>/extra/junit-4.12-addon-gruendel.jar:'
              '<path-to>/extra/hamcrest-core-1.3.jar'}
 CHECKSTYLE_VER = {'check-6.2': '<path-to>/extra/checkstyle-6.2-all.jar',
@@ -137,6 +138,11 @@ SETLXJAR = '<path-to>/extra/setlX.jar'
 # "_www    		ALL=(tester)NOPASSWD:ALL"
 # "developer	ALL=(tester)NOPASSWD:ALL"
 USEPRAKTOMATTESTER = False
+# whether JUNIT (or other unit tests) send detailed test results
+DETAILED_UNITTEST_OUTPUT = True
+
+JUNIT_RUN_LISTENER = 'de.ostfalia.zell.praktomat.JunitProFormAListener'
+JUNIT_RUN_LISTENER_LIB = '<path-to>/extra/JunitRunListener.jar'
 
 LOGGING = {
     'version': 1,

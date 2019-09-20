@@ -275,18 +275,30 @@ def create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict):
         raise Exception('Task XML error: Junit Version is missing')
 
     version = re.split('\.', junit_version)
-    if int(version[0]) == 3:
-        inst.junit_version = 'junit3'
-    elif int(version[0]) == 4:
-        if str(version[1]) == "12-gruendel":
-            inst.junit_version = 'junit4.12-gruendel'
-        elif str(version[1]) == "12":
-            inst.junit_version = 'junit4.12'
-        else:
-            inst.junit_version = 'junit4'
-    else:
+
+    inst.junit_version = "junit" + junit_version
+    logger.debug("JUNIT-version is " + inst.junit_version)
+
+    try:
+        # check if version is supported
+        settings.JAVA_LIBS[inst.junit_version]
+    except Exception as e:
         inst.delete()
-        raise Exception("JUnit-Version is not supported: " + str(version))
+        # todo create: something like TaskException class
+        raise Exception("Junit-Version is not supported: " + str(junit_version))
+
+    # if int(version[0]) == 3:
+    #     inst.junit_version = 'junit3'
+    # elif int(version[0]) == 4:
+    #     if str(version[1]) == "12-gruendel":
+    #         inst.junit_version = 'junit4.12-gruendel'
+    #     elif str(version[1]) == "12":
+    #         inst.junit_version = 'junit4.12'
+    #     else:
+    #         inst.junit_version = 'junit4'
+    # else:
+    #     inst.delete()
+    #     raise Exception("JUnit-Version is not supported: " + str(version))
 
     if xmlTest.xpath("p:test-configuration/p:filerefs", namespaces=checker_ns):
         val_order = task.creating_file_checker(embedded_file_dict=test_file_dict, new_task=new_task, ns=checker_ns,
@@ -302,36 +314,26 @@ def set_checkstyle_config(inst, value):
 
 def create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_dict):
     checker_ns = ns.copy()
-    #checker_ns['praktomat'] = 'urn:proforma:praktomat:v0.2'
     checker_ns['check'] = 'urn:proforma:tests:java-checkstyle:v1.1'
 
     inst = CheckStyleChecker.CheckStyleChecker.objects.create(task=new_task, order=val_order)
     set_test_base_parameters(inst, xmlTest, ns)
     if xmlTest.xpath("p:test-configuration/check:java-checkstyle",
                      namespaces=checker_ns)[0].attrib.get("version"):
-        # checkstyle_version = re.split('\.',
-        #                              xmlTest.xpath("p:test-configuration/check:java-checkstyle",
-        #                                                  namespaces=checker_ns)[0].attrib.get("version"))
         checkstyle_ver = xmlTest.xpath("p:test-configuration/check:java-checkstyle", namespaces=checker_ns)[0].\
             attrib.get("version")
-        checkstyle_ver = checkstyle_ver.strip()
-        logger.debug('checkstyle version: ' + checkstyle_ver)
 
-        supported_versions = {'5.4', '6.2', '7.6', '8.23'}
-        if checkstyle_ver in supported_versions:
-            inst.check_version = 'check-' + checkstyle_ver
-
-        # if int(checkstyle_version[0]) == 8 and int(checkstyle_version[1]) == 2 and int(checkstyle_version[2]) == 3:
-        #     inst.check_version = 'check-8.23'
-        # elif int(checkstyle_version[0]) == 7 and int(checkstyle_version[1]) == 6:
-        #     inst.check_version = 'check-7.6'
-        # elif int(checkstyle_version[0]) == 6 and int(checkstyle_version[1]) == 2:
-        #     inst.check_version = 'check-6.2'
-        # elif int(checkstyle_version[0]) == 5 and int(checkstyle_version[1]) == 4:
-        #     inst.check_version = 'check-5.4'
-        else:
+        # check if checkstlye version is configured
+        inst.check_version = 'check-' + checkstyle_ver.strip()
+        logger.debug('checkstyle version: ' + inst.check_version)
+        try:
+            # check if version is supported
+            bin = settings.CHECKSTYLE_VER[inst.check_version]
+        except Exception as e:
             inst.delete()
+            # todo create: something like TaskException class
             raise Exception("Checkstyle-Version is not supported: " + str(checkstyle_ver))
+
 
     if xmlTest.xpath("p:test-configuration/check:java-checkstyle/"
                      "check:max-checkstyle-warnings", namespaces=checker_ns):

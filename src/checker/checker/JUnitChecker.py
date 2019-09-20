@@ -34,6 +34,7 @@ class JUnitChecker(Checker):
 
     JUNIT_CHOICES = (
         (u'junit4', u'JUnit 4'),
+        (u'junit4.10', u'JUnit 4.10'),
         (u'junit4.12', u'JUnit 4.12'),
         (u'junit4.12-gruendel', u'JUnit 4.12 with Gruendel Addon'),
         (u'junit3', u'JUnit 3'),
@@ -42,6 +43,7 @@ class JUnitChecker(Checker):
 
     def runner(self):
         return {'junit4' : 'org.junit.runner.JUnitCore',
+                'junit4.10' : 'org.junit.runner.JUnitCore',
                 'junit4.12' : 'org.junit.runner.JUnitCore',
                 'junit4.12-gruendel' : 'org.junit.runner.JUnitCore',
                 'junit3' : 'junit.textui.TestRunner'}[self.junit_version]
