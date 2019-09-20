@@ -13,7 +13,7 @@ So the installation manual is not up-to-date.
 The following programming languages and test frameworks are provided with the ProFormA interface.
 
 
-| Language      | Test Framework |
+| Language      | Test Frameworks |
 | :---:        |    :----:   |         
 | Java      | Compiler,  Junit 4, Checkstyle      |
 | SetlX   | Test, Syntax Check        |
@@ -32,8 +32,8 @@ In order to set up the docker composition go through the following steps:
 | Checkstyle      | checkstyle-5.4-all.jar      |
 |       | checkstyle-6.2-all.jar      |
 |       | checkstyle-7.6-all.jar      |
+|       | checkstyle-8.23-all.jar      |
 | SetlX   | setlX-2.7.jar        |
-
 
  2. Check and adjust your settings_docker.py (JAVA_LIBS, CHECKSTYLE_VER, SETLXJAR)
 
@@ -41,6 +41,8 @@ In order to set up the docker composition go through the following steps:
 
         docker-compose up
 
+For using different versions then you need to modify src/checker/JUnitChecker.py resp. 
+modify src/checker/CheckStyleChecker.py.
 
 <!--
 TODO: The Web-Interface seems to be buggy.  
