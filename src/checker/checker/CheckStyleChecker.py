@@ -109,8 +109,8 @@ class CheckStyleChecker(Checker):
         result.set_passed(not exitcode and not timed_out and warning <= self.allowedWarnings
                           and error <= self.allowedErrors and not truncated)
 
-        output = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
-                 escape(output) + '</pre>'
+        #output = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
+        output = '<pre>' + escape(output) + '</pre>'
         result.set_log(output, timed_out=timed_out, truncated=truncated)
         return result
 

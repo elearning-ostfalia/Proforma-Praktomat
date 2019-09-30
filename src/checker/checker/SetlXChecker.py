@@ -103,8 +103,8 @@ class SetlXChecker(Checker):
         # Remove Praktomat-Path-Prefixes from result:
         output = re.sub(r"^"+re.escape(env.tmpdir())+"/+", "", output, flags=re.MULTILINE)
 
-        output = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
-                 escape(output) + '</pre>'
+        # output = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
+        output = '<pre>' + escape(output) + '</pre>'
         result.set_log(output, timed_out=timed_out, truncated=truncated)
         result.set_passed(not exitcode and not timed_out and (RXFAIL.search(output) is None) and not truncated)
 
