@@ -117,18 +117,18 @@ JVM = '/usr/bin/java'
 JVM_SECURE = '/praktomat/src/checker/scripts/java'
 FORTRAN_BINARY = 'g77'
 DEJAGNU_RUNTEST = 'runtest'
-CHECKSTYLEALLJAR = '/praktomat/extra/checkstyle-8.23-all.jar'
+CHECKSTYLEALLJAR = '/praktomat/lib/checkstyle-8.23-all.jar'
 JUNIT38 = 'junit'
 JAVA_LIBS = {'junit3': '/praktomat/extra/junit-3.8.jar',
              'junit4': '/praktomat/extra/junit-4.10.jar',
              'junit4.10': '/praktomat/extra/junit-4.10.jar',
-             'junit4.12': '/praktomat/extra/junit-4.12.jar:'
-             '/praktomat/extra/hamcrest-core-1.3.jar',
-             'junit4.12-gruendel': '/praktomat/extra/junit-4.12.jar:/praktomat/extra/JUnit4AddOn.jar:/praktomat/extra/hamcrest-core-1.3.jar'}
+             'junit4.12': '/praktomat/lib/junit-4.12.jar:'
+             '/praktomat/lib/hamcrest-core-1.3.jar',
+             'junit4.12-gruendel': '/praktomat/lib/junit-4.12.jar:/praktomat/extra/JUnit4AddOn.jar:/praktomat/lib/hamcrest-core-1.3.jar'}
 CHECKSTYLE_VER = {'check-6.2': '/praktomat/extra/checkstyle-6.2-all.jar',
                   'check-7.6': '/praktomat/extra/checkstyle-7.6-all.jar',
                   'check-5.4': '/praktomat/extra/checkstyle-7.6-all.jar',
-                  'check-8.23': '/praktomat/extra/checkstyle-8.23-all.jar'}
+                  'check-8.23': '/praktomat/lib/checkstyle-8.23-all.jar'}
 JCFDUMP = 'jcf-dump'
 SETLXJAR = '/praktomat/extra/setlX-2.7.jar'
 

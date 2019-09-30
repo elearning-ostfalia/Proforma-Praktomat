@@ -15,34 +15,25 @@ The following programming languages and test frameworks are provided with the Pr
 
 | Language      | Test Frameworks |
 | :---:        |    :----:   |         
-| Java      | Compiler,  Junit 4, Checkstyle      |
+| Java 8     | Compiler ,  Junit 4.12, Checkstyle 8.23   |
 | SetlX   | Test, Syntax Check        |
 | Python 2   | Doctest        |
 
+For running SetlX tests you need to copy the setlx-2.7.jar into the extra folder.
+
 ## Docker
 
+In order to build and start the docker composition simply run 
 
-In order to set up the docker composition go through the following steps:
-
- 1. Download and copy all libraries you need for grading into the extra folder:
-
-| Test Framework      | library |
-| :---        |    :----   |         
-| JUnit      | junit-4.12.jar,    hamcrest-core-1.3.jar   |
-| Checkstyle      | checkstyle-5.4-all.jar      |
-|       | checkstyle-6.2-all.jar      |
-|       | checkstyle-7.6-all.jar      |
-|       | checkstyle-8.23-all.jar      |
-| SetlX   | setlX-2.7.jar        |
-
- 2. Check and adjust your settings_docker.py (JAVA_LIBS, CHECKSTYLE_VER, SETLXJAR)
-
- 3. Run the docker containers
-
+        docker-compose build
         docker-compose up
+      
 
-For using different versions then you need to modify src/checker/JUnitChecker.py resp. 
-modify src/checker/CheckStyleChecker.py.
+Note: For installation of other framework versions then you need to modify 
+- src/checker/JUnitChecker.py
+- src/checker/CheckStyleChecker.py
+- URLs in Dockerfile
+- src/settings.docker.py
 
 <!--
 TODO: The Web-Interface seems to be buggy.  
@@ -54,14 +45,14 @@ Then Praktomat is available on port 80 in your web browser:
 For login see the credentials in your docker-compose.yml file (SUPERUSER and PASSWORD).
 
 -->
-If you want to use Praktomat as a grading back-end the appropriate URI is
+
+The REST API is available on port 80 and port 8010:  
 
         http://localhost:80/api/v2/submissions
 
 or (circumventing the web server)
 
         http://localhost:8010/api/v2/submissions
-
 
 
 ## ProFormA API (CURL)
