@@ -10,7 +10,7 @@
                 {# Format=<{{testResult.log_format }}> #}
                 {% if testResult.is_proforma_subtests_format  %}
 
-                {# version with complete subtest result #}
+                {# version with complete subtest results #}
                 {#<subtests-response>#}
                 {% autoescape off %}{{ testResult.log }}{% endautoescape %}
                 {#</subtests-response>#}
