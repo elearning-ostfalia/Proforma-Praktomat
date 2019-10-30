@@ -227,7 +227,7 @@ def grade_api_lon_capa(request, fw=None, fw_version=None):
     except Exception as inst:
         logger.exception(inst)
         callstack = traceback.format_exc()
-        print "Exception caught Stack Trace: " + str(callstack)  # __str__ allows args to be printed directly
+        print ("Exception caught Stack Trace: " + str(callstack))  # __str__ allows args to be printed directly
         response = HttpResponse()
         response.write(answer_format_template(award="ERROR", message="Error in grading process: " + str(inst) + callstack))
         #response.write(api_v2.get_http_error_page('Error in grading process', str(inst), callstack))

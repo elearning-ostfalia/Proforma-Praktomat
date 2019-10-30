@@ -110,6 +110,7 @@ class JUnitChecker(Checker):
                                                                timeout=settings.TEST_TIMEOUT,
                                                                fileseeklimit=settings.TEST_MAXFILESIZE,
                                                                extradirs=[script_dir])
+
         # logger.debug('JUNIT output:' + str(output))
         logger.debug('JUNIT error:' + str(error))
         logger.debug('JUNIT exitcode:' + str(exitcode))
@@ -131,6 +132,11 @@ class JUnitChecker(Checker):
             result.set_log(output, timed_out=True, truncated=truncated)
             result.set_passed(False)
             return result
+
+        import chardet
+        encoding = chardet.detect(output)
+        logger.debug('JUNIT output encoding:' + encoding['encoding'])
+
 
         if use_run_listener:
             # RUN LISTENER

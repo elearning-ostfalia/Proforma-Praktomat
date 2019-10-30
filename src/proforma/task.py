@@ -31,6 +31,7 @@ from xml.dom import minidom
 from xml.dom.minidom import Node
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from django.core.servers.basehttp import FileWrapper
 from django.db import models
@@ -516,11 +517,11 @@ def import_task(request):
 
     except Exception as inst:
         logger.exception(inst)
-        print "Exception caught: " + str(type(inst))  # the exception instance
-        print "Exception caught: " + str(inst.args)  # arguments stored in .args
-        print "Exception caught: " + str(inst)  # __str__ allows args to be printed directly
+        print ("Exception caught: " + str(type(inst)))  # the exception instance
+        print ("Exception caught: " + str(inst.args))  # arguments stored in .args
+        print ("Exception caught: " + str(inst))  # __str__ allows args to be printed directly
         callstack = traceback.format_exc()
-        print "Exception caught Stack Trace: " + str(callstack)  # __str__ allows args to be printed directly
+        print ("Exception caught Stack Trace: " + str(callstack))  # __str__ allows args to be printed directly
 
         #x, y = inst.args
         #print 'x =', x
@@ -544,7 +545,13 @@ def import_task_internal(filename, task_file):
     if filename[-3:].upper() == 'ZIP':
         task_xml, dict_zip_files = extract_zip_with_xml_and_zip_dict(uploaded_file=task_file)
     else:
-        task_xml = task_file[0].read()  # todo check name
+        # task_xml = task_file[0].read()  # todo check name
+        if type(task_file) == InMemoryUploadedFile:
+            task_xml = task_file.read()  # todo check name
+        else:
+            logger.debug('task_file class name is ' + task_file.__class__.__name__)
+            task_xml = task_file  # todo check name
+
 
     encoding = rxcoding.search(task_xml, re.IGNORECASE)
     if encoding is not None:
