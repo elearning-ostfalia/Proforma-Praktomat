@@ -120,14 +120,14 @@ DEJAGNU_RUNTEST = 'runtest'
 CHECKSTYLEALLJAR = '/praktomat/lib/checkstyle-8.23-all.jar'
 JUNIT38 = 'junit'
 JAVA_LIBS = {'junit3': '/praktomat/extra/junit-3.8.jar',
-             'junit4': '/praktomat/extra/junit-4.10.jar',
-             'junit4.10': '/praktomat/extra/junit-4.10.jar',
-             'junit4.12': '/praktomat/lib/junit-4.12.jar:'
-             '/praktomat/lib/hamcrest-core-1.3.jar',
+             # map junit4 and junit 4.10 to 4.12
+             'junit4': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',
+             'junit4.10': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',
+             'junit4.12': '/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar',
              'junit4.12-gruendel': '/praktomat/lib/junit-4.12.jar:/praktomat/extra/JUnit4AddOn.jar:/praktomat/lib/hamcrest-core-1.3.jar'}
-CHECKSTYLE_VER = {'check-6.2': '/praktomat/extra/checkstyle-6.2-all.jar',
-                  'check-7.6': '/praktomat/extra/checkstyle-7.6-all.jar',
-                  'check-5.4': '/praktomat/extra/checkstyle-7.6-all.jar',
+CHECKSTYLE_VER = {'check-6.2': '/praktomat/lib/checkstyle-8.23-all.jar',
+                  'check-7.6': '/praktomat/lib/checkstyle-8.23-all.jar',
+#                  'check-5.4': '/praktomat/lib/checkstyle-8.23-all.jar',
                   'check-8.23': '/praktomat/lib/checkstyle-8.23-all.jar'}
 JCFDUMP = 'jcf-dump'
 SETLXJAR = '/praktomat/extra/setlX-2.7.jar'
@@ -182,6 +182,7 @@ LOGGING = {
     'loggers': {
         'proforma': {
             'handlers': ['console', 'file'],
+#            'level': 'DEBUG',  # change debug level as appropiate
             'level': 'INFO',  # change debug level as appropiate
             'propagate': False,
             'maxBytes': 1024*1024*15,  # 15MB
@@ -189,12 +190,14 @@ LOGGING = {
         },
         'checker': {
             'handlers': ['console', 'error-file'],
+#            'level': 'DEBUG',  # change debug level as appropiate
             'level': 'INFO',  # change debug level as appropiate
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
         },
         'utilities': {
             'handlers': ['console', 'error-file'],
+#            'level': 'DEBUG',  # change debug level as appropiate
             'level': 'INFO',  # change debug level as appropiate
             'maxBytes': 1024 * 1024 * 15,  # 15MB
             'backupCount': 10,  # keep 10 historical versions
