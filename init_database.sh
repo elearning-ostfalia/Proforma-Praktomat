@@ -16,6 +16,12 @@ python ./src/manage.py syncdb --noinput --migrate
 #    exit 1 
 #fi
 
+# clear python cache since there can be old files that confuse migrations
+echo "clean python cache"
+pyclean .
+# py3clean does not delete cache files generated from source files that have been deleted since
+find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
+
 # update tables in case of a modified or added checker
 echo "migrate schema"
 # do not use exit here!
