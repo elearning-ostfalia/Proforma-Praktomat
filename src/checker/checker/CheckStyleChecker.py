@@ -11,6 +11,8 @@ from checker.admin import CheckerInline
 from checker.models import Checker, CheckerResult, CheckerFileField, execute_arglist, truncated_log
 from utilities.file_operations import *
 
+import logging
+logger = logging.getLogger(__name__)
 
 class CheckStyleChecker(Checker):
 
@@ -103,11 +105,22 @@ class CheckStyleChecker(Checker):
         lines = 0
         warning_in_line = 0 # is a line a warning? or must there a warn?
 
-        warning = str.count(output, 'warning:')
-        error = str.count(output, 'error:')
+        # logger.debug("output = " + output)
+        stroutput = None
+        import types
+        if type(output) == types.UnicodeType:
+            stroutput = output.encode('utf8')
+        else:
+            stroutput = output
 
-        result.set_passed(not exitcode and not timed_out and warning <= self.allowedWarnings
-                          and error <= self.allowedErrors and not truncated)
+        warnings = str.count(stroutput, '[WARN]')
+        errors = str.count(stroutput, '[ERROR]')
+
+        logger.debug("warnings: " + str(warnings))
+        logger.debug("errors: " + str(errors))
+
+        result.set_passed(not exitcode and not timed_out and warnings <= self.allowedWarnings
+                          and errors <= self.allowedErrors and not truncated)
 
         output = '<pre>' + '\n\n======== Test Results ======\n\n</pre><br/><pre>' + \
                  escape(output) + '</pre>'

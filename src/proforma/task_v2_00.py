@@ -446,8 +446,10 @@ def import_task(task_xml, dict_zip_files=None):
                 logger.debug('** create_java_unit_checker')
                 create_java_unit_checker(xmlTest, val_order, new_task, ns, test_file_dict)
             elif testtype == "java-checkstyle":
+                logger.debug('** create_java_checkstyle_checker')
                 create_java_checkstyle_checker(xmlTest, val_order, new_task, ns, test_file_dict)
             elif testtype == "setlx": # and xmlTest.xpath("p:test-configuration/jartest:jartest[@framework='setlX']", namespaces=ns):
+                logger.debug('** create_setlx_checker')
                 create_setlx_checker(xmlTest, val_order, new_task, ns, test_file_dict)
             elif testtype == "python-doctest":
                 logger.debug('** create_python_checker')
