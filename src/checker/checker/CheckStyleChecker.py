@@ -10,11 +10,12 @@ from checker.admin import CheckerInline
 
 from checker.models import Checker, CheckerResult, CheckerFileField, execute_arglist, truncated_log
 from utilities.file_operations import *
+from checker.checker.ProFormAChecker import ProFormAChecker
 
 import logging
 logger = logging.getLogger(__name__)
 
-class CheckStyleChecker(Checker):
+class CheckStyleChecker(ProFormAChecker):
 
     name = models.CharField(max_length=100, default="CheckStyle", help_text=_("Name to be displayed "
                                                                               "on the solution detail page."))
@@ -53,10 +54,11 @@ class CheckStyleChecker(Checker):
         return is_valid
 
     def run(self, env):
+        self.copy_files(env)
 
-        # Save save check configuration
+        # Save check configuration
         config_path = os.path.join(env.tmpdir(), "checks.xml")
-        copy_file(self.configuration.path, config_path)
+        copy_file(self.configuration.path, config_path) # configuration file is not part of 'files' attribute
         script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
 
 

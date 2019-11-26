@@ -181,8 +181,8 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('checker', ['JavaBuilder'])
 
-        # Adding model 'JUnitChecker'
-        db.create_table('checker_junitchecker', (
+        # Adding model 'ProFormAChecker'
+        db.create_table('checker_proformachecker', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('created', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('order', self.gf('django.db.models.fields.IntegerField')()),
@@ -191,6 +191,21 @@ class Migration(SchemaMigration):
             ('required', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('always', self.gf('django.db.models.fields.BooleanField')(default=True)),
             ('proforma_id', self.gf('django.db.models.fields.CharField')(default='None', max_length=255)),
+        ))
+        db.send_create_signal('checker', ['ProFormAChecker'])
+
+        # Adding M2M table for field files on 'ProFormAChecker'
+        m2m_table_name = db.shorten_name('checker_proformachecker_files')
+        db.create_table(m2m_table_name, (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('proformachecker', models.ForeignKey(orm['checker.proformachecker'], null=False)),
+            ('createfilechecker', models.ForeignKey(orm['checker.createfilechecker'], null=False))
+        ))
+        db.create_unique(m2m_table_name, ['proformachecker_id', 'createfilechecker_id'])
+
+        # Adding model 'JUnitChecker'
+        db.create_table('checker_junitchecker', (
+            ('proformachecker_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['checker.ProFormAChecker'], unique=True, primary_key=True)),
             ('class_name', self.gf('django.db.models.fields.CharField')(max_length=100)),
             ('test_description', self.gf('django.db.models.fields.TextField')()),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
@@ -244,20 +259,13 @@ class Migration(SchemaMigration):
 
         # Adding model 'CheckStyleChecker'
         db.create_table('checker_checkstylechecker', (
-            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('order', self.gf('django.db.models.fields.IntegerField')()),
-            ('task', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['tasks.Task'])),
-            ('public', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('required', self.gf('django.db.models.fields.BooleanField')(default=False)),
-            ('always', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('proforma_id', self.gf('django.db.models.fields.CharField')(default='None', max_length=255)),
+            ('proformachecker_ptr', self.gf('django.db.models.fields.related.OneToOneField')(to=orm['checker.ProFormAChecker'], unique=True, primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(default='CheckStyle', max_length=100)),
             ('configuration', self.gf('checker.models.CheckerFileField')(max_length=500)),
             ('allowedWarnings', self.gf('django.db.models.fields.IntegerField')(default=0)),
             ('allowedErrors', self.gf('django.db.models.fields.IntegerField')(default=0)),
             ('regText', self.gf('django.db.models.fields.CharField')(default='.*', max_length=5000)),
-            ('check_version', self.gf('django.db.models.fields.CharField')(default='check-6.2', max_length=16)),
+            ('check_version', self.gf('django.db.models.fields.CharField')(default='check-8.23', max_length=16)),
         ))
         db.send_create_signal('checker', ['CheckStyleChecker'])
 
@@ -418,6 +426,12 @@ class Migration(SchemaMigration):
         # Deleting model 'JavaBuilder'
         db.delete_table('checker_javabuilder')
 
+        # Deleting model 'ProFormAChecker'
+        db.delete_table('checker_proformachecker')
+
+        # Removing M2M table for field files on 'ProFormAChecker'
+        db.delete_table(db.shorten_name('checker_proformachecker_files'))
+
         # Deleting model 'JUnitChecker'
         db.delete_table('checker_junitchecker')
 
@@ -544,21 +558,14 @@ class Migration(SchemaMigration):
             'solution': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['solutions.Solution']"})
         },
         'checker.checkstylechecker': {
-            'Meta': {'object_name': 'CheckStyleChecker'},
+            'Meta': {'object_name': 'CheckStyleChecker', '_ormbases': ['checker.ProFormAChecker']},
             'allowedErrors': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'allowedWarnings': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
-            'always': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'check_version': ('django.db.models.fields.CharField', [], {'default': "'check-6.2'", 'max_length': '16'}),
+            'check_version': ('django.db.models.fields.CharField', [], {'default': "'check-8.23'", 'max_length': '16'}),
             'configuration': ('checker.models.CheckerFileField', [], {'max_length': '500'}),
-            'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'default': "'CheckStyle'", 'max_length': '100'}),
-            'order': ('django.db.models.fields.IntegerField', [], {}),
-            'proforma_id': ('django.db.models.fields.CharField', [], {'default': "'None'", 'max_length': '255'}),
-            'public': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'regText': ('django.db.models.fields.CharField', [], {'default': "'.*'", 'max_length': '5000'}),
-            'required': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'task': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['tasks.Task']"})
+            'proformachecker_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['checker.ProFormAChecker']", 'unique': 'True', 'primary_key': 'True'}),
+            'regText': ('django.db.models.fields.CharField', [], {'default': "'.*'", 'max_length': '5000'})
         },
         'checker.createfilechecker': {
             'Meta': {'object_name': 'CreateFileChecker'},
@@ -709,18 +716,11 @@ class Migration(SchemaMigration):
             'test_case': ('checker.models.CheckerFileField', [], {'max_length': '500'})
         },
         'checker.junitchecker': {
-            'Meta': {'object_name': 'JUnitChecker'},
-            'always': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'Meta': {'object_name': 'JUnitChecker', '_ormbases': ['checker.ProFormAChecker']},
             'class_name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'junit_version': ('django.db.models.fields.CharField', [], {'default': "'junit4.12'", 'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'order': ('django.db.models.fields.IntegerField', [], {}),
-            'proforma_id': ('django.db.models.fields.CharField', [], {'default': "'None'", 'max_length': '255'}),
-            'public': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'required': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'task': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['tasks.Task']"}),
+            'proformachecker_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['checker.ProFormAChecker']", 'unique': 'True', 'primary_key': 'True'}),
             'test_description': ('django.db.models.fields.TextField', [], {})
         },
         'checker.linecounter': {
@@ -747,6 +747,18 @@ class Migration(SchemaMigration):
             'public': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'required': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'tab_width': ('django.db.models.fields.IntegerField', [], {'default': '4'}),
+            'task': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['tasks.Task']"})
+        },
+        'checker.proformachecker': {
+            'Meta': {'object_name': 'ProFormAChecker'},
+            'always': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'files': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['checker.CreateFileChecker']", 'symmetrical': 'False'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'order': ('django.db.models.fields.IntegerField', [], {}),
+            'proforma_id': ('django.db.models.fields.CharField', [], {'default': "'None'", 'max_length': '255'}),
+            'public': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'required': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'task': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['tasks.Task']"})
         },
         'checker.pythonchecker': {

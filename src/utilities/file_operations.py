@@ -28,6 +28,8 @@ def makedirs(path):
 
 def create_file(path, content, replace=[], override=True):
     """ """
+    logger.debug('create file ' + path)
+
     dirname = os.path.dirname(path)
     if not os.path.exists(dirname):
         makedirs(dirname)
@@ -57,6 +59,8 @@ def copy_file(from_file_path, to_file_path, replace=[], override=True):
 
 
 def copy_file_to_directory_verbatim(from_path, to_path, override=True):
+    logger.debug('copy file verbatim from ' + from_file_path + ' to ' + to_file_path)
+
     to_path = os.path.join(to_path, os.path.basename(from_path))
     dirname = os.path.dirname(to_path)
     if not os.path.exists(dirname):
@@ -82,6 +86,7 @@ def copy_file_to_directory(from_file_path, to_path, replace=[], override=True):
 
 
 def create_tempfolder(path):
+    logger.debug('create folder ' + path)
     makedirs(path)
     tempfile.tempdir = path
     new_tmpdir = tempfile.mkdtemp()

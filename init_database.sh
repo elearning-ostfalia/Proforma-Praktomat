@@ -22,8 +22,13 @@ pyclean .
 # py3clean does not delete cache files generated from source files that have been deleted since
 find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
+#echo "initialise schema files"
+#python ./src/manage.py schemamigration checker --initial
+#exit
+
 # update tables in case of a modified or added checker
 echo "migrate schema"
+
 # do not use exit here!
 python ./src/manage.py schemamigration checker --auto
 # use initial in order to create initial migrations file

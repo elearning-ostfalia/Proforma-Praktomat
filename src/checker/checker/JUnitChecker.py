@@ -8,10 +8,10 @@ from django.utils.html import escape
 from checker.models import Checker, CheckerResult, execute_arglist, truncated_log
 from checker.admin import CheckerInline
 from utilities.file_operations import *
-from solutions.models import Solution
+#from solutions.models import Solution
 
 from checker.compiler.JavaBuilder import JavaBuilder
-
+from checker.checker.ProFormAChecker import ProFormAChecker
 
 import logging
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ RXFAIL = re.compile(r"^(.*)(FAILURES!!!|your program crashed|cpu time limit exce
                     r"failures|Class not found|Exception in thread)(.*)$", re.MULTILINE)
 
 
-class JUnitChecker(Checker):
+class JUnitChecker(ProFormAChecker):
     """ New Checker for JUnit3 Unittests. """
 
     # Add fields to configure checker instances. You can use any of the Django fields. (See online documentation)
@@ -61,6 +61,7 @@ class JUnitChecker(Checker):
         return (RXFAIL.search(output) == None)
 
     def run(self, env):
+        self.copy_files(env)
 
         logger.debug('JUNIT Checker build')
         java_builder = JavaBuilder(_flags="", _libs=self.junit_version,
