@@ -15,7 +15,7 @@ lxml==4.6.2
 Markdown==3.2.2
 monotonic==1.5
 psycopg2-binary==2.8.6
-Pygments==2.6.1
+Pygments==2.7.4
 pytz==2020.1
 
 # It appears that due to the pull-request https://github.com/aljosa/django-tinymce/pull/103 merged in django-tinymce==2.4.0, jquery is loaded after our onw jquery
