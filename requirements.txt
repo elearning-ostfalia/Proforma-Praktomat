@@ -1,7 +1,7 @@
 # workaround for debug-toolbar/sqlparse incompatibility, see http://stackoverflow.com/questions/38479063/django-debug-toolbar-breaking-on-admin-while-getting-sql-stats
 chardet==3.0.4
 Django==2.2.17
-django-debug-toolbar==2.2
+django-debug-toolbar==2.2.1
 django-extensions==2.2.9
 # django-tinymce 3.x is not compatible
 django-tinymce==2.9.0
