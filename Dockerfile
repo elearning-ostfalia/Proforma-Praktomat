@@ -2,11 +2,12 @@
 # FROM debian:jessie
 # FROM debian:buster
 # focal: Ubuntu 20.04 LTS
+# FROM ubuntu:focal
 # => Python 3.8
-FROM ubuntu:focal
+
 # jammy: Ubuntu 22.04 LTS
+FROM ubuntu:jammy
 # => Python 3.10
-# FROM ubuntu:jammy
 
 MAINTAINER Ostfalia
 
@@ -85,6 +86,7 @@ ADD --chown=999:999 requirements.txt /praktomat/
 RUN pip3 install --upgrade pip && \
     pip3 --version && \
     pip3 install -r requirements.txt --ignore-installed --force-reinstall --upgrade --no-cache-dir
+
 
 
 COPY . /praktomat
