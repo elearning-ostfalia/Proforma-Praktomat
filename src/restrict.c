@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // create new sesion (because limits are set per session)
+    // create new session (because limits are set per session)
     pid_t sid = getsid(0);
     pid_t pid = getpid();
     if (sid != pid) {
@@ -65,14 +65,15 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // rlimit CPU
     struct rlimit limit;
+    // rlimit CPU
     limit.rlim_cur = 25; // sec soft
     limit.rlim_max = 30; // sec hard
     if (setrlimit(RLIMIT_CPU, &limit) < 0) {
         perror("setrlimit CPU");
         return 1;
-    }     
+    }
+
 
     // rlimit NPROC (fork)
     limit.rlim_cur = 250; // number of threads soft
@@ -80,12 +81,12 @@ int main(int argc, char **argv) {
     if (setrlimit(RLIMIT_NPROC, &limit) < 0) {
         perror("setrlimit NPROC");
         return 1;
-    }    
+    }
 
     // rlimit AS (address space)
     // struct rlimit limit;
-    limit.rlim_cur = 1024 * 1024 * 500; // bytes soft (500MB)
-    limit.rlim_max = 1024 * 1024 * 600; // bytes hard (600MB)
+    limit.rlim_cur = 1024 * 1024 * 1000; // bytes soft (1.0GB)
+    limit.rlim_max = 1024 * 1024 * 1100; // bytes hard (1.1GB)
     if (setrlimit(RLIMIT_AS, &limit) < 0) {
         perror("setrlimit AS");
         return 1;
