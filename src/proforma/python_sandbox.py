@@ -166,7 +166,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
 
             logger.debug('copy shared libraries from os')
             self._include_shared_object('libffi.so', templ_dir)
-            self._include_shared_object('libffi.so.7', templ_dir)
+#            self._include_shared_object('libffi.so.7', templ_dir)
             self._include_shared_object('libbz2.so.1.0', templ_dir)
             self._include_shared_object('libsqlite3.so.0', templ_dir)
 
