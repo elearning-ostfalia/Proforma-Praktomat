@@ -90,7 +90,7 @@ class PythonChecker(ProFormAChecker):
 
         # todo: make properly
         # python3 instead of 3.8 and prepare outside checker
-        createpathonlib = "(cd / && tar -cf - usr/lib/python3.8) | (cd " + test_dir + " && tar -xf -)"
+        createpathonlib = "(cd / && tar -cf - usr/lib/python3.10) | (cd " + test_dir + " && tar -xf -)"
         os.system(createpathonlib)
 
 
