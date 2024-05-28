@@ -85,8 +85,8 @@ int main(int argc, char **argv) {
 
     // rlimit AS (address space)
     // struct rlimit limit;
-    limit.rlim_cur = 1024 * 1024 * 1000; // bytes soft (1.0GB)
-    limit.rlim_max = 1024 * 1024 * 1100; // bytes hard (1.1GB)
+    limit.rlim_cur = 1024 * 1024 * 1100; // bytes soft (1.1GB)
+    limit.rlim_max = 1024 * 1024 * 1200; // bytes hard (1.2GB)
     if (setrlimit(RLIMIT_AS, &limit) < 0) {
         perror("setrlimit AS");
         return 1;
