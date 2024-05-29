@@ -72,7 +72,7 @@ RUN groupadd -g 999 praktomat && \
   usermod -aG sudo praktomat && \
   echo "praktomat:$PASSWORD" | sudo chpasswd && \
 # add user tester (uid=777) \
-  useradd -g 999 -u 777 tester -s /bin/false --no-create-home -c "Test Exceution User"
+  useradd -g 999 -u 777 tester -s /bin/false --no-create-home -c "Test Execution User"
 
 # allow user praktomat to execute 'sudo -u tester ...'
 # allow user praktomat to start cron
