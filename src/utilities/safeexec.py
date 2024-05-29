@@ -104,7 +104,7 @@ def execute_arglist(args, working_directory, environment_variables={},
     def prepare_subprocess():
         # create a new session for the spawned subprocess using os.setsid,
         # so we can later kill it and all children on timeout, taken from http://stackoverflow.com/questions/4789837/how-to-terminate-a-python-subprocess-launched-with-shell-true
-        os.setsid()
+        # os.setsid()
         # Limit the size of files created during execution
         resource.setrlimit(resource.RLIMIT_NOFILE, (128, 128))
         if fileseeklimit is not None:
@@ -117,7 +117,7 @@ def execute_arglist(args, working_directory, environment_variables={},
         stderr=subprocess.STDOUT if error_to_output else subprocess.PIPE,
         cwd=working_directory,
         env=environment,
-        #start_new_session=True, # call of os.setsid()
+        start_new_session=True, # call of os.setsid()
         preexec_fn=prepare_subprocess
     )
 
@@ -142,15 +142,19 @@ def execute_arglist(args, working_directory, environment_variables={},
             # negative pid means process group
             # restrict used
             term_cmd = ["kill", "-TERM", "-" + str(process.pid)]
-            kill_cmd = ["kill", "-KILL", "-" + str(process.pid)]
-            term_cmd = sudo_prefix + ["-n"] + term_cmd
-            kill_cmd = sudo_prefix + ["-n"] + kill_cmd
+            kill_cmd = ["kill", "-SIGKILL", "-" + str(process.pid)]
+            # term_cmd = sudo_prefix + ["-n"] + term_cmd
+            # kill_cmd = sudo_prefix + ["-n"] + kill_cmd
 
-        subprocess.call(term_cmd)
+        print(term_cmd)
+        returncode = subprocess.call(term_cmd)
+        logger.debug("kill returned " + str(returncode))
         if process.poll() == None:
             time.sleep(5)
             logger.debug("force kill: " + str(kill_cmd))
-            subprocess.call(kill_cmd)
+            # os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            returncode = subprocess.call(kill_cmd)
+            logger.debug("force kill returned " + str(returncode))
 
             # if not unsafe and settings.USEPRAKTOMATTESTER:
             #    # restrict used
