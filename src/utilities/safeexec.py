@@ -117,8 +117,8 @@ def execute_arglist(args, working_directory, environment_variables={},
         stderr=subprocess.STDOUT if error_to_output else subprocess.PIPE,
         cwd=working_directory,
         env=environment,
-        start_new_session=True, # call of os.setsid()
-        preexec_fn=prepare_subprocess
+        start_new_session=True # call of os.setsid()
+        # preexec_fn=prepare_subprocess
     )
 
     timed_out = False
@@ -143,8 +143,8 @@ def execute_arglist(args, working_directory, environment_variables={},
             # restrict used
             term_cmd = ["kill", "-TERM", "-" + str(process.pid)]
             kill_cmd = ["kill", "-SIGKILL", "-" + str(process.pid)]
-            # term_cmd = sudo_prefix + ["-n"] + term_cmd
-            # kill_cmd = sudo_prefix + ["-n"] + kill_cmd
+            term_cmd = sudo_prefix + ["-n"] + term_cmd
+            kill_cmd = sudo_prefix + ["-n"] + kill_cmd
 
         print(term_cmd)
         returncode = subprocess.call(term_cmd)
