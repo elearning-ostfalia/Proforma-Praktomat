@@ -10,7 +10,9 @@
 # => Python 3.10
 
 # bookworm => jammy
-FROM python:3.11.9-slim-bookworm
+# FROM python:3.11.9-slim-bookworm
+FROM python:3.11.9-bookworm
+# FROM python:3.10.14-bookworm
 # bullseye => focal
 # FROM python:3.11.9-bullseye
 

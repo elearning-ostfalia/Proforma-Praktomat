@@ -26,6 +26,7 @@ from utilities.file_operations import copy_file
 from utilities.safeexec import execute_command
 
 from django.conf import settings
+from . import grade
 
 import logging
 
@@ -92,6 +93,8 @@ class SandboxInstance:
         if self._destfolder is None:
             return
 
+        if grade.keep_sandbox:
+            return
         try:
             if self._type == self.OVERLAY:
                 logger.debug('cleanup sandbox')

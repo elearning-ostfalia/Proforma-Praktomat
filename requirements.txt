@@ -32,12 +32,12 @@ six==1.16.0 #
 sqlparse==0.5.0 #
 wheel==0.43.0 #
 xmlschema==3.3.1 #
+pip==24.0
 
 #asgiref                3.8.1
 #click                  8.1.7
 #dbus-python            1.2.16
 #packaging              24.0
-#pip                    24.0
 #psycopg2-binary        2.9.9
 #pyelftools             0.31
 #PyGObject              3.36.0

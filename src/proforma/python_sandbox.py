@@ -27,6 +27,7 @@ import shutil
 from . import sandbox, task
 from django.conf import settings
 from utilities.safeexec import execute_command, escape_xml_invalid_chars
+from utilities.file_operations import copy_file
 
 import logging
 
@@ -169,6 +170,8 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             self._include_shared_object('libffi.so.8', templ_dir)
             self._include_shared_object('libbz2.so.1.0', templ_dir)
             self._include_shared_object('libsqlite3.so.0', templ_dir)
+            # hack: libpython3.11.so.1.0 exists twice in docker image. Pick the right one.
+            copy_file('/usr/lib/x86_64-linux-gnu/libpython3.11.so.1.0', templ_dir + '/usr/lib/x86_64-linux-gnu/libpython3.11.so.1.0')
 
             logger.debug('copy all shared libraries needed for python to work')
             self._checker.copy_shared_objects(templ_dir)
