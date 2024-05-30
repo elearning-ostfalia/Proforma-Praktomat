@@ -73,14 +73,13 @@ Adjust number of workers to fit your hardware.
 ##### Optional: Change Locale
 
 By default Praktomat uses German locale which results in German Checkstyle messages.
-In order to adjust the locale settings, you can override the build argument LOCALE in the
-docker-compose.yml file. E.g. for American English set LOCALE to en_US.UTF-8: 
+In order to adjust the locale settings, you can override the build argument LOCALE_PLAIN in the
+docker-compose.yml file. E.g. for American English set LOCALE_PLAIN to en_US: 
 
     build:
         ...
         args:
-            LOCALE: en_US.UTF-8
-
+            LOCALE_PLAIN: en_US
 
 ##### Optional: HTTPS
 For enabling HTTPS (port 443) you must 

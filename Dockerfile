@@ -6,35 +6,41 @@
 # => Python 3.8
 
 # jammy: Ubuntu 22.04 LTS
-FROM ubuntu:jammy
+# FROM ubuntu:jammy
 # => Python 3.10
+
+# bookworm => jammy
+FROM python:3.11.9-slim-bookworm
+# bullseye => focal
+# FROM python:3.11.9-bullseye
 
 MAINTAINER Ostfalia
 
 ENV PYTHONUNBUFFERED 1
 ARG PASSWORD=123
-# set locale to German (UTF-8)
-ARG LOCALE=de_DE.UTF-8
-
+ARG LOCALE_PLAIN=de_DE
+ARG LOCALE=${LOCALE_PLAIN}.UTF-8
+ARG GROUP_ID=1234
+ARG PRAKTOMAT_ID=1100
+ARG TESTER_ID=1101
 ARG DEBIAN_FRONTEND=noninteractive
 
-# change locale to something UTF-8
-RUN apt-get update && apt-get install -y locales && locale-gen ${LOCALE} && rm -rf /var/lib/apt/lists/*
+# local-gen does not seem to work properly with debian images (with ubuntu it does)
+# so we install locales-all :-(
+#    locale-gen ${LOCALE} && \
+
+# this is how to set locale for debian (from https://hub.docker.com/_/debian):
+RUN apt-get update && apt-get install -y locales && rm -rf /var/lib/apt/lists/* \
+	&& localedef -i ${LOCALE_PLAIN} -c -f UTF-8 -A /usr/share/locale/locale.alias ${LOCALE}
+
 ENV LANG ${LOCALE}
 ENV LC_ALL ${LOCALE}
-
-
-# do not use Python 3.8 because of expected incompatibility with Praktomat (safeexec-Popen with preexec_fn and threads)
-# https://docs.python.org/3/library/subprocess.html
-# RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository ppa:deadsnakes/ppa && \
-#    apt-get update && apt install -y python3.6 && \
-#    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
-
+ENV LANGUAGE ${LOCALE}
 
 # libffi-dev is used for python unittests with pandas (avoid extra RUN command)
 # squashfs-tools is used for sandbox templates
 RUN apt-get update && \
-    apt-get install -y swig libxml2-dev libxslt1-dev python3-pip python3-venv libpq-dev wget cron netcat sudo \
+    apt-get install -y swig libxml2-dev libxslt1-dev python3-pip python3-venv libpq-dev wget cron netcat-openbsd sudo \
     subversion git unzip \
     libffi-dev && \
     rm -rf /var/lib/apt/lists/*
@@ -66,13 +72,13 @@ RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletes
 ################
 
 # create group praktomat
-RUN groupadd -g 999 praktomat && \
-# add user praktomat (uid=999) \
-  useradd -g 999 -u 999 praktomat -s /bin/sh --home /praktomat --create-home --comment "Praktomat Demon" && \
+RUN groupadd -g ${GROUP_ID} praktomat && \
+# add user praktomat (uid=${PRAKTOMAT_ID}) \
+  useradd -g ${GROUP_ID} -u ${PRAKTOMAT_ID} praktomat -s /bin/sh --home /praktomat --create-home --comment "Praktomat Demon" && \
   usermod -aG sudo praktomat && \
   echo "praktomat:$PASSWORD" | sudo chpasswd && \
 # add user tester (uid=777) \
-  useradd -g 999 -u 777 tester -s /bin/false --no-create-home -c "Test Execution User"
+  useradd -g ${GROUP_ID} -u ${TESTER_ID} tester -s /bin/false --no-create-home -c "Test Execution User"
 
 # allow user praktomat to execute 'sudo -u tester ...'
 # allow user praktomat to start cron
@@ -80,9 +86,9 @@ RUN echo "praktomat ALL=NOPASSWD:SETENV: /usr/sbin/cron,/usr/bin/py3clean,/usr/b
 echo "praktomat ALL=(tester) NOPASSWD: ALL" >> /etc/sudoers
 
 
-# RUN mkdir /praktomat && chown 999:999 /praktomat
+# RUN mkdir /praktomat && chown ${PRAKTOMAT_ID}:${GROUP_ID} /praktomat
 WORKDIR /praktomat
-ADD --chown=999:999 requirements.txt /praktomat/
+ADD --chown=${PRAKTOMAT_ID}:${GROUP_ID} requirements.txt /praktomat/
 RUN pip3 install --upgrade pip && \
     pip3 --version && \
     pip3 install -r requirements.txt --ignore-installed --force-reinstall --upgrade --no-cache-dir

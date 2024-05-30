@@ -32,11 +32,11 @@ find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 echo "make migrations"
 # do not use exit here!
 # sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations configuration
-sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations accounts
-sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations tasks
-sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations solutions
-sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations checker
-sudo -n -E /usr/bin/python3 ./src/manage-docker.py makemigrations
+python3 ./src/manage-docker.py makemigrations accounts
+python3 ./src/manage-docker.py makemigrations tasks
+python3 ./src/manage-docker.py makemigrations solutions
+python3 ./src/manage-docker.py makemigrations checker
+python3 ./src/manage-docker.py makemigrations
 
 echo "migrate"
 python3 ./src/manage-docker.py migrate || exit
