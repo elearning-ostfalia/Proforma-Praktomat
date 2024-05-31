@@ -150,21 +150,15 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
     #            execute_command("usr/local/bin/python bin/pip install -r " + requirements_path,
     #                            cwd=os.path.join(templ_dir, '.venv'), env=env)
 
-                cmd = ["usr/local/bin/python", "bin/pip", "install", "-r", requirements_path]
+                cmd = ["usr/local/bin/pip", "install", "-r", requirements_path]
                 try:
-                    yield from PythonSandboxTemplate.execute_arglist_yield(cmd, os.path.join(templ_dir, '.venv'), env)
+                    yield from PythonSandboxTemplate.execute_arglist_yield(cmd, templ_dir, env)
+#                    yield from PythonSandboxTemplate.execute_arglist_yield(cmd, os.path.join(templ_dir, '.venv'), env)
                 except:
                     # convert exception in order to have more info for the user
                     raise Exception('Cannot install requirements.txt')
 
             yield 'data: add missing libraries\n\n'
-            logger.info('copy python libraries from OS')
-            # pythonbin = os.readlink('/usr/bin/python3') # ubuntu
-            pythonbin = os.readlink('/usr/local/bin/python3')
-            logger.debug('python is ' + pythonbin)  # expect python3.x
-            # copy python libs
-            createlib = "(cd / && tar -chf - usr/local/lib/" + pythonbin + ") | (cd " + templ_dir + " && tar -xf -)"
-            execute_command(createlib, shell=True)
 
             logger.debug('copy shared libraries from os')
             self._include_shared_object('libffi.so', templ_dir)
@@ -172,14 +166,6 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             self._include_shared_object('libbz2.so.1.0', templ_dir)
             self._include_shared_object('libsqlite3.so.0', templ_dir)
             # self._include_shared_object('libpython3.11.so.1.0', templ_dir)
-            # hack: libpython3.11.so.1.0 exists twice in docker image. Pick the right one.
-            # self._include_shared_object(' libpython3.11.so.1.0', templ_dir) # , '/usr/local')
-            # copy_file('/usr/local/lib/libpython3.11.so.1.0', templ_dir + '/lib/libpython3.11.so.1.0')
-            copy_file('/usr/local/bin/python3', templ_dir + '/usr/local/bin/python3')
-
-            # os.makedirs(templ_dir + "/usr/local/bin", 0o755, True)
-            logger.debug('copy all shared libraries needed for python to work')
-            self._checker.copy_shared_objects(templ_dir)
             # used for python executable to find "self"
             os.makedirs(templ_dir + "/proc", 0o755, True)
 
@@ -238,14 +224,29 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
         python_dir = os.path.join(settings.UPLOAD_ROOT, PythonSandboxTemplate.get_python_path(), 'Python')
 
         if not os.path.isfile(python_dir + '.tar'):
-            venv_dir = os.path.join(python_dir, ".venv")
+            venv_dir = python_dir # os.path.join(python_dir, ".venv")
             # create python environment in separate folder in order to be able to reuse it
             logger.debug('create venv for reuse in ' + venv_dir)
 
-            venv.create(venv_dir, system_site_packages=False, with_pip=True, symlinks=False)
+            # venv.create(venv_dir, system_site_packages=False, with_pip=True, symlinks=False)
+
+            copy_file('/usr/local/bin/python3', venv_dir + '/usr/local/bin/python3')
+            copy_file('/usr/local/bin/pip', venv_dir + '/usr/local/bin/pip')
+
+            logger.debug('copy all shared libraries needed for python to work')
+            self._checker.copy_shared_objects(venv_dir)
+
+            logger.info('copy python libraries from OS')
+            # pythonbin = os.readlink('/usr/bin/python3') # ubuntu
+            pythonbin = os.readlink('/usr/local/bin/python3')
+            logger.debug('python is ' + pythonbin)  # expect python3.x
+            # copy python libs
+            createlib = "(cd / && tar -chf - usr/local/lib/" + pythonbin + ") | (cd " + venv_dir + " && tar -xf -)"
+            execute_command(createlib, shell=True)
+
             # install xmlrunner
             logger.debug('install xmlrunner')
-            rc = subprocess.run(["bin/pip", "install", "unittest-xml-reporting"], cwd=venv_dir)
+            rc = subprocess.run(["usr/local/bin/pip", "install", "unittest-xml-reporting"], cwd=venv_dir)
             if rc.returncode != 0:
                 raise Exception('cannot install unittest-xml-reporting')
 
