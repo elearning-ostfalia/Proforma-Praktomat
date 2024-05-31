@@ -1,6 +1,11 @@
 # Ignore any files or directories any level, including the context root,
 # named migrations
 
+README.md*
+changelog.txt*
+docker-compose.*
+
+
 # clean build
 **/migrations
 
@@ -13,3 +18,4 @@ documentation
 
 docker-image
 
+lib-src

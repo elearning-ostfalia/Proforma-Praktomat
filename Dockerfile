@@ -11,7 +11,7 @@
 
 # bookworm => jammy
 # FROM python:3.11.9-slim-bookworm
-FROM python:3.11.9-bookworm
+FROM python:3.11.9-slim-bookworm
 # FROM python:3.10.14-bookworm
 # bullseye => focal
 # FROM python:3.11.9-bullseye
@@ -41,12 +41,15 @@ ENV LANGUAGE ${LOCALE}
 
 # libffi-dev is used for python unittests with pandas (avoid extra RUN command)
 # squashfs-tools is used for sandbox templates
+# python3-venv
 RUN apt-get update && \
-    apt-get install -y swig libxml2-dev libxslt1-dev python3-pip python3-venv libpq-dev wget cron netcat-openbsd sudo \
+    apt-get install -y swig libxml2-dev libxslt1-dev libpq-dev  wget cron netcat-openbsd sudo \
     subversion git unzip \
-    libffi-dev && \
-    rm -rf /var/lib/apt/lists/*
+    libffi-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 #RUN apt-get update && apt-get install -y swig libxml2-dev libxslt1-dev python3 python3-pip libpq-dev locales wget cron netcat
+#    apt-get install -y swig libxml2-dev libxslt1-dev python3-pip python3-venv libpq-dev wget cron netcat-openbsd sudo \
 
 # Java:
 # install OpenJDK (for Java Compiler checks)
@@ -66,9 +69,13 @@ RUN apt-get update && \
 RUN apt-get update && apt-get install -y openjdk-17-jdk openjfx && rm -rf /var/lib/apt/lists/*
 # Install C, cmake, Googletest (must be compiled)
 # pkg-config can be used to locate gmock (and other packages) after installation
-RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletest pkg-config && \
-    mkdir -p /tmp/googletest && cd /tmp/googletest && cmake /usr/src/googletest && cmake --build . && cmake --install . && \
-    rm -rf /var/lib/apt/lists/*
+# gcc is missing in slim version of base image => install build-essential
+RUN apt-get update \
+    && apt install -y build-essential \
+    && apt install -y cmake libcunit1 libcunit1-dev googletest pkg-config \
+    && mkdir -p /tmp/googletest && cd /tmp/googletest && cmake /usr/src/googletest && cmake --build . && cmake --install . \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # ADD UNIX USERS
 ################
@@ -84,7 +91,7 @@ RUN groupadd -g ${GROUP_ID} praktomat && \
 
 # allow user praktomat to execute 'sudo -u tester ...'
 # allow user praktomat to start cron
-RUN echo "praktomat ALL=NOPASSWD:SETENV: /usr/sbin/cron,/usr/bin/py3clean,/usr/bin/python3,/usr/bin/mount " >> /etc/sudoers && \
+RUN echo "praktomat ALL=NOPASSWD:SETENV: /usr/sbin/cron,/usr/local/bin/py3clean,/usr/local/bin/python3,/usr/bin/mount " >> /etc/sudoers && \
 echo "praktomat ALL=(tester) NOPASSWD: ALL" >> /etc/sudoers
 
 

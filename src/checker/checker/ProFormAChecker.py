@@ -150,15 +150,15 @@ class ProFormAChecker(Checker):
             # look for shared libraries
             try:
                 ltree = lddtree(file)
-                # ltree = lddtree(destdir + '/' + file)
+                # ltree = lddtree(destdir + file)
                 # print(ltree)
                 for key, value in ltree['libs'].items():
                     if value['path'] is None:
                         continue
-                    # logger.debug('=> ' + value['path'])
-                    os.makedirs(os.path.dirname(destdir + '/' + value['path']), 0o755, True)
-                    shutil.copyfile(value['path'], destdir + '/' + value['path'])
-                    os.chmod(destdir + '/' + value['path'], 0o755)
+                    logger.debug('=> ' + value['path'])
+                    os.makedirs(os.path.dirname(destdir + value['path']), 0o755, True)
+                    shutil.copyfile(value['path'], destdir + value['path'])
+                    os.chmod(destdir + value['path'], 0o755)
             except Exception as inst:
                 logger.exception('could not find shared objects ')
                 print(inst)

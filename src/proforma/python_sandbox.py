@@ -147,10 +147,10 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
                 # rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
                 env = {}
                 env['PATH'] = env['VIRTUAL_ENV'] = os.path.join(templ_dir, '.venv')
-    #            execute_command("bin/python bin/pip install -r " + requirements_path,
+    #            execute_command("usr/local/bin/python bin/pip install -r " + requirements_path,
     #                            cwd=os.path.join(templ_dir, '.venv'), env=env)
 
-                cmd = ["bin/python", "bin/pip", "install", "-r", requirements_path]
+                cmd = ["usr/local/bin/python", "bin/pip", "install", "-r", requirements_path]
                 try:
                     yield from PythonSandboxTemplate.execute_arglist_yield(cmd, os.path.join(templ_dir, '.venv'), env)
                 except:
@@ -159,10 +159,11 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
 
             yield 'data: add missing libraries\n\n'
             logger.info('copy python libraries from OS')
-            pythonbin = os.readlink('/usr/bin/python3')
+            # pythonbin = os.readlink('/usr/bin/python3') # ubuntu
+            pythonbin = os.readlink('/usr/local/bin/python3')
             logger.debug('python is ' + pythonbin)  # expect python3.x
             # copy python libs
-            createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + templ_dir + " && tar -xf -)"
+            createlib = "(cd / && tar -chf - usr/local/lib/" + pythonbin + ") | (cd " + templ_dir + " && tar -xf -)"
             execute_command(createlib, shell=True)
 
             logger.debug('copy shared libraries from os')
@@ -170,11 +171,17 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             self._include_shared_object('libffi.so.8', templ_dir)
             self._include_shared_object('libbz2.so.1.0', templ_dir)
             self._include_shared_object('libsqlite3.so.0', templ_dir)
+            # self._include_shared_object('libpython3.11.so.1.0', templ_dir)
             # hack: libpython3.11.so.1.0 exists twice in docker image. Pick the right one.
-            copy_file('/usr/lib/x86_64-linux-gnu/libpython3.11.so.1.0', templ_dir + '/usr/lib/x86_64-linux-gnu/libpython3.11.so.1.0')
+            # self._include_shared_object(' libpython3.11.so.1.0', templ_dir) # , '/usr/local')
+            # copy_file('/usr/local/lib/libpython3.11.so.1.0', templ_dir + '/lib/libpython3.11.so.1.0')
+            copy_file('/usr/local/bin/python3', templ_dir + '/usr/local/bin/python3')
 
+            # os.makedirs(templ_dir + "/usr/local/bin", 0o755, True)
             logger.debug('copy all shared libraries needed for python to work')
             self._checker.copy_shared_objects(templ_dir)
+            # used for python executable to find "self"
+            os.makedirs(templ_dir + "/proc", 0o755, True)
 
             # compile python code (smaller???)
             if compile_python:

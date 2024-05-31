@@ -85,12 +85,12 @@ class PythonChecker(ProFormAChecker):
         # since it is not available because of chroot in restrict
 
         # todo: make properly
-        copy_file('/usr/bin/python3', test_dir + '/python3')
+        copy_file('/usr/local/bin/python3', test_dir + '/python3')
         self.copy_shared_objects(env)
 
         # todo: make properly
         # python3 instead of 3.8 and prepare outside checker
-        createpathonlib = "(cd / && tar -cf - usr/lib/python3.10) | (cd " + test_dir + " && tar -xf -)"
+        createpathonlib = "(cd / && tar -cf - usr/local/lib/python3.11) | (cd " + test_dir + " && tar -xf -)"
         os.system(createpathonlib)
 
 

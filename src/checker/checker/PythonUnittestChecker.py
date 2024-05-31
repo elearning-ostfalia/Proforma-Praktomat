@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 import os.path
 import re
@@ -215,18 +216,22 @@ with open('unittest_results.xml', 'wb') as output:
         #    result.set_log("Invalid keyword found in submission (e.g. exit)", log_format=CheckerResult.TEXT_LOG)
         #    return result
 
+        # execute_command(['sudo', 'mount', '--bind', '/proc', test_dir + '/proc'])
+
         # run test
-        cmd = ['.venv/bin/python3', 'run_suite.py']
+        # cmd = ['.venv/bin/python3', 'run_suite.py']
+        cmd = ['/usr/local/bin/python3', 'run_suite.py']
         # set environment variables
         runenv.set_variable('VIRTUAL_ENV', '/.venv')
-        runenv.set_variable('PATH', '/.venv')
+#        runenv.set_variable('PATH', '/.venv:./usr')
+        runenv.set_variable('PATH', './usr/local/bin:/.venv')
         logger.debug('run ' + str(cmd))
-        execute_command('mkdir -p ' + test_dir + '/.matplotlib')
+        os.makedirs(test_dir + '/.matplotlib')
         runenv.set_variable('MPLCONFIGDIR', '/.matplotlib')
         (result, output) = self.run_command(cmd, runenv)
         logger.debug('result: ' + str(result))
         logger.debug('output: ' + str(output))
-        # execute_command('cat /proc/mounts')
+        # execute_command(['sudo', 'umount', test_dir + '/proc'])
 
         # XSLT
         if os.path.exists(test_dir + "/unittest_results.xml") and \

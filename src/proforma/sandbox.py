@@ -154,19 +154,25 @@ class SandboxTemplate:
         logger.debug('delete temp folder')
         shutil.rmtree(templ_dir)
 
-    def _include_shared_object(self, filename, newdir):
+    def _include_shared_object(self, filename, newdir, preferred_path = None, absolute_path = False):
         from pathlib import Path
-        found = False
+        if preferred_path:
+            for path in Path(preferred_path).rglob(filename):
+                if absolute_path:
+                    path = os.path.basename(path)
+
+                logger.debug('copy ' + str(path) + ' to ' + newdir + str(path))
+                copy_file(str(path), newdir + str(path))
+                return
+
         for path in Path('/').rglob(filename):
-            found = True
-            logger.debug(newdir)
-            logger.debug(str(path))
-            logger.debug(newdir + str(path))
+            if absolute_path:
+                path = os.path.basename(path)
+            logger.debug('copy ' + str(path) + ' to ' + newdir + str(path))
             copy_file(str(path), newdir + str(path))
             return
 
-        if not found:
-            raise Exception(filename + ' not found for testing')
+        raise Exception(filename + ' not found for testing')
 
     def _commit(self, templ_dir):
         """ freeze sandbox """
