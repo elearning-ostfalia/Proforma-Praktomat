@@ -9,11 +9,14 @@ RUN useradd praktomat -s /bin/bash
 # create sandbox folder and copy task and framework files into it, make writable
 # WORKDIR 
 # RUN chmod -R 777 
-ADD requirements.txt .
-ADD executor.py .
+# ADD requirements.txt .
 
 # install requirements
-RUN pip3 install --upgrade pip && pip3 install -r requirements.txt
+# RUN pip3 install --upgrade pip && pip3 install -r requirements.txt
+RUN pip3 install --upgrade pip \
+    && pip3 install docker
+
+ADD executor.py .
 
 # change user
 # USER praktomat    

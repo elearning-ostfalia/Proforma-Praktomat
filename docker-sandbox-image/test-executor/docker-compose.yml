@@ -11,6 +11,7 @@ services:
     volumes:
 #      - ./result:/result
       - ./solution:/solution:ro
+      - ./task:/task:ro
       - /var/run/docker.sock:/var/run/docker.sock
 
 

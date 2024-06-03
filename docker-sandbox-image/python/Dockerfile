@@ -1,4 +1,5 @@
 FROM python:3.11.9-slim-bookworm
+# FROM python:3.11.9-alpine3.20
 
 # set locale
 ARG LOCALE_PLAIN=de_DE
@@ -15,32 +16,36 @@ ENV LANGUAGE ${LOCALE}
 # create user with less capabilties 
 RUN useradd praktomat -s /bin/bash
 
-# create sandbox folder and copy task and framework files into it, make writable
+# create sandbox folder and copy framework files into it
 WORKDIR /sandbox
-RUN chmod -R 777 /sandbox
 
-# create result folder and set writable
-RUN mkdir -p __result__ && chmod -R 777 __result__
+# prepare sandbox folder: 
+# - set permissions
+# - create result folder
+# - create folder for matplotlib cache (suppresses warning)
+RUN chmod -R 777 /sandbox \
+	&& mkdir -p __result__ \
+	&& chmod -R 777 __result__ \
+	&& mkdir -p .matplotlib \
+	&& chmod -R 777 .matplotlib
 
-
-# create folder for matplotlib cache (suppresses warning)
-RUN mkdir -p .matplotlib && chmod -R 777 .matplotlib
 ENV MPLCONFIGDIR=/sandbox/.matplotlib
 
 ADD framework /sandbox
 ADD entrypoint.sh /
 RUN chmod 777 /entrypoint.sh
 
-ADD task /sandbox
 
-# extra für Tests
+# install xmlrunner for test framework
 RUN pip3 install --upgrade pip && pip3 install xmlrunner
 
 # install requirements
-RUN pip3 install --upgrade pip && pip3 install -r requirements.txt
+# ADD task /sandbox
+# RUN pip3 install --upgrade pip && pip3 install -r requirements.txt
 
 # change user
 USER praktomat    
 
 # run entrypoint.sh as user praktomat
-ENTRYPOINT ["../entrypoint.sh"]
+# ENTRYPOINT ["../entrypoint.sh"]
+CMD ["sleep", "100000"]

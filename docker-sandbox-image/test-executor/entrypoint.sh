@@ -11,9 +11,10 @@ echo "Docker entrypoint"
 echo "Copy solution into sandbox"
 
 cp -r /solution/* /sandbox
+cp -r /task/* /task
 
 # ls -al 
 
 python3 run_suite.py
 
-ls -al /result
+ls -al /__result__
