@@ -117,12 +117,14 @@ def get_result(container):
     with tarfile.open("result.tar", 'r') as tar:
         tar.extractall()
 
+    if debug:
+        os.system("ls -al")
+        os.system("ls -al " + remote_result_subfolder)
     if os.path.exists(local_result_file):
         print("TEST RESULT AVAILABLE")
     else:
         print("NO TEST RESULT AVAILABLE")
 
-    # os.system("ls -al __result__")
 
     if debug:
         print("** remove container")
