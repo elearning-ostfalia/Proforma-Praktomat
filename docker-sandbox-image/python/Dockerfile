@@ -47,5 +47,5 @@ RUN pip3 install --upgrade pip && pip3 install xmlrunner
 USER praktomat    
 
 # run entrypoint.sh as user praktomat
-# ENTRYPOINT ["../entrypoint.sh"]
-CMD ["sleep", "100000"]
+ENTRYPOINT ["tail", "-f", "/dev/null"]
+# CMD ["sleep", "infinity"]
