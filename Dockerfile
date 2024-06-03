@@ -120,7 +120,9 @@ ADD https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-sta
 RUN pip3 list && python3 --version && java -version
 
 # set permissions
-RUN chmod 0644 /praktomat/lib/* /praktomat/extra/*
+RUN chmod 0644 /praktomat/lib/* /praktomat/extra/* \
+    && chown praktomat:praktomat /praktomat/init_database.sh /praktomat/entrypoint.sh \
+    && chmod u+x /praktomat/init_database.sh /praktomat/entrypoint.sh
 
 # compile and install restrict.c
 RUN cd /praktomat/src && make restrict && sudo install -m 4750 -o root -g praktomat restrict /sbin/restrict
