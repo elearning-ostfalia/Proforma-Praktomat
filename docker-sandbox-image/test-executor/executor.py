@@ -5,8 +5,14 @@ import os
 import time
 import tarfile
 
-debug= False
+debug= True
 
+remote_command = "python3 /sandbox/run_suite.py"
+remote_result_subfolder = "__result__"
+remote_result_folder = "/sandbox/" + remote_result_subfolder
+local_task_folder = "task"
+local_solution_folder = "solution"
+local_result_file = remote_result_subfolder + "/unittest_results.xml"
 
 def start_container():
     client = docker.from_env()
@@ -47,11 +53,22 @@ def start_container():
 def run_test(container):
     if debug:
         print("** create tar files and upload to sandbox")
+
+    if not os.path.exists(local_task_folder):
+        raise Exception("subfolder " + local_task_folder + " does not exist")
+    if not os.path.exists(local_solution_folder):
+        raise Exception("subfolder " + local_solution_folder + " does not exist")    
+  
+    if len(os.listdir(local_task_folder)) == 0: 
+        raise Exception("subfolder " + local_task_folder + " is empty")
+    if len(os.listdir(local_solution_folder)) == 0: 
+        raise Exception("subfolder " + local_solution_folder + " is empty")
+
     # start_time = time.time()
     with tarfile.open("task.tar", 'w:gz') as tar:
-        tar.add("./task", arcname=".", recursive=True)    
+        tar.add(local_task_folder, arcname=".", recursive=True)    
     with tarfile.open("solution.tar", 'w:gz') as tar:
-        tar.add("./solution", arcname=".", recursive=True)    
+        tar.add(local_solution_folder, arcname=".", recursive=True)    
     with open('task.tar', 'rb') as fd:
         if not container.put_archive(path='/sandbox', data=fd):
             raise Exception('cannot put task-archive.tar')
@@ -64,6 +81,9 @@ def run_test(container):
 
     start_time = time.time()
     code, str = container.exec_run("python3 /sandbox/run_suite.py")
+    if code != 0:
+        raise Exception("running test failed", str.decode('UTF-8').replace('\n', '\r\n'))
+    
     print("---run test  %s seconds ---" % (time.time() - start_time))
     if debug:
         print(code)
@@ -84,7 +104,7 @@ def get_result(container):
 
     if debug:
         print("** get result")
-    tar, dict = container.get_archive("/sandbox/__result__")
+    tar, dict = container.get_archive(remote_result_folder)
     if debug:
         print(dict)
 
@@ -97,7 +117,7 @@ def get_result(container):
     with tarfile.open("result.tar", 'r') as tar:
         tar.extractall()
 
-    if os.path.exists("__result__/unittest_results.xml"):
+    if os.path.exists(local_result_file):
         print("TEST RESULT AVAILABLE")
     else:
         print("NO TEST RESULT AVAILABLE")
@@ -112,6 +132,7 @@ def close(container):
     container.remove()
 
 
+total_start_time = time.time()
 container = start_container()
 try:
     run_test(container)
@@ -119,4 +140,4 @@ try:
     print(result)
 finally:
     close(container)
-
+    print("---total time  %s seconds ---" % (time.time() - total_start_time))
