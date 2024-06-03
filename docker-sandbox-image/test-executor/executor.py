@@ -5,7 +5,7 @@ import os
 import time
 import tarfile
 
-debug= True
+debug= False
 
 remote_command = "python3 /sandbox/run_suite.py"
 remote_result_subfolder = "__result__"
@@ -30,7 +30,7 @@ def start_container():
 
 
     if debug:
-        print("create container")
+        print("*** create container")
     # start_time = time.time()
     #volumes = ['/home/karin/docker/docker-sandbox-executor/solution/:/solution']
     volumes = [] # todo
@@ -46,13 +46,13 @@ def start_container():
     if debug:
         print("** start container")
     # start_time = time.time()
-    container.start()
+    container.restart()
     # print("--- start docker container  %s seconds ---" % (time.time() - start_time))
     return container
 
 def run_test(container):
     if debug:
-        print("** create tar files and upload to sandbox")
+        print("** create tar files")
 
     if not os.path.exists(local_task_folder):
         raise Exception("subfolder " + local_task_folder + " does not exist")
@@ -69,6 +69,9 @@ def run_test(container):
         tar.add(local_task_folder, arcname=".", recursive=True)    
     with tarfile.open("solution.tar", 'w:gz') as tar:
         tar.add(local_solution_folder, arcname=".", recursive=True)    
+
+    if debug:
+        print("** upload to sandbox")        
     with open('task.tar', 'rb') as fd:
         if not container.put_archive(path='/sandbox', data=fd):
             raise Exception('cannot put task-archive.tar')
@@ -78,11 +81,13 @@ def run_test(container):
     #print("---upload tar files  %s seconds ---" % (time.time() - start_time))
 
     # print(container.logs().decode('UTF-8').replace('\n', '\r\n'))
-
+    if debug:
+        print("** run tests in sandbox")    
     start_time = time.time()
-    code, str = container.exec_run("python3 /sandbox/run_suite.py")
+    code, str = container.exec_run(remote_command, user="praktomat")
     if code != 0:
-        raise Exception("running test failed", str.decode('UTF-8').replace('\n', '\r\n'))
+        print(str.decode('UTF-8').replace('\n', '\r\n'))
+        raise Exception("running test failed")
     
     print("---run test  %s seconds ---" % (time.time() - start_time))
     if debug:

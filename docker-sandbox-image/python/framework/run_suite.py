@@ -158,6 +158,7 @@ suite = loader.discover(start_dir, "*test*.py")
 print("Suite:")
 print(suite)
 
+os.system("ls -al " + start_dir)  
 compile_test_code(start_dir)
 delete_py_files(start_dir)
 
@@ -166,7 +167,7 @@ delete_py_files(start_dir)
 # os.system("ls -al")                        
 # os.system("cd .. && ls -al")  
 
-os.makedirs(result_folder)
+os.makedirs(result_folder, exist_ok=True)
 with open(result_folder + '/unittest_results.xml', 'wb') as output:
     runner=xmlrunner.XMLTestRunner(output=output, outsuffix='')
     runner.run(suite)    
