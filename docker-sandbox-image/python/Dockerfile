@@ -32,12 +32,14 @@ RUN chmod -R 777 /sandbox \
 ENV MPLCONFIGDIR=/sandbox/.matplotlib
 
 ADD framework /sandbox
-ADD entrypoint.sh /
-RUN chmod 777 /entrypoint.sh
+# ADD entrypoint.sh /
+# RUN chmod 777 /entrypoint.sh
 
 
 # install xmlrunner for test framework
-RUN pip3 install --upgrade pip && pip3 install xmlrunner
+# lxml is needed for xml result conversion
+# RUN pip3 install --upgrade pip && pip3 install xmlrunner unittest-xml-reporting lxml
+RUN pip3 install --upgrade pip && pip3 install xmlrunner unittest-xml-reporting 
 
 # install requirements
 # ADD task /sandbox

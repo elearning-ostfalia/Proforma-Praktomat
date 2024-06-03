@@ -1,6 +1,10 @@
 #!/bin/bash
 
-echo "Docker entrypoint"
+# requires a virtual python environment
+# - python3 -m venv venv
+# - source venv/bin/activate
+# - pip install xmlrunner unittest-xml-reporting (lxml)
+# - pip list
 
 date
 # ls -al 
