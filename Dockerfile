@@ -129,9 +129,9 @@ RUN cd /praktomat/src && make restrict && sudo install -m 4750 -o root -g prakto
 
 # install fuse for sandbox templates
 # user_allow_other is needed in or der to allow praktomat user to set option allow_other on mount
-RUN apt-get update && apt-get install -y fuse3 unionfs-fuse squashfs-tools squashfuse fuse-overlayfs && \
-    rm -rf /var/lib/apt/lists/* && \
-    sed -i -e 's/^#user_allow_other/user_allow_other/' /etc/fuse.conf
+#RUN apt-get update && apt-get install -y fuse3 unionfs-fuse squashfs-tools squashfuse fuse-overlayfs && \
+#    rm -rf /var/lib/apt/lists/* && \
+#    sed -i -e 's/^#user_allow_other/user_allow_other/' /etc/fuse.conf
 # install tree and strace for debugging :-)
 #    tree strace less nano && \
 
@@ -141,8 +141,10 @@ RUN apt-get update && apt-get install -y fuse3 unionfs-fuse squashfs-tools squas
 #    cd fuse-overlayfs-1.9 && sh ./autogen.sh && ./configure && make && mv /usr/bin/fuse-overlayfs /usr/bin/fuse-overlayfs.old && \
 #    mv fuse-overlayfs /usr/bin/fuse-overlayfs
 
+# RUN usermod -aG docker praktomat
+#RUN chown praktomat /var/run/docker.sock
 # change user
-USER praktomat
+# USER praktomat
 
 # run entrypoint.sh as user praktomat
 ENTRYPOINT ["/praktomat/entrypoint.sh"]

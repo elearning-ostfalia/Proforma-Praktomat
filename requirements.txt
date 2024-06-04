@@ -19,7 +19,8 @@ psycopg2-binary==2.9.9 #
 # Pygments==2.11.2
 
 # for python unittests
-unittest-xml-reporting==3.2.0 #
+docker==7.1.0
+# unittest-xml-reporting==3.2.0 #
 
 
 ## modules automatically installed

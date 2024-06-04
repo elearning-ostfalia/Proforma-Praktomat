@@ -8,9 +8,9 @@ services:
 #      args:
 #        LOCALE: de_DE.UTF-8
 #    command: python3 run_suite.py
-    volumes:
+#    volumes:
 #      - ./result:/result:rw
-      - ./solution:/solution:ro
+#      - ./solution:/solution:ro
 
 
 # copy result:

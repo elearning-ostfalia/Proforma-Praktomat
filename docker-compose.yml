@@ -68,6 +68,8 @@ services:
       # for development: map source folders into container:
       # not for production!
      - ./src:/praktomat/src
+     # allow access to docker socket
+     - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8010:8010"
     depends_on:

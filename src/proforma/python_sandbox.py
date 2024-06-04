@@ -22,7 +22,8 @@
 import os
 import subprocess
 import venv
-import shutil
+import docker
+import tarfile
 
 from . import sandbox, task
 from django.conf import settings
@@ -40,6 +41,80 @@ compile_python = False
 #    def __init__(self):
 #        super().__init__()
 
+class DockerSandbox():
+    remote_command = "python3 /sandbox/run_suite.py"
+    remote_result_subfolder = "__result__"
+    remote_result_folder = "/sandbox/" + remote_result_subfolder
+    def __init__(self, container, studentenv):
+        self._container = container
+        self._studentenv = studentenv
+        if self._container is None:
+            raise Exception('could not create container')
+        self._container.restart()
+
+    def __del__(self):
+        self._container.remove()
+
+    def uploadEnvironmment(self):
+        if not os.path.exists(self._studentenv):
+            raise Exception("subfolder " + self._studentenv + " does not exist")
+
+        if len(os.listdir(self._studentenv)) == 0:
+            raise Exception("subfolder " + self._studentenv + " is empty")
+
+        # we need to change permissions on student folder in order to
+        # have the required permissions inside test docker container
+        os.system("chown -R praktomat:praktomat " + self._studentenv)
+
+        # start_time = time.time()
+        with tarfile.open("environment.tar", 'w:gz') as tar:
+            tar.add(self._studentenv, arcname=".", recursive=True)
+
+        logger.debug("** upload to sandbox")
+        with open('environment.tar', 'rb') as fd:
+            if not self._container.put_archive(path='/sandbox', data=fd):
+                raise Exception('cannot put environment.tar')
+
+        # logger.debug("** change permissions")
+        code, str = self._container.exec_run("ls -al /sandbox")
+        if code != 0:
+            logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
+            raise Exception("running test failed")
+        logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
+
+    def runTests(self):
+        logger.debug("** run tests in sandbox")
+        # start_time = time.time()
+        code, str = self._container.exec_run(DockerSandbox.remote_command, user="praktomat")
+        if code != 0:
+            logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
+            raise Exception("running test failed")
+
+        # print("---run test  %s seconds ---" % (time.time() - start_time))
+        logger.debug(code)
+        logger.debug("Test run log")
+        logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
+
+def get_result(self):
+    self._container.stop()
+    logger.debug("get result")
+    tar, dict = self._container.get_archive(DockerSandbox.remote_result_folder)
+    logger.debug(dict)
+
+    with open("result.tar", 'bw') as f:
+        for block in tar:
+            f.write(block)
+
+    with tarfile.open("result.tar", 'r') as tar:
+        tar.extractall(path=self._studentenv)
+
+#        os.system("ls -al")
+#        os.system("ls -al " + remote_result_subfolder)
+    resultpath = self._studentenv + '/' + DockerSandbox.remote_result_subfolder + '/unittest_results.xml'
+    if not os.path.exists(resultpath):
+        raise Exception("No test result file found")
+
+    return "todo read result"
 
 class PythonSandboxTemplate(sandbox.SandboxTemplate):
     """ python sandbox template for python tests """
@@ -126,79 +201,79 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             requirements_txt = requirements_txt.first()
             requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
 
-        templ_path = self.get_python_template_path()
-        if self.template_exists(templ_path):
+    #     templ_path = self.get_python_template_path()
+        if True: # self.template_exists(templ_path):
             yield 'data: python template already exists\n\n'
             # already exists => return
             return
-
-        yield 'data: create virtual python environment\n\n'
-        templ_dir = self._create_venv(templ_path)
-        logger.info('Create Python template ' + templ_dir)
-
-        try:
-            # install modules from requirements.txt if available
-            if requirements_txt is not None:
-                hash = PythonSandboxTemplate.get_hash(requirements_path)
-                print(hash)
-                yield 'data: install requirements\n\n'
-                logger.info('install requirements')
-                # rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
-                env = {}
-                env['PATH'] = env['VIRTUAL_ENV'] = os.path.join(templ_dir, '.venv')
-    #            execute_command("bin/python bin/pip install -r " + requirements_path,
-    #                            cwd=os.path.join(templ_dir, '.venv'), env=env)
-
-                cmd = ["bin/python", "bin/pip", "install", "-r", requirements_path]
-                try:
-                    yield from PythonSandboxTemplate.execute_arglist_yield(cmd, os.path.join(templ_dir, '.venv'), env)
-                except:
-                    # convert exception in order to have more info for the user
-                    raise Exception('Cannot install requirements.txt')
-
-            yield 'data: add missing libraries\n\n'
-            logger.info('copy python libraries from OS')
-            pythonbin = os.readlink('/usr/bin/python3')
-            logger.debug('python is ' + pythonbin)  # expect python3.x
-            # copy python libs
-            createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + templ_dir + " && tar -xf -)"
-            execute_command(createlib, shell=True)
-
-            logger.debug('copy shared libraries from os')
-            self._include_shared_object('libffi.so', templ_dir)
-            self._include_shared_object('libffi.so.8', templ_dir)
-            self._include_shared_object('libbz2.so.1.0', templ_dir)
-            self._include_shared_object('libsqlite3.so.0', templ_dir)
-
-            logger.debug('copy all shared libraries needed for python to work')
-            self._checker.copy_shared_objects(templ_dir)
-
-            # compile python code (smaller???)
-            if compile_python:
-                import compileall
-                import glob
-                logger.debug('**** compile')
-                success = compileall.compile_dir(templ_dir, quiet=True)
-
-            # delete all python source code
-    #        logger.debug('delete py')
-    #        for filePath in glob.glob(templ_dir + '/**/*.py', recursive=True):
-    #            if 'encodings' not in filePath and 'codecs' not in filePath:
-    #                print(filePath)
-    #                try:
-    #                    os.remove(filePath)
-    #                except:
-    #                    logger.error("Error while deleting file : ", filePath)
-    #            else:
-    #                print('**' + filePath)
-
-            yield 'data: freeze template\n\n'
-            self._commit(templ_dir)
-        except:
-            # try and delete complete templ_dir
-            shutil.rmtree(templ_dir, ignore_errors=True)
-            raise
-
+    #
+    #     yield 'data: create virtual python environment\n\n'
+    #     templ_dir = self._create_venv(templ_path)
+    #     logger.info('Create Python template ' + templ_dir)
+    #
+    #     try:
+    #         # install modules from requirements.txt if available
+    #         if requirements_txt is not None:
+    #             hash = PythonSandboxTemplate.get_hash(requirements_path)
+    #             print(hash)
+    #             yield 'data: install requirements\n\n'
+    #             logger.info('install requirements')
+    #             # rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
+    #             env = {}
+    #             env['PATH'] = env['VIRTUAL_ENV'] = os.path.join(templ_dir, '.venv')
+    # #            execute_command("bin/python bin/pip install -r " + requirements_path,
+    # #                            cwd=os.path.join(templ_dir, '.venv'), env=env)
+    #
+    #             cmd = ["bin/python", "bin/pip", "install", "-r", requirements_path]
+    #             try:
+    #                 yield from PythonSandboxTemplate.execute_arglist_yield(cmd, os.path.join(templ_dir, '.venv'), env)
+    #             except:
+    #                 # convert exception in order to have more info for the user
+    #                 raise Exception('Cannot install requirements.txt')
+    #
+    #         yield 'data: add missing libraries\n\n'
+    #         logger.info('copy python libraries from OS')
+    #         pythonbin = os.readlink('/usr/bin/python3')
+    #         logger.debug('python is ' + pythonbin)  # expect python3.x
+    #         # copy python libs
+    #         createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + templ_dir + " && tar -xf -)"
+    #         execute_command(createlib, shell=True)
+    #
+    #         logger.debug('copy shared libraries from os')
+    #         self._include_shared_object('libffi.so', templ_dir)
+    #         self._include_shared_object('libffi.so.8', templ_dir)
+    #         self._include_shared_object('libbz2.so.1.0', templ_dir)
+    #         self._include_shared_object('libsqlite3.so.0', templ_dir)
+    #
+    #         logger.debug('copy all shared libraries needed for python to work')
+    #         self._checker.copy_shared_objects(templ_dir)
+    #
+    #         # compile python code (smaller???)
+    #         if compile_python:
+    #             import compileall
+    #             import glob
+    #             logger.debug('**** compile')
+    #             success = compileall.compile_dir(templ_dir, quiet=True)
+    #
+    #         # delete all python source code
+    # #        logger.debug('delete py')
+    # #        for filePath in glob.glob(templ_dir + '/**/*.py', recursive=True):
+    # #            if 'encodings' not in filePath and 'codecs' not in filePath:
+    # #                print(filePath)
+    # #                try:
+    # #                    os.remove(filePath)
+    # #                except:
+    # #                    logger.error("Error while deleting file : ", filePath)
+    # #            else:
+    # #                print('**' + filePath)
+    #
+    #         yield 'data: freeze template\n\n'
+    #         self._commit(templ_dir)
+    #     except:
+    #         # try and delete complete templ_dir
+    #         shutil.rmtree(templ_dir, ignore_errors=True)
+    #         raise
+    #
 
     def get_python_template_path(self):
         """ returns the template pathname for the given requirements.txt """
@@ -266,15 +341,22 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
 
     def get_instance(self, studentenv):
         """ return an instance created from this template """
-        templ_dir = self.get_python_template_path()
-        if not self.template_exists(templ_dir):
-            logger.debug('Template does not exist => (re)create')
-            self.create()
+        # templ_dir = self.get_python_template_path()
+        # if not self.template_exists(templ_dir):
+        #     logger.debug('Template does not exist => (re)create')
+        #     self.create()
+        #
+        # logger.info('Use Python template ' + templ_dir)
+        # instance = sandbox.SandboxInstance(templ_dir, studentenv)
+        # return instance
+        client = docker.from_env()
+        # with the init flag set to True signals are handled properly so that
+        # stopping the container is much faster
+        container = client.containers.create(image="python-praktomat_sandbox",
+                                             volumes=[],
+                                             init=True)
 
-        logger.info('Use Python template ' + templ_dir)
-        instance = sandbox.SandboxInstance(templ_dir, studentenv)
-        return instance
-
+        return DockerSandbox(container, studentenv)
 
 
 
