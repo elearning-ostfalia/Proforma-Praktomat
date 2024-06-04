@@ -13,15 +13,20 @@ ENV LANG ${LOCALE}
 ENV LC_ALL ${LOCALE}
 ENV LANGUAGE ${LOCALE}
 
+ARG GROUP_ID=999
+ARG PRAKTOMAT_ID=999
+ARG TESTER_ID=777
+
 # install xmlrunner for test framework
 # lxml is needed for xml result conversion
 # RUN pip3 install --upgrade pip && pip3 install xmlrunner unittest-xml-reporting lxml
 RUN pip3 install --upgrade pip && pip3 install xmlrunner unittest-xml-reporting 
 
 # create user with less capabilties 
-RUN useradd praktomat -s /bin/bash
+RUN groupadd -g ${GROUP_ID} praktomat \
+    && useradd -g ${GROUP_ID} -u ${PRAKTOMAT_ID} praktomat -s /bin/bash
 
-  
+
 
 # create sandbox folder and copy framework files into it
 WORKDIR /sandbox
@@ -40,18 +45,17 @@ RUN chmod -R 777 /sandbox \
 
 ENV MPLCONFIGDIR=/sandbox/.matplotlib
 
-# ADD entrypoint.sh /
-# RUN chmod 777 /entrypoint.sh
-
-
-
 # install requirements
 # ADD task /sandbox
 # RUN pip3 install --upgrade pip && pip3 install -r requirements.txt
 
+
+# RUN apt-get update && apt-get -y install sudo strace && adduser praktomat sudo
+
+
 # change user
-USER praktomat  
+USER praktomat
 
 # run entrypoint.sh as user praktomat
+# CMD ["sleep", "10000"]
 ENTRYPOINT ["tail", "-f", "/dev/null"]
-# CMD ["sleep", "infinity"]

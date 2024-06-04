@@ -13,6 +13,12 @@ MAINTAINER Ostfalia
 
 ENV PYTHONUNBUFFERED 1
 ARG PASSWORD=123
+
+ARG GROUP_ID=999
+ARG PRAKTOMAT_ID=999
+ARG TESTER_ID=777
+
+
 # set locale to German (UTF-8)
 ARG LOCALE=de_DE.UTF-8
 
@@ -66,23 +72,22 @@ RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletes
 ################
 
 # create group praktomat
-RUN groupadd -g 999 praktomat && \
-# add user praktomat (uid=999) \
-  useradd -g 999 -u 999 praktomat -s /bin/sh --home /praktomat --create-home --comment "Praktomat Demon" && \
+RUN groupadd -g ${GROUP_ID} praktomat && \
+# add user praktomat (uid=${PRAKTOMAT_ID}) \
+  useradd -g ${GROUP_ID} -u ${PRAKTOMAT_ID} praktomat -s /bin/sh --home /praktomat --create-home --comment "Praktomat Demon" && \
   usermod -aG sudo praktomat && \
   echo "praktomat:$PASSWORD" | sudo chpasswd && \
 # add user tester (uid=777) \
-  useradd -g 999 -u 777 tester -s /bin/false --no-create-home -c "Test Execution User"
-
+  useradd -g ${GROUP_ID} -u ${TESTER_ID} tester -s /bin/false --no-create-home -c "Test Execution User"
 # allow user praktomat to execute 'sudo -u tester ...'
 # allow user praktomat to start cron
 RUN echo "praktomat ALL=NOPASSWD:SETENV: /usr/sbin/cron,/usr/bin/py3clean,/usr/bin/python3,/usr/bin/mount " >> /etc/sudoers && \
 echo "praktomat ALL=(tester) NOPASSWD: ALL" >> /etc/sudoers
 
 
-# RUN mkdir /praktomat && chown 999:999 /praktomat
+# RUN mkdir /praktomat && chown ${PRAKTOMAT_ID}:${GROUP_ID} /praktomat
 WORKDIR /praktomat
-ADD --chown=999:999 requirements.txt /praktomat/
+ADD --chown=${PRAKTOMAT_ID}:${GROUP_ID} requirements.txt /praktomat/
 RUN pip3 install --upgrade pip && \
     pip3 --version && \
     pip3 install -r requirements.txt --ignore-installed --force-reinstall --upgrade --no-cache-dir

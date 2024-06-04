@@ -105,10 +105,9 @@ class PythonUnittestChecker(ProFormAChecker):
         sandbox = template.get_instance(test_dir)
         sandbox.uploadEnvironmment()
         # run test
-        sandbox.runTests()
-        sandbox.get_result()
+        output = sandbox.runTests()
         result = self.create_result(studentenv)
-        output = "TODO die Logausgaben während des Testlaufs müssen noch irgendwo herkommen"
+        sandbox.get_result_file()
 
         # XSLT
         if os.path.exists(test_dir + "/unittest_results.xml") and \

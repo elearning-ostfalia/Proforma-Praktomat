@@ -52,8 +52,9 @@ class DockerSandbox():
             raise Exception('could not create container')
         self._container.restart()
 
-    def __del__(self):
-        self._container.remove()
+#    def __del__(self):
+#        self._container.stop()
+#        self._container.remove()
 
     def uploadEnvironmment(self):
         if not os.path.exists(self._studentenv):
@@ -75,17 +76,10 @@ class DockerSandbox():
             if not self._container.put_archive(path='/sandbox', data=fd):
                 raise Exception('cannot put environment.tar')
 
-        # logger.debug("** change permissions")
-        code, str = self._container.exec_run("ls -al /sandbox")
-        if code != 0:
-            logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
-            raise Exception("running test failed")
-        logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
-
     def runTests(self):
         logger.debug("** run tests in sandbox")
         # start_time = time.time()
-        code, str = self._container.exec_run(DockerSandbox.remote_command, user="praktomat")
+        code, str = self._container.exec_run(DockerSandbox.remote_command, user="999")
         if code != 0:
             logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
             raise Exception("running test failed")
@@ -94,27 +88,29 @@ class DockerSandbox():
         logger.debug(code)
         logger.debug("Test run log")
         logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
+        return str.decode('UTF-8').replace('\n', '\r\n')
 
-def get_result(self):
-    self._container.stop()
-    logger.debug("get result")
-    tar, dict = self._container.get_archive(DockerSandbox.remote_result_folder)
-    logger.debug(dict)
+    def get_result_file(self):
+        self._container.stop()
+        logger.debug("get result")
+        tar, dict = self._container.get_archive(DockerSandbox.remote_result_folder)
+        logger.debug(dict)
 
-    with open("result.tar", 'bw') as f:
-        for block in tar:
-            f.write(block)
+        with open("result.tar", 'bw') as f:
+            for block in tar:
+                f.write(block)
 
-    with tarfile.open("result.tar", 'r') as tar:
-        tar.extractall(path=self._studentenv)
+        with tarfile.open("result.tar", 'r') as tar:
+            tar.extractall(path=self._studentenv)
 
-#        os.system("ls -al")
-#        os.system("ls -al " + remote_result_subfolder)
-    resultpath = self._studentenv + '/' + DockerSandbox.remote_result_subfolder + '/unittest_results.xml'
-    if not os.path.exists(resultpath):
-        raise Exception("No test result file found")
+    #        os.system("ls -al")
+    #        os.system("ls -al " + remote_result_subfolder)
+        resultpath = self._studentenv + '/' + DockerSandbox.remote_result_subfolder + '/unittest_results.xml'
+        if not os.path.exists(resultpath):
+            raise Exception("No test result file found")
 
-    return "todo read result"
+        os.system("mv " + resultpath + " " + self._studentenv + '/unittest_results.xml')
+        return "todo read result"
 
 class PythonSandboxTemplate(sandbox.SandboxTemplate):
     """ python sandbox template for python tests """
