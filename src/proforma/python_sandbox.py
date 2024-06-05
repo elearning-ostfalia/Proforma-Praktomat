@@ -194,10 +194,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
         images = self._client.images.list(
             filters = {"reference": PythonSandboxTemplate.python_image_name + ":" + tag})
         print(images)
-        if len(images) > 0:
-            return True
-        else:
-            return False
+        return len(images) > 0
 
     def create(self):
         """ creates a docker image """
@@ -215,7 +212,8 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
         yield 'data: create new python base image\n\n'
         logger.debug("create python image for tag " + tag + " from " + self.python_dockerfile_path)
         image, logs_gen = self._client.images.build(path=self.python_dockerfile_path,
-                                  tag=PythonSandboxTemplate.python_image_name)
+                                                    tag=PythonSandboxTemplate.python_image_name+':'+tag,
+                                                    rm =True)
         print(logs_gen)
 
         requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
@@ -310,7 +308,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
         if requirements_path is not None:
             self._tag = PythonSandboxTemplate.get_hash(requirements_path)
         else:
-            self._tag = "latest" # default tag
+            self._tag = "0" # "latest" # default tag
 
         return self._tag
 
