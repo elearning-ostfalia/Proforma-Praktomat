@@ -52,9 +52,9 @@ class DockerSandbox():
             raise Exception('could not create container')
         self._container.restart()
 
-#    def __del__(self):
-#        self._container.stop()
-#        self._container.remove()
+    def __del__(self):
+        self._container.stop()
+        self._container.remove()
 
     def uploadEnvironmment(self):
         if not os.path.exists(self._studentenv):
@@ -114,8 +114,15 @@ class DockerSandbox():
 
 class PythonSandboxTemplate(sandbox.SandboxTemplate):
     """ python sandbox template for python tests """
+
+    # name of python docker image
+    python_image_name = "python-praktomat_sandbox"
+    python_dockerfile_path = '/praktomat/docker-sandbox-image/python'
+
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test)
+        self._client = docker.from_env()
+        self._tag = None
 
     def get_hash(requirements_txt):
         """ create simple hash for requirements.txt content """
@@ -131,10 +138,6 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             # print('Modules: ' + '\n'.join(modules))
             md5 = hashlib.md5('\n'.join(modules).encode('utf-8')).hexdigest()
             return md5
-
-    def get_python_path():
-        """ return root of all templates. """
-        return 'Templates/Python'
 
     def check_preconditions(self):
         requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
@@ -187,25 +190,44 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             raise
 
 
+    def _image_exists(self, tag):
+        images = self._client.images.list(
+            filters = {"reference": PythonSandboxTemplate.python_image_name + ":" + tag})
+        print(images)
+        if len(images) > 0:
+            return True
+        else:
+            return False
+
     def create(self):
+        """ creates a docker image """
+        logger.debug("create python image (if it does not exist)")
+
         self.check_preconditions()
+
+        tag = self._get_image_tag()
+        if self._image_exists(tag):
+            logger.debug("python image for tag " + tag + " already exists")
+            yield 'data: python image for tag ' + tag + ' already exists\n\n'
+            # already exists => return
+            return
+
+        yield 'data: create new python base image\n\n'
+        logger.debug("create python image for tag " + tag + " from " + self.python_dockerfile_path)
+        image, logs_gen = self._client.images.build(path=self.python_dockerfile_path,
+                                  tag=PythonSandboxTemplate.python_image_name)
+        print(logs_gen)
+
         requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
         if len(requirements_txt) == 0:
             requirements_txt = None
             requirements_path = None
         else:
             requirements_txt = requirements_txt.first()
-            requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
+            requirements_path = os.path.join(settings.UPLOAD_ROOT,
+                                             task.get_storage_path(requirements_txt, requirements_txt.filename))
 
-    #     templ_path = self.get_python_template_path()
-        if True: # self.template_exists(templ_path):
-            yield 'data: python template already exists\n\n'
-            # already exists => return
-            return
-    #
-    #     yield 'data: create virtual python environment\n\n'
-    #     templ_dir = self._create_venv(templ_path)
-    #     logger.info('Create Python template ' + templ_dir)
+        # logger.info('Create Python image for ' + templ_dir)
     #
     #     try:
     #         # install modules from requirements.txt if available
@@ -271,8 +293,10 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
     #         raise
     #
 
-    def get_python_template_path(self):
-        """ returns the template pathname for the given requirements.txt """
+    def _get_image_tag(self):
+        if not self._tag is None:
+            return self._tag
+
         requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
         if len(requirements_txt) > 1:
             raise Exception('more than one requirements.txt found')
@@ -283,72 +307,35 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             requirements_txt = requirements_txt.first()
             requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
 
-        hash = None
         if requirements_path is not None:
-            hash = PythonSandboxTemplate.get_hash(requirements_path)
+            self._tag = PythonSandboxTemplate.get_hash(requirements_path)
+        else:
+            self._tag = "latest" # default tag
 
+        return self._tag
+
+    def get_python_template_path(self):
+        """ returns the template pathname for the given requirements.txt """
+        hash = self._get_image_tag()
         if hash is not None:
             return os.path.join(settings.UPLOAD_ROOT, PythonSandboxTemplate.get_python_path(), hash)
         else:
-            return os.path.join(settings.UPLOAD_ROOT, PythonSandboxTemplate.get_python_path(), '0')
+            return PythonSandboxTemplate.get_python_path()
 
 
-
-    def _create_venv(self, templ_dir):
-        # create virtual environment for reuse
-        python_dir = os.path.join(settings.UPLOAD_ROOT, PythonSandboxTemplate.get_python_path(), 'Python')
-
-        if not os.path.isfile(python_dir + '.tar'):
-            venv_dir = os.path.join(python_dir, ".venv")
-            # create python environment in separate folder in order to be able to reuse it
-            logger.debug('create venv for reuse in ' + venv_dir)
-
-            venv.create(venv_dir, system_site_packages=False, with_pip=True, symlinks=False)
-            # install xmlrunner
-            logger.debug('install xmlrunner')
-            rc = subprocess.run(["bin/pip", "install", "unittest-xml-reporting"], cwd=venv_dir)
-            if rc.returncode != 0:
-                raise Exception('cannot install unittest-xml-reporting')
-
-            # compile python code (smaller)
-            if compile_python:
-                import compileall
-                logger.debug('**** compile')
-                success = compileall.compile_dir(venv_dir, quiet=True)
-
-            # delete all python source code
-            # logger.debug('delete py in python venv')
-            # import glob
-            #for filePath in glob.glob(venv_dir + '/**/*.py', recursive=True):
-            #    print(filePath)
-            #    try:
-            #        os.remove(filePath)
-            #    except:
-            #        logger.error("Error while deleting file : ", filePath)
-
-            self._compress_to_archive(python_dir)
-
-        logger.debug('reuse python env')
-        # templ_dir = os.path.join(settings.UPLOAD_ROOT, self._checker.get_template_path())
-        execute_command("mkdir -p " + templ_dir)
-        execute_command("tar -xf " + python_dir + ".tar ", templ_dir)
-
-        return templ_dir
 
     def get_instance(self, studentenv):
         """ return an instance created from this template """
-        # templ_dir = self.get_python_template_path()
-        # if not self.template_exists(templ_dir):
-        #     logger.debug('Template does not exist => (re)create')
-        #     self.create()
-        #
+        self.create()
+        tag = self._get_image_tag()
+
         # logger.info('Use Python template ' + templ_dir)
         # instance = sandbox.SandboxInstance(templ_dir, studentenv)
         # return instance
-        client = docker.from_env()
+
         # with the init flag set to True signals are handled properly so that
         # stopping the container is much faster
-        container = client.containers.create(image="python-praktomat_sandbox",
+        container = self._client.containers.create(image=PythonSandboxTemplate.python_image_name+':'+tag,
                                              volumes=[],
                                              init=True)
 
