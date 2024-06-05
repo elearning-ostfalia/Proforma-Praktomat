@@ -5,13 +5,13 @@ import traceback
 
 from lxml import etree
 
-from checker.basemodels import CheckerResult, truncated_log, CheckerEnvironment
-from utilities.safeexec import execute_arglist
+from checker.basemodels import CheckerResult # , truncated_log, CheckerEnvironment
+# from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
-from django.conf import settings
+# from django.conf import settings
 from proforma import python_sandbox
-from utilities.safeexec import execute_command
+# from utilities.safeexec import execute_command
 
 import logging
 
@@ -95,18 +95,15 @@ class PythonUnittestChecker(ProFormAChecker):
         test_dir = studentenv.tmpdir()
         logger.debug('main environment is in ' + test_dir)
 
-        # code layer will contain testcode
-        # codelayer = CheckerEnvironment(env._solution)
         # copy task files and unzip zip file if submission consists of just a zip file.
         self.prepare_run(studentenv)
         logger.debug('task code is in ' + test_dir)
 
-        template = python_sandbox.PythonSandboxTemplate(self)
-        sandbox = template.get_instance(test_dir)
+        sandbox = python_sandbox.PythonSandboxTemplate(self).get_instance(test_dir)
         sandbox.uploadEnvironmment()
         # run test
-        output = sandbox.runTests()
         result = self.create_result(studentenv)
+        output = sandbox.runTests()
         sandbox.get_result_file()
 
         # XSLT
@@ -138,5 +135,3 @@ class PythonUnittestChecker(ProFormAChecker):
                 return result
                 # raise Exception('Inconclusive test result (2)')
             return result
-
-
