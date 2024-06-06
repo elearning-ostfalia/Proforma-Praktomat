@@ -88,14 +88,14 @@ class GoogleTestChecker(ProFormAChecker):
         result_tree = transform(doc)
         return str(result_tree)
 
-    def submission_ok(self, env, RXSECURE):
-        """ Check submission for invalid keywords """
-        for (name, content) in env.sources():
-            logger.debug('check ' + name)
-            if RXSECURE.search(content):
-                logger.error('invalid keyword found')
-                return False
-        return True
+    # def submission_ok(self, env, RXSECURE):
+    #     """ Check submission for invalid keywords """
+    #     for (name, content) in env.sources():
+    #         logger.debug('check ' + name)
+    #         if RXSECURE.search(content):
+    #             logger.error('invalid keyword found')
+    #             return False
+    #     return True
 
     def run(self, env):
         # copy files and unzip zip file if submission consists of just a zip file.

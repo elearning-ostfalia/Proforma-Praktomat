@@ -27,14 +27,80 @@
 
 #from django.conf import settings
 import docker
-import abc
+import tarfile
+from abc import ABC, abstractmethod
+import os
+import tempfile
 
 import logging
 
 logger = logging.getLogger(__name__)
 
+class DockerSandbox(ABC):
+    remote_command = "python3 /sandbox/run_suite.py"
+    remote_result_subfolder = "__result__"
+    remote_result_folder = "/sandbox/" + remote_result_subfolder
+    def __init__(self, container, studentenv):
+        self._container = container
+        self._studentenv = studentenv
+        if self._container is None:
+            raise Exception('could not create container')
+        self._container.restart()
 
-class SandboxImage:
+    def __del__(self):
+        """ remove container
+        """
+        self._container.stop()
+        self._container.remove()
+
+    @abstractmethod
+    def _get_remote_command(self):
+        """ name of image """
+        return
+
+    def uploadEnvironmment(self):
+        if not os.path.exists(self._studentenv):
+            raise Exception("subfolder " + self._studentenv + " does not exist")
+
+        if len(os.listdir(self._studentenv)) == 0:
+            raise Exception("subfolder " + self._studentenv + " is empty")
+
+        # we need to change permissions on student folder in order to
+        # have the required permissions inside test docker container
+        os.system("chown -R praktomat:praktomat " + self._studentenv)
+
+        tmp_filename = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False) as f:
+                tmp_filename = f.name
+                with tarfile.open(fileobj=f, mode='w:gz') as tar:
+                    tar.add(self._studentenv, arcname=".", recursive=True)
+            logger.debug("** upload to sandbox " + tmp_filename)
+            # os.system("ls -al " + tmp_filename)
+            with open(tmp_filename, 'rb') as fd:
+                if not self._container.put_archive(path='/sandbox', data=fd):
+                    raise Exception('cannot put requirements.tar/' + tmp_filename)
+        finally:
+            if tmp_filename:
+                os.unlink(tmp_filename)
+
+    def runTests(self):
+        logger.debug("** run tests in sandbox")
+        # start_time = time.time()
+        code, str = self._container.exec_run(self._get_remote_command(), user="999")
+        if code != 0:
+            logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
+            raise Exception("running test failed")
+
+        # print("---run test  %s seconds ---" % (time.time() - start_time))
+        logger.debug(code)
+        logger.debug("Test run log")
+        logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
+        return str.decode('UTF-8').replace('\n', '\r\n')
+
+
+
+class SandboxImage(ABC):
     base_tag = '0' # default tag name
 
     def __init__(self, checker):
@@ -45,17 +111,17 @@ class SandboxImage:
 
     def __del__(self):
         self._client.close()
-    @abc.abstractmethod
+    @abstractmethod
     def get_container(self, proformAChecker, studentenv):
         """ return an instance created from this template """
         return
 
-    @abc.abstractmethod
+    @abstractmethod
     def _get_image_name(self):
         """ name of image """
         return
 
-    @abc.abstractmethod
+    @abstractmethod
     def _get_dockerfile_path(self):
         """ path to Dockerfile """
         return
@@ -68,4 +134,83 @@ class SandboxImage:
             filters = {"reference": self._get_image_name() + ":" + tag})
         print(images)
         return len(images) > 0
+
+
+class GoogletestDockerSandbox(DockerSandbox):
+    remote_result_subfolder = "__result__"
+    remote_result_folder = "/sandbox/" + remote_result_subfolder
+    def __init__(self, container, studentenv):
+        super().__init__(container, studentenv)
+
+    def _get_remote_command(self):
+        """ name of image """
+        return "python3 /sandbox/run_suite.py"
+
+    def get_result_file(self):
+        self._container.stop()
+        logger.debug("get result")
+        tar, dict = self._container.get_archive(DockerSandbox.remote_result_folder)
+        logger.debug(dict)
+
+        with open(self._studentenv + '/result.tar', mode='bw') as f:
+            for block in tar:
+                f.write(block)
+        with tarfile.open(self._studentenv + '/result.tar', 'r') as tar:
+            tar.extractall(path=self._studentenv)
+        os.unlink(self._studentenv + '/result.tar')
+
+#        os.system("ls -al " + self._studentenv)
+        resultpath = self._studentenv + '/' + DockerSandbox.remote_result_subfolder + '/unittest_results.xml'
+        if not os.path.exists(resultpath):
+            raise Exception("No test result file found")
+
+        os.system("mv " + resultpath + " " + self._studentenv + '/unittest_results.xml')
+        return "todo read result"
+
+class GoogleTestImage(SandboxImage):
+    def __init__(self, praktomat_test):
+        super().__init__(praktomat_test)
+
+    def _get_image_name(self):
+        """ name of base image """
+        return "cpp-praktomat_sandbox"
+
+    def _get_dockerfile_path(self):
+        """ path to Dockerfile """
+        return '/praktomat/docker-sandbox-image/cpp'
+
+    def create(self):
+        """ creates the docker image """
+        logger.debug("create python image (if it does not exist)")
+
+        tag = self._get_image_tag()
+        if self._image_exists(tag):
+            logger.debug("image for tag " + tag + " already exists")
+            yield 'data: image for tag ' + tag + ' already exists\n\n'
+            # already exists => return
+            return
+
+        # check
+        if not self._image_exists(tag):
+            yield 'data: create new image\n\n'
+            logger.debug("create image for tag " + tag + " from " + self._get_dockerfile_path())
+            image, logs_gen = self._client.images.build(path=self._get_dockerfile_path(),
+                                                        tag=tag,
+                                                        rm =True, forcerm=True)
+            yield logs_gen
+
+    def get_container(self, studentenv):
+        """ return an instance created from this template """
+        self.create()
+        tag = self._get_image_tag()
+
+        # with the init flag set to True signals are handled properly so that
+        # stopping the container is much faster
+        container = self._client.containers.create(image=self._get_image_name() + ':' + tag,
+                                                   volumes=[],
+                                                   init=True)
+
+        return GoogletestDockerSandbox(container, studentenv)
+
+
 

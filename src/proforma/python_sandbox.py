@@ -36,67 +36,20 @@ logger = logging.getLogger(__name__)
 compile_python = False
 
 
-class DockerSandbox():
-    remote_command = "python3 /sandbox/run_suite.py"
+class PythonDockerSandbox(sandbox.DockerSandbox):
     remote_result_subfolder = "__result__"
     remote_result_folder = "/sandbox/" + remote_result_subfolder
     def __init__(self, container, studentenv):
-        self._container = container
-        self._studentenv = studentenv
-        if self._container is None:
-            raise Exception('could not create container')
-        self._container.restart()
+        super().__init__(container, studentenv)
 
-    def __del__(self):
-        """ remove container
-        """
-        self._container.stop()
-        self._container.remove()
-
-    def uploadEnvironmment(self):
-        if not os.path.exists(self._studentenv):
-            raise Exception("subfolder " + self._studentenv + " does not exist")
-
-        if len(os.listdir(self._studentenv)) == 0:
-            raise Exception("subfolder " + self._studentenv + " is empty")
-
-        # we need to change permissions on student folder in order to
-        # have the required permissions inside test docker container
-        os.system("chown -R praktomat:praktomat " + self._studentenv)
-
-        tmp_filename = None
-        try:
-            with tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False) as f:
-                tmp_filename = f.name
-                with tarfile.open(fileobj=f, mode='w:gz') as tar:
-                    tar.add(self._studentenv, arcname=".", recursive=True)
-            logger.debug("** upload to sandbox " + tmp_filename)
-            # os.system("ls -al " + tmp_filename)
-            with open(tmp_filename, 'rb') as fd:
-                if not self._container.put_archive(path='/sandbox', data=fd):
-                    raise Exception('cannot put requirements.tar/' + tmp_filename)
-        finally:
-            if tmp_filename:
-                os.unlink(tmp_filename)
-
-    def runTests(self):
-        logger.debug("** run tests in sandbox")
-        # start_time = time.time()
-        code, str = self._container.exec_run(DockerSandbox.remote_command, user="999")
-        if code != 0:
-            logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
-            raise Exception("running test failed")
-
-        # print("---run test  %s seconds ---" % (time.time() - start_time))
-        logger.debug(code)
-        logger.debug("Test run log")
-        logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
-        return str.decode('UTF-8').replace('\n', '\r\n')
+    def _get_remote_command(self):
+        """ name of image """
+        return "python3 /sandbox/run_suite.py"
 
     def get_result_file(self):
         self._container.stop()
         logger.debug("get result")
-        tar, dict = self._container.get_archive(DockerSandbox.remote_result_folder)
+        tar, dict = self._container.get_archive(PythonDockerSandbox.remote_result_folder)
         logger.debug(dict)
 
         with open(self._studentenv + '/result.tar', mode='bw') as f:
@@ -107,7 +60,7 @@ class DockerSandbox():
         os.unlink(self._studentenv + '/result.tar')
 
 #        os.system("ls -al " + self._studentenv)
-        resultpath = self._studentenv + '/' + DockerSandbox.remote_result_subfolder + '/unittest_results.xml'
+        resultpath = self._studentenv + '/' + PythonDockerSandbox.remote_result_subfolder + '/unittest_results.xml'
         if not os.path.exists(resultpath):
             raise Exception("No test result file found")
 
@@ -253,6 +206,20 @@ class PythonSandboxImage(sandbox.SandboxImage):
 
         return self._tag
 
+    # def get_container(self, studentenv):
+    #     """ return an instance created from this template """
+    #     self.create()
+    #     tag = self._get_image_tag()
+    #
+    #     # with the init flag set to True signals are handled properly so that
+    #     # stopping the container is much faster
+    #     container = self._client.containers.create(image=self._get_image_name() + ':' + tag,
+    #                                                volumes=[],
+    #                                                init=True)
+    #
+    #     return DockerSandbox(container, studentenv)
+
+
     def get_container(self, studentenv):
         """ return an instance created from this template """
         self.create()
@@ -260,11 +227,8 @@ class PythonSandboxImage(sandbox.SandboxImage):
 
         # with the init flag set to True signals are handled properly so that
         # stopping the container is much faster
-        container = self._client.containers.create(image=PythonSandboxImage.image_name + ':' + tag,
+        container = self._client.containers.create(image=self._get_image_name() + ':' + tag,
                                                    volumes=[],
                                                    init=True)
 
-        return DockerSandbox(container, studentenv)
-
-
-
+        return PythonDockerSandbox(container, studentenv)
