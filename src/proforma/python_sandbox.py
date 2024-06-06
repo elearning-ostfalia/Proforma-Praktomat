@@ -21,13 +21,13 @@
 
 import os
 import subprocess
-import venv
 import docker
 import tarfile
+import tempfile
 
 from . import sandbox, task
 from django.conf import settings
-from utilities.safeexec import execute_command, escape_xml_invalid_chars
+#from utilities.safeexec import execute_command, escape_xml_invalid_chars
 
 import logging
 
@@ -53,6 +53,8 @@ class DockerSandbox():
         self._container.restart()
 
     def __del__(self):
+        """ remove container
+        """
         self._container.stop()
         self._container.remove()
 
@@ -116,13 +118,17 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
     """ python sandbox template for python tests """
 
     # name of python docker image
-    python_image_name = "python-praktomat_sandbox"
-    python_dockerfile_path = '/praktomat/docker-sandbox-image/python'
+    image_name = "python-praktomat_sandbox"
+    dockerfile_path = '/praktomat/docker-sandbox-image/python'
+    base_tag = '0' # tag name of plain python image
+    base_image_tag = image_name + ':' + base_tag
+
 
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test)
         self._client = docker.from_env()
         self._tag = None
+        self._client.close()
 
     def get_hash(requirements_txt):
         """ create simple hash for requirements.txt content """
@@ -192,7 +198,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
 
     def _image_exists(self, tag):
         images = self._client.images.list(
-            filters = {"reference": PythonSandboxTemplate.python_image_name + ":" + tag})
+            filters = {"reference": PythonSandboxTemplate.image_name + ":" + tag})
         print(images)
         return len(images) > 0
 
@@ -209,87 +215,76 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             # already exists => return
             return
 
-        yield 'data: create new python base image\n\n'
-        logger.debug("create python image for tag " + tag + " from " + self.python_dockerfile_path)
-        image, logs_gen = self._client.images.build(path=self.python_dockerfile_path,
-                                                    tag=PythonSandboxTemplate.python_image_name+':'+tag,
-                                                    rm =True)
-        print(logs_gen)
+        # check
+        if not self._image_exists(PythonSandboxTemplate.base_image_tag):
+            yield 'data: create new python base image\n\n'
+            logger.debug("create python image for tag " + PythonSandboxTemplate.base_image_tag + " from " + self.dockerfile_path)
+            image, logs_gen = self._client.images.build(path=self.dockerfile_path,
+                                                        tag=PythonSandboxTemplate.base_image_tag,
+                                                        rm =True)
+            yield logs_gen
 
         requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
         if len(requirements_txt) == 0:
-            requirements_txt = None
-            requirements_path = None
-        else:
-            requirements_txt = requirements_txt.first()
-            requirements_path = os.path.join(settings.UPLOAD_ROOT,
-                                             task.get_storage_path(requirements_txt, requirements_txt.filename))
+            # no requirements.txt is available =>
+            # use default image => finished
+            return
 
-        # logger.info('Create Python image for ' + templ_dir)
-    #
-    #     try:
-    #         # install modules from requirements.txt if available
-    #         if requirements_txt is not None:
-    #             hash = PythonSandboxTemplate.get_hash(requirements_path)
-    #             print(hash)
-    #             yield 'data: install requirements\n\n'
-    #             logger.info('install requirements')
-    #             # rc = subprocess.run(["ls", "-al", "bin/pip"], cwd=os.path.join(templ_dir, '.venv'))
-    #             env = {}
-    #             env['PATH'] = env['VIRTUAL_ENV'] = os.path.join(templ_dir, '.venv')
-    # #            execute_command("bin/python bin/pip install -r " + requirements_path,
-    # #                            cwd=os.path.join(templ_dir, '.venv'), env=env)
-    #
-    #             cmd = ["bin/python", "bin/pip", "install", "-r", requirements_path]
-    #             try:
-    #                 yield from PythonSandboxTemplate.execute_arglist_yield(cmd, os.path.join(templ_dir, '.venv'), env)
-    #             except:
-    #                 # convert exception in order to have more info for the user
-    #                 raise Exception('Cannot install requirements.txt')
-    #
-    #         yield 'data: add missing libraries\n\n'
-    #         logger.info('copy python libraries from OS')
-    #         pythonbin = os.readlink('/usr/bin/python3')
-    #         logger.debug('python is ' + pythonbin)  # expect python3.x
-    #         # copy python libs
-    #         createlib = "(cd / && tar -chf - usr/lib/" + pythonbin + ") | (cd " + templ_dir + " && tar -xf -)"
-    #         execute_command(createlib, shell=True)
-    #
-    #         logger.debug('copy shared libraries from os')
-    #         self._include_shared_object('libffi.so', templ_dir)
-    #         self._include_shared_object('libffi.so.8', templ_dir)
-    #         self._include_shared_object('libbz2.so.1.0', templ_dir)
-    #         self._include_shared_object('libsqlite3.so.0', templ_dir)
-    #
-    #         logger.debug('copy all shared libraries needed for python to work')
-    #         self._checker.copy_shared_objects(templ_dir)
-    #
-    #         # compile python code (smaller???)
-    #         if compile_python:
-    #             import compileall
-    #             import glob
-    #             logger.debug('**** compile')
-    #             success = compileall.compile_dir(templ_dir, quiet=True)
-    #
-    #         # delete all python source code
-    # #        logger.debug('delete py')
-    # #        for filePath in glob.glob(templ_dir + '/**/*.py', recursive=True):
-    # #            if 'encodings' not in filePath and 'codecs' not in filePath:
-    # #                print(filePath)
-    # #                try:
-    # #                    os.remove(filePath)
-    # #                except:
-    # #                    logger.error("Error while deleting file : ", filePath)
-    # #            else:
-    # #                print('**' + filePath)
-    #
-    #         yield 'data: freeze template\n\n'
-    #         self._commit(templ_dir)
-    #     except:
-    #         # try and delete complete templ_dir
-    #         shutil.rmtree(templ_dir, ignore_errors=True)
-    #         raise
-    #
+        requirements_txt = requirements_txt.first()
+        requirements_path = os.path.join(settings.UPLOAD_ROOT,
+                                         task.get_storage_path(requirements_txt, requirements_txt.filename))
+
+#        logger.info('Create Python image for ' + templ_dir)
+
+        # create container from base image, install requirements
+        # and commit container to image
+        # install modules from requirements.txt if available
+        yield 'data: install requirements\n\n'
+        logger.info('install requirements from ' + requirements_path)
+        logger.debug('create container from ' + PythonSandboxTemplate.base_image_tag)
+        container = self._client.containers.create(image=PythonSandboxTemplate.base_image_tag,
+                                                   init=True)
+        tmp_filename = None
+        try:
+            container.start()
+            # start_time = time.time()
+
+            with tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False) as f:
+                tmp_filename = f.name
+                with tarfile.open(fileobj=f, mode='w:gz') as tar:
+                    tar.add(requirements_path, arcname="requirements.txt", recursive=False)
+
+            logger.debug("** upload to sandbox " + tmp_filename)
+            # os.system("ls -al " + tmp_filename)
+            with open(tmp_filename, 'rb') as fd:
+                if not container.put_archive(path='/sandbox', data=fd):
+                    raise Exception('cannot put requirements.tar/' + tmp_filename)
+
+
+            # code, log = container.exec_run("ls -al /")
+            # logger.debug(log.decode('UTF-8').replace('\n', '\r\n'))
+            # code, log = container.exec_run("ls -al /sandbox")
+            # logger.debug(log.decode('UTF-8').replace('\n', '\r\n'))
+
+            code, log = container.exec_run("pip install -r /sandbox/requirements.txt", user="root")
+            yield log
+            logger.debug(log.decode('UTF-8').replace('\n', '\r\n'))
+            if code != 0:
+                logger.error(log.decode('UTF-8').replace('\n', '\r\n'))
+                raise Exception('Cannot install requirements.txt')
+
+            yield 'data: commit image\n\n'
+            logger.debug("** commit image to " + PythonSandboxTemplate.image_name + ':' + tag)
+            container.commit(repository=PythonSandboxTemplate.image_name,
+                             tag=tag)
+#                             tag=PythonSandboxTemplate.image_name + ':' + tag)
+        finally:
+            if tmp_filename:
+                os.unlink(tmp_filename)
+            container.stop()
+            container.remove()
+            pass
+
 
     def _get_image_tag(self):
         if not self._tag is None:
@@ -308,19 +303,9 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
         if requirements_path is not None:
             self._tag = PythonSandboxTemplate.get_hash(requirements_path)
         else:
-            self._tag = "0" # "latest" # default tag
+            self._tag = PythonSandboxTemplate.base_tag
 
         return self._tag
-
-    def get_python_template_path(self):
-        """ returns the template pathname for the given requirements.txt """
-        hash = self._get_image_tag()
-        if hash is not None:
-            return os.path.join(settings.UPLOAD_ROOT, PythonSandboxTemplate.get_python_path(), hash)
-        else:
-            return PythonSandboxTemplate.get_python_path()
-
-
 
     def get_instance(self, studentenv):
         """ return an instance created from this template """
@@ -333,9 +318,9 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
 
         # with the init flag set to True signals are handled properly so that
         # stopping the container is much faster
-        container = self._client.containers.create(image=PythonSandboxTemplate.python_image_name+':'+tag,
-                                             volumes=[],
-                                             init=True)
+        container = self._client.containers.create(image=PythonSandboxTemplate.image_name + ':' + tag,
+                                                   volumes=[],
+                                                   init=True)
 
         return DockerSandbox(container, studentenv)
 
