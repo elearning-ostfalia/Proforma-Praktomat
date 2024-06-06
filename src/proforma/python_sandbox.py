@@ -69,14 +69,20 @@ class DockerSandbox():
         # have the required permissions inside test docker container
         os.system("chown -R praktomat:praktomat " + self._studentenv)
 
-        # start_time = time.time()
-        with tarfile.open("environment.tar", 'w:gz') as tar:
-            tar.add(self._studentenv, arcname=".", recursive=True)
-
-        logger.debug("** upload to sandbox")
-        with open('environment.tar', 'rb') as fd:
-            if not self._container.put_archive(path='/sandbox', data=fd):
-                raise Exception('cannot put environment.tar')
+        tmp_filename = None
+        try:
+            with tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False) as f:
+                tmp_filename = f.name
+                with tarfile.open(fileobj=f, mode='w:gz') as tar:
+                    tar.add(self._studentenv, arcname=".", recursive=True)
+            logger.debug("** upload to sandbox " + tmp_filename)
+            # os.system("ls -al " + tmp_filename)
+            with open(tmp_filename, 'rb') as fd:
+                if not self._container.put_archive(path='/sandbox', data=fd):
+                    raise Exception('cannot put requirements.tar/' + tmp_filename)
+        finally:
+            if tmp_filename:
+                os.unlink(tmp_filename)
 
     def runTests(self):
         logger.debug("** run tests in sandbox")
