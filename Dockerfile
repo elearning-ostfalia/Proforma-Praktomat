@@ -15,6 +15,9 @@ ENV PYTHONUNBUFFERED 1
 ARG PASSWORD=123
 
 ARG GROUP_ID=999
+# docker group id (name=docker cannot be used here)
+# figure it out by call of "/etc/group"
+ARG DOCKER_GROUP_ID=2000
 ARG PRAKTOMAT_ID=999
 ARG TESTER_ID=777
 
@@ -71,10 +74,15 @@ RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletes
 # ADD UNIX USERS
 ################
 
+
+
 # create group praktomat
 RUN groupadd -g ${GROUP_ID} praktomat && \
-# add user praktomat (uid=${PRAKTOMAT_ID}) \
+# add user praktomat to group praktomat \
   useradd -g ${GROUP_ID} -u ${PRAKTOMAT_ID} praktomat -s /bin/sh --home /praktomat --create-home --comment "Praktomat Demon" && \
+# add user praktomat to docker group \
+  groupadd -g ${DOCKER_GROUP_ID} docker && \
+  usermod -a -G ${DOCKER_GROUP_ID} praktomat && \
   usermod -aG sudo praktomat && \
   echo "praktomat:$PASSWORD" | sudo chpasswd && \
 # add user tester (uid=777) \
@@ -149,7 +157,7 @@ RUN cd /praktomat/src && make restrict && sudo install -m 4750 -o root -g prakto
 # RUN usermod -aG docker praktomat
 #RUN chown praktomat /var/run/docker.sock
 # change user
-# USER praktomat
+USER praktomat
 
 # run entrypoint.sh as user praktomat
 ENTRYPOINT ["/praktomat/entrypoint.sh"]
