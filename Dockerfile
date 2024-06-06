@@ -67,9 +67,9 @@ RUN apt-get update && \
 RUN apt-get update && apt-get install -y openjdk-17-jdk openjfx && rm -rf /var/lib/apt/lists/*
 # Install C, cmake, Googletest (must be compiled)
 # pkg-config can be used to locate gmock (and other packages) after installation
-RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletest pkg-config && \
-    mkdir -p /tmp/googletest && cd /tmp/googletest && cmake /usr/src/googletest && cmake --build . && cmake --install . && \
-    rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletest pkg-config && \
+#    mkdir -p /tmp/googletest && cd /tmp/googletest && cmake /usr/src/googletest && cmake --build . && cmake --install . && \
+#    rm -rf /var/lib/apt/lists/*
 
 # ADD UNIX USERS
 ################

@@ -1,6 +1,10 @@
 FROM python:3.11.9-slim-bookworm
 # FROM python:3.11.9-alpine3.20
 
+MAINTAINER Ostfalia
+
+ENV PYTHONUNBUFFERED 1
+
 # set locale
 ARG LOCALE_PLAIN=de_DE
 ARG LOCALE=${LOCALE_PLAIN}.UTF-8

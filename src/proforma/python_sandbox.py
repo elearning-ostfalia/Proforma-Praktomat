@@ -226,7 +226,7 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             logger.debug("create python image for tag " + PythonSandboxTemplate.base_image_tag + " from " + self.dockerfile_path)
             image, logs_gen = self._client.images.build(path=self.dockerfile_path,
                                                         tag=PythonSandboxTemplate.base_image_tag,
-                                                        rm =True)
+                                                        rm =True, forcerm=True)
             yield logs_gen
 
         requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')

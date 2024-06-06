@@ -2,9 +2,8 @@
 
 import unittest
 import xmlrunner
-import subprocess
+import compileall
 import os
-from lxml import etree
 
 result_folder = "__result__"
 
@@ -61,7 +60,7 @@ def delete_py_files(start_folder):
                 for file in files:
                     if file.endswith('.py'):
                         try:
-                            print(os.path.join(dirpath, file))
+                            # print(os.path.join(dirpath, file))
                             os.unlink(os.path.join(dirpath, file))
                         except:
                             pass
@@ -72,7 +71,7 @@ def delete_py_files(start_folder):
             # print(file)
             if file.endswith('.py'):
                 try:
-                    print(os.path.join(dirpath, file))            
+                    # print(os.path.join(dirpath, file))
                     os.unlink(os.path.join(dirpath, file))
                 except:
                     pass
@@ -88,10 +87,10 @@ def delete_py_files(start_folder):
 loader = unittest.TestLoader()
 start_dir = '.'
 suite = loader.discover(start_dir, "*test*.py")
-# print("Suite:")
-# print(suite)
 
-os.system("python3 -m compileall " + start_dir)
+os.system("python3 -m compileall " + start_dir + " -q")
+# if not compileall.compile_dir(start_dir, quiet=1):
+#    raise Exception('could not compile ' + start_dir)
 
 # compile_test_code(start_dir)
 delete_py_files(start_dir)
@@ -103,13 +102,3 @@ with open(result_folder + '/unittest_results.xml', 'wb') as output:
 
 
 # os.system("ls -al ./__result__")
-
-
-
-
-#os.system("mv __result__/*.xml  __result__/unittest_results.xml") 
-
-# os.system("ls -al ./__result__")   
-#os.system("ls -al unittest_results.xml") 
-
-#os.system("mv unittest_results.xml ../result/unittest_results.xml")
