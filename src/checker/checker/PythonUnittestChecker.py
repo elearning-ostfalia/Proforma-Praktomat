@@ -88,21 +88,21 @@ class PythonUnittestChecker(ProFormAChecker):
         result_tree = transform(doc)
         return str(result_tree)
 
-    def run(self, studentenv):
+    def run(self, env):
         """ run testcase """
         # Precondition:
         # env already contains student's submission
-        test_dir = studentenv.tmpdir()
+        test_dir = env.tmpdir()
         logger.debug('main environment is in ' + test_dir)
 
         # copy task files and unzip zip file if submission consists of just a zip file.
-        self.prepare_run(studentenv)
+        self.prepare_run(env)
         logger.debug('task code is in ' + test_dir)
 
         sandbox = python_sandbox.PythonSandboxImage(self).get_container(test_dir)
         sandbox.uploadEnvironmment()
         # run test
-        result = self.create_result(studentenv)
+        result = self.create_result(env)
         output = sandbox.runTests()
         sandbox.get_result_file()
 
