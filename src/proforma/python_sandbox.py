@@ -36,11 +36,6 @@ logger = logging.getLogger(__name__)
 compile_python = False
 
 
-#class PythonSandboxInstance(sandbox.SandboxInstance):
-#    """ sandbox instance for python tests """
-#    def __init__(self):
-#        super().__init__()
-
 class DockerSandbox():
     remote_command = "python3 /sandbox/run_suite.py"
     remote_result_subfolder = "__result__"
@@ -119,21 +114,24 @@ class DockerSandbox():
         os.system("mv " + resultpath + " " + self._studentenv + '/unittest_results.xml')
         return "todo read result"
 
-class PythonSandboxTemplate(sandbox.SandboxTemplate):
+class PythonSandboxImage(sandbox.SandboxImage):
     """ python sandbox template for python tests """
 
     # name of python docker image
     image_name = "python-praktomat_sandbox"
     dockerfile_path = '/praktomat/docker-sandbox-image/python'
-    base_tag = '0' # tag name of plain python image
-    base_image_tag = image_name + ':' + base_tag
-
+    base_image_tag = image_name + ':' + sandbox.SandboxImage.base_tag
 
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test)
-        self._client = docker.from_env()
-        self._tag = None
-        self._client.close()
+
+    def _get_image_name(self):
+        """ name of base image """
+        return PythonSandboxImage.image_name
+
+    def _get_dockerfile_path(self):
+        """ path to Dockerfile """
+        return PythonSandboxImage.dockerfile_path
 
     def get_hash(requirements_txt):
         """ create simple hash for requirements.txt content """
@@ -155,60 +153,9 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
         if len(requirements_txt) > 1:
             raise Exception('more than one requirements.txt found')
 
-    def execute_arglist_yield(args, working_directory, environment_variables={}):
-        """ yield output text during execution. """
-        assert isinstance(args, list)
-
-        command = args[:]
-        # do not modify environment for current process => use copy!!
-        environment = os.environ.copy()
-        environment.update(environment_variables)
-
-        logger.debug('execute command in ' + working_directory + ':')
-        logger.debug('command :' + str(command))
-
-        try:
-            with subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                cwd=working_directory,
-                env=environment,
-                start_new_session=True, # call of os.setsid()
-            ) as process:
-                while True:
-                    data = process.stdout.readline()  # Alternatively proc.stdout.read(1024)
-                    if len(data) == 0:
-                        break
-                    yield 'data: ' + str(data) + '\n\n'
-                # if it is too fast then get remainder
-                remainder = process.communicate()[0]
-                if remainder is not None and len(remainder) > 0:
-                    yield 'data: ' + str(remainder) + '\n\n'
-
-                # Get exit code
-                result = process.wait(0)
-                if result != 0:
-                    # stop further execution
-                    raise Exception('command exited with code != 0')
-
-        except Exception as e:
-            if type(e) == subprocess.TimeoutExpired:
-                logger.debug("TIMEOUT")
-                yield 'data: timeout\n\n'
-            else:
-                logger.error("exception occured: " + str(type(e)))
-            raise
-
-
-    def _image_exists(self, tag):
-        images = self._client.images.list(
-            filters = {"reference": PythonSandboxTemplate.image_name + ":" + tag})
-        print(images)
-        return len(images) > 0
 
     def create(self):
-        """ creates a docker image """
+        """ creates the docker image """
         logger.debug("create python image (if it does not exist)")
 
         self.check_preconditions()
@@ -221,11 +168,11 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             return
 
         # check
-        if not self._image_exists(PythonSandboxTemplate.base_image_tag):
+        if not self._image_exists(PythonSandboxImage.base_image_tag):
             yield 'data: create new python base image\n\n'
-            logger.debug("create python image for tag " + PythonSandboxTemplate.base_image_tag + " from " + self.dockerfile_path)
-            image, logs_gen = self._client.images.build(path=self.dockerfile_path,
-                                                        tag=PythonSandboxTemplate.base_image_tag,
+            logger.debug("create python image for tag " + PythonSandboxImage.base_image_tag + " from " + self.dockerfile_path)
+            image, logs_gen = self._client.images.build(path=self._get_dockerfile_path(),
+                                                        tag=PythonSandboxImage.base_image_tag,
                                                         rm =True, forcerm=True)
             yield logs_gen
 
@@ -246,8 +193,8 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
         # install modules from requirements.txt if available
         yield 'data: install requirements\n\n'
         logger.info('install requirements from ' + requirements_path)
-        logger.debug('create container from ' + PythonSandboxTemplate.base_image_tag)
-        container = self._client.containers.create(image=PythonSandboxTemplate.base_image_tag,
+        logger.debug('create container from ' + PythonSandboxImage.base_image_tag)
+        container = self._client.containers.create(image=PythonSandboxImage.base_image_tag,
                                                    init=True)
         tmp_filename = None
         try:
@@ -265,12 +212,6 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
                 if not container.put_archive(path='/sandbox', data=fd):
                     raise Exception('cannot put requirements.tar/' + tmp_filename)
 
-
-            # code, log = container.exec_run("ls -al /")
-            # logger.debug(log.decode('UTF-8').replace('\n', '\r\n'))
-            # code, log = container.exec_run("ls -al /sandbox")
-            # logger.debug(log.decode('UTF-8').replace('\n', '\r\n'))
-
             code, log = container.exec_run("pip install -r /sandbox/requirements.txt", user="root")
             yield log
             logger.debug(log.decode('UTF-8').replace('\n', '\r\n'))
@@ -279,8 +220,8 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
                 raise Exception('Cannot install requirements.txt')
 
             yield 'data: commit image\n\n'
-            logger.debug("** commit image to " + PythonSandboxTemplate.image_name + ':' + tag)
-            container.commit(repository=PythonSandboxTemplate.image_name,
+            logger.debug("** commit image to " + PythonSandboxImage.image_name + ':' + tag)
+            container.commit(repository=PythonSandboxImage.image_name,
                              tag=tag)
 #                             tag=PythonSandboxTemplate.image_name + ':' + tag)
         finally:
@@ -306,24 +247,20 @@ class PythonSandboxTemplate(sandbox.SandboxTemplate):
             requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
 
         if requirements_path is not None:
-            self._tag = PythonSandboxTemplate.get_hash(requirements_path)
+            self._tag = PythonSandboxImage.get_hash(requirements_path)
         else:
-            self._tag = PythonSandboxTemplate.base_tag
+            self._tag = super()._get_image_tag()
 
         return self._tag
 
-    def get_instance(self, studentenv):
+    def get_container(self, studentenv):
         """ return an instance created from this template """
         self.create()
         tag = self._get_image_tag()
 
-        # logger.info('Use Python template ' + templ_dir)
-        # instance = sandbox.SandboxInstance(templ_dir, studentenv)
-        # return instance
-
         # with the init flag set to True signals are handled properly so that
         # stopping the container is much faster
-        container = self._client.containers.create(image=PythonSandboxTemplate.image_name + ':' + tag,
+        container = self._client.containers.create(image=PythonSandboxImage.image_name + ':' + tag,
                                                    volumes=[],
                                                    init=True)
 

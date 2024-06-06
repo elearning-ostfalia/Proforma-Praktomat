@@ -99,7 +99,7 @@ class PythonUnittestChecker(ProFormAChecker):
         self.prepare_run(studentenv)
         logger.debug('task code is in ' + test_dir)
 
-        sandbox = python_sandbox.PythonSandboxTemplate(self).get_instance(test_dir)
+        sandbox = python_sandbox.PythonSandboxImage(self).get_container(test_dir)
         sandbox.uploadEnvironmment()
         # run test
         result = self.create_result(studentenv)
