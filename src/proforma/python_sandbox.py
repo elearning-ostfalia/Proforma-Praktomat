@@ -109,15 +109,8 @@ class DockerSandbox():
                 f.write(block)
         with tarfile.open(self._studentenv + '/result.tar', 'r') as tar:
             tar.extractall(path=self._studentenv)
+        os.unlink(self._studentenv + '/result.tar')
 
-        # with open("result.tar", 'bw') as f:
-        #     for block in tar:
-        #         f.write(block)
-        #
-        # with tarfile.open("result.tar", 'r') as tar:
-        #     tar.extractall(path=self._studentenv)
-
-    #        os.system("ls -al")
 #        os.system("ls -al " + self._studentenv)
         resultpath = self._studentenv + '/' + DockerSandbox.remote_result_subfolder + '/unittest_results.xml'
         if not os.path.exists(resultpath):
