@@ -115,10 +115,16 @@ class GoogleTestChecker(ProFormAChecker):
         gt_sandbox = sandbox.GoogletestImage(self).get_container(test_dir, self.exec_command)
         gt_sandbox.upload_environmment()
         # run test
-        result = self.create_result(env)
+        (passed, output) = gt_sandbox.compile_tests()
+        logger.debug("compilation passed is "+ str(passed))
+        logger.debug(output)
+        if not passed:
+            return self.handle_compile_error(env, output, "", False, False)
         (passed, output) = gt_sandbox.runTests()
         if passed:
             gt_sandbox.get_result_file()
+        result = self.create_result(env)
+
 
 
         # compile
@@ -144,6 +150,10 @@ class GoogleTestChecker(ProFormAChecker):
 # #            return result
 
         (output, truncated) = truncated_log(output)
+
+        logger.debug("passed is "+ str(passed))
+        logger.debug(output)
+
         result.set_log(output, timed_out=False, truncated=truncated, oom_ed=False,
                        log_format=CheckerResult.TEXT_LOG)
         result.set_passed(passed and not truncated)
@@ -156,10 +166,10 @@ class GoogleTestChecker(ProFormAChecker):
                                log_format=CheckerResult.PROFORMA_SUBTESTS)
                 result.set_extralog(output)
                 result.set_passed(passed)
-                return result
             except:
                 # fallback: use default output
-                return result
+                pass
+                # return result
                 # logger.error('could not convert to XML format')
                 # raise Exception('Inconclusive test result (1)')
         else:
@@ -168,7 +178,8 @@ class GoogleTestChecker(ProFormAChecker):
                 # (exit in submission?)
                 result.set_passed(False)
                 result.set_log("Inconclusive test result", log_format=CheckerResult.TEXT_LOG)
-                return result
+                # return result
                 # raise Exception('Inconclusive test result (2)')
-            return result
+
+        return result
 

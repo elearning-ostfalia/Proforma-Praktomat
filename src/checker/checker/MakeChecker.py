@@ -50,10 +50,13 @@ class MakeChecker(ProFormAChecker):
         gt_sandbox = sandbox.GoogletestImage(self).get_container(test_dir, self.class_name)
         gt_sandbox.upload_environmment()
         # run test
-        result = self.create_result(env)
+        (passed, output) = gt_sandbox.compile_tests()
+        if not passed:
+            return self.handle_compile_error(env, output, "", False, False)
         (passed, output) = gt_sandbox.runTests()
         logger.debug("passed " + str(passed))
         logger.debug("output " + output)
+        result = self.create_result(env)
 
         # if passed:
         #    gt_sandbox.get_result_file()

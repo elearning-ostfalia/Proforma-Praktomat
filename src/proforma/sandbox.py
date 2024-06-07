@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import signal
 
 # This file is part of Ostfalia-Praktomat.
 #
@@ -56,21 +57,28 @@ class DockerSandbox(ABC):
         # with the init flag set to True signals are handled properly so that
         # stopping the container is much faster
         ulimits = [
-            docker.types.Ulimit(name='nproc', soft=250),
-            docker.types.Ulimit(name='nproc', hard=250),
+#            docker.types.Ulimit(name='nproc', soft=250),
+#            docker.types.Ulimit(name='nproc', hard=250),
 #            docker.types.Ulimit(name='CPU', soft=25),
 #            docker.types.Ulimit(name='CPU', hard=30),
 #            docker.types.Ulimit(name='AS', soft=1024 * 1024 * 1500), # 1.5GB
 #            docker.types.Ulimit(name='AS', hard=1024 * 1024 * 2000), # 2.0GB
-#            docker.types.Ulimit(name='nofile', soft=64),
-#            docker.types.Ulimit(name='nofile', hard=64),
+            docker.types.Ulimit(name='nofile', soft=64),
+            docker.types.Ulimit(name='nofile', hard=64),
         ]
         ulimits = []
         #hc = self._client.create_host_config(ulimits=[nproc_limit])
 
+        # self._container = self._client.containers.run(
+        #     image_name, init=True,
+        #     network_disabled=True,
+        #     ulimits = ulimits, detach=True)
         self._container = self._client.containers.create(
-            image_name, volumes=[], init=True, mem_limit="1g", network_disabled=True,
-            ulimits = ulimits)
+            image_name, init=True,
+            mem_limit="1g",
+            network_disabled=True,
+            ulimits=ulimits)
+
         if self._container is None:
             raise Exception("could not create container")
         self._container.start()
@@ -79,8 +87,10 @@ class DockerSandbox(ABC):
 
     @abstractmethod
     def _get_remote_command(self):
-        """ name of image """
         return
+
+    def _get_compile_command(self):
+        return None
 
     def upload_environmment(self):
         if not os.path.exists(self._studentenv):
@@ -108,6 +118,29 @@ class DockerSandbox(ABC):
             if tmp_filename:
                 os.unlink(tmp_filename)
 
+    def compile_tests(self):
+        logger.debug("** compile tests in sandbox")
+        # start_time = time.time()
+        command = self._get_compile_command()
+        if command is None:
+            return True, ""
+
+        code, output = self._container.exec_run(command, user="999")
+        #        if code != 0:
+        #            logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
+        #            raise Exception("running test failed")
+
+        # print("---run test  %s seconds ---" % (time.time() - start_time))
+        logger.debug("exitcode is " + str(code))
+        logger.debug("Test compilation log")
+        # capture output from generator
+        text = output.decode('UTF-8').replace('\n', '\r\n')
+        logger.debug(text)
+        if code < 0:
+            # append signal message
+            text = text + '\r\nSignal:\r\n' + signal.strsignal(- code)
+        return (code == 0), text
+
     def runTests(self):
         logger.debug("** run tests in sandbox")
         # start_time = time.time()
@@ -122,6 +155,9 @@ class DockerSandbox(ABC):
         # capture output from generator
         text = output.decode('UTF-8').replace('\n', '\r\n')
         logger.debug(text)
+        if code < 0:
+            # append signal message
+            text = text + '\r\nSignal:\r\n' + signal.strsignal(- code)
         return ((code == 0), text)
 
 
@@ -170,9 +206,10 @@ class GoogletestSandbox(DockerSandbox):
         super().__init__(client, studentenv)
         self._command = command
 
+    def _get_compile_command(self):
+        return "python3 /sandbox/compile_suite.py "
 
     def _get_remote_command(self):
-        """ name of image """
         return "python3 /sandbox/run_suite.py " + self._command
 
     def get_result_file(self):

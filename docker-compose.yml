@@ -69,6 +69,7 @@ services:
       # for development: map source folders into container:
       # not for production!
      - ./src:/praktomat/src
+     - ./docker-sandbox-image:/praktomat/docker-sandbox-image:ro
      # allow access to docker socket
      - /var/run/docker.sock:/var/run/docker.sock
     ports:

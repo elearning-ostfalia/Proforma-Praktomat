@@ -22,7 +22,7 @@ fi
 
 # clear python cache since there can be old files that confuse migrations
 echo "clean python cache"
-sudo -n /usr/bin/py3clean /praktomat
+sudo -n /usr/bin/py3clean /praktomat/src
 
 # py3clean does not delete cache files generated from source files that have been deleted since
 find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
