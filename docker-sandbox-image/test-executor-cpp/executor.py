@@ -37,19 +37,19 @@ def start_container():
     # with the init flag set to True signals are handled properly so that 
     # stopping the container is much faster
     ulimits = [
-        docker.types.Ulimit(name='nproc', soft=250),
+#        docker.types.Ulimit(name='nproc', soft=250),
 #        docker.types.Ulimit(name='nproc', hard=250),
 #            docker.types.Ulimit(name='CPU', soft=25),
 #            docker.types.Ulimit(name='CPU', hard=30),
 #            docker.types.Ulimit(name='AS', soft=1024 * 1024 * 1500), # 1.5GB
 #            docker.types.Ulimit(name='AS', hard=1024 * 1024 * 2000), # 2.0GB
-#            docker.types.Ulimit(name='NOFILE', soft=64),
-#            docker.types.Ulimit(name='NOFILE', hard=64),
+            docker.types.Ulimit(name='nofile', soft=64),
+            docker.types.Ulimit(name='nofile', hard=64),
     ]    
-    ulimits=[docker.types.Ulimit(name='memlock', hard=-1), docker.types.Ulimit(name='stack', hard=67108864)]
+#    ulimits=[docker.types.Ulimit(name='memlock', hard=-1), docker.types.Ulimit(name='stack', hard=67108864)]
     ulimits=[]
-    container = client.containers.create(image="cpp-praktomat_sandbox", volumes=volumes, init=True,
-                                         network_disabled=True, ulimits=ulimits)
+    container = client.containers.run(image="cpp-praktomat_sandbox",init=True,
+                                         network_disabled=True, ulimits=ulimits, detach=True)
     if container == None:
         raise Exception('could not create container')    
     # print("--- create docker container  %s seconds ---" % (time.time() - start_time))

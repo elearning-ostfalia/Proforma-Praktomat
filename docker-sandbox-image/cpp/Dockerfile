@@ -44,8 +44,6 @@ ADD framework /sandbox
 
 # prepare sandbox folder: 
 # - set permissions
-# - create result folder
-# - create folder for matplotlib cache (suppresses warning)
 RUN chmod -R 777 /sandbox
 
 

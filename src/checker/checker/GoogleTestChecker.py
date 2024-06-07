@@ -143,6 +143,10 @@ class GoogleTestChecker(ProFormAChecker):
 #             # error
 # #            return result
 
+        (output, truncated) = truncated_log(output)
+        result.set_log(output, timed_out=False, truncated=truncated, oom_ed=False,
+                       log_format=CheckerResult.TEXT_LOG)
+        result.set_passed(passed and not truncated)
         # XSLT
         if os.path.exists(test_dir + "/test_detail.xml") and \
                 os.path.isfile(test_dir + "/test_detail.xml"):
@@ -151,6 +155,7 @@ class GoogleTestChecker(ProFormAChecker):
                 result.set_log(xmloutput, timed_out=False, truncated=False, oom_ed=False,
                                log_format=CheckerResult.PROFORMA_SUBTESTS)
                 result.set_extralog(output)
+                result.set_passed(passed)
                 return result
             except:
                 # fallback: use default output

@@ -52,8 +52,11 @@ class MakeChecker(ProFormAChecker):
         # run test
         result = self.create_result(env)
         (passed, output) = gt_sandbox.runTests()
-        if passed:
-            gt_sandbox.get_result_file()
+        logger.debug("passed " + str(passed))
+        logger.debug("output " + output)
+
+        # if passed:
+        #    gt_sandbox.get_result_file()
 
         # # compile
         # build_result = self.compile_make(env)

@@ -18,10 +18,10 @@ def compile_make(sandbox_dir):
         if subprocess.call(['cmake', '.'], cwd=sandbox_dir, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT) != 0:
             # repeat call in order to get output
             subprocess.run(['cmake', '.'], cwd=sandbox_dir, stderr=subprocess.STDOUT)
-            raise Exception("CMake failed")
+            exit(1)
         if subprocess.call(['cmake', '--build', '.'], cwd=sandbox_dir, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT) != 0:
             subprocess.run(['cmake', '--build', '.'], cwd=sandbox_dir, stderr=subprocess.STDOUT)
-            raise Exception("Compilation failed")
+            exit(1)
 
 #        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['cmake', '.'], sandbox_dir, unsafe=True)
 #        if exitcode != 0:
@@ -35,7 +35,7 @@ def compile_make(sandbox_dir):
         # print('make')
         if subprocess.call(['make'], cwd=sandbox_dir) != 0:
             subprocess.run(['make'], cwd=sandbox_dir, stderr=subprocess.STDOUT)
-            raise Exception("make failed")
+            exit(1)
 
         # [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], sandbox_dir, unsafe=True)
         # if exitcode != 0:

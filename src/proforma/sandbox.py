@@ -62,8 +62,8 @@ class DockerSandbox(ABC):
 #            docker.types.Ulimit(name='CPU', hard=30),
 #            docker.types.Ulimit(name='AS', soft=1024 * 1024 * 1500), # 1.5GB
 #            docker.types.Ulimit(name='AS', hard=1024 * 1024 * 2000), # 2.0GB
-#            docker.types.Ulimit(name='NOFILE', soft=64),
-#            docker.types.Ulimit(name='NOFILE', hard=64),
+#            docker.types.Ulimit(name='nofile', soft=64),
+#            docker.types.Ulimit(name='nofile', hard=64),
         ]
         ulimits = []
         #hc = self._client.create_host_config(ulimits=[nproc_limit])
@@ -111,16 +111,18 @@ class DockerSandbox(ABC):
     def runTests(self):
         logger.debug("** run tests in sandbox")
         # start_time = time.time()
-        code, str = self._container.exec_run(self._get_remote_command(), user="999")
+        code, output = self._container.exec_run(self._get_remote_command(), user="999")
 #        if code != 0:
 #            logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
 #            raise Exception("running test failed")
 
         # print("---run test  %s seconds ---" % (time.time() - start_time))
-        logger.debug(code)
+        logger.debug("exitcode is "+ str(code))
         logger.debug("Test run log")
-        logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
-        return ((code == 0), str.decode('UTF-8').replace('\n', '\r\n'))
+        # capture output from generator
+        text = output.decode('UTF-8').replace('\n', '\r\n')
+        logger.debug(text)
+        return ((code == 0), text)
 
 
 
