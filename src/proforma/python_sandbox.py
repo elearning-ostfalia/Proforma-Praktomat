@@ -225,10 +225,8 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
         self.create()
         tag = self._get_image_tag()
 
-        # with the init flag set to True signals are handled properly so that
-        # stopping the container is much faster
-        container = self._client.containers.create(image=self._get_image_name() + ':' + tag,
-                                                   volumes=[],
-                                                   init=True)
+        p_sandbox = PythonSandbox(self._client, studentenv)
+        p_sandbox.create(self._get_image_name() + ':' + tag)
+        return p_sandbox
 
-        return PythonSandbox(container, studentenv)
+

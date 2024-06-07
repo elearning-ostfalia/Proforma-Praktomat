@@ -40,12 +40,10 @@ class DockerSandbox(ABC):
     remote_command = "python3 /sandbox/run_suite.py"
     remote_result_subfolder = "__result__"
     remote_result_folder = "/sandbox/" + remote_result_subfolder
-    def __init__(self, container, studentenv):
-        self._container = container
+    def __init__(self, client, studentenv):
+        self._client = client
         self._studentenv = studentenv
-        if self._container is None:
-            raise Exception('could not create container')
-        self._container.restart()
+        self._container = None
 
     def __del__(self):
         """ remove container
@@ -54,12 +52,37 @@ class DockerSandbox(ABC):
             self._container.stop()
             self._container.remove()
 
+    def create(self, image_name):
+        # with the init flag set to True signals are handled properly so that
+        # stopping the container is much faster
+        ulimits = [
+            docker.types.Ulimit(name='nproc', soft=250),
+            docker.types.Ulimit(name='nproc', hard=250),
+#            docker.types.Ulimit(name='CPU', soft=25),
+#            docker.types.Ulimit(name='CPU', hard=30),
+#            docker.types.Ulimit(name='AS', soft=1024 * 1024 * 1500), # 1.5GB
+#            docker.types.Ulimit(name='AS', hard=1024 * 1024 * 2000), # 2.0GB
+#            docker.types.Ulimit(name='NOFILE', soft=64),
+#            docker.types.Ulimit(name='NOFILE', hard=64),
+        ]
+        ulimits = []
+        #hc = self._client.create_host_config(ulimits=[nproc_limit])
+
+        self._container = self._client.containers.create(
+            image_name, volumes=[], init=True, mem_limit="1g", network_disabled=True,
+            ulimits = ulimits)
+        if self._container is None:
+            raise Exception("could not create container")
+        self._container.start()
+
+
+
     @abstractmethod
     def _get_remote_command(self):
         """ name of image """
         return
 
-    def uploadEnvironmment(self):
+    def upload_environmment(self):
         if not os.path.exists(self._studentenv):
             raise Exception("subfolder " + self._studentenv + " does not exist")
 
@@ -89,15 +112,15 @@ class DockerSandbox(ABC):
         logger.debug("** run tests in sandbox")
         # start_time = time.time()
         code, str = self._container.exec_run(self._get_remote_command(), user="999")
-        if code != 0:
-            logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
-            raise Exception("running test failed")
+#        if code != 0:
+#            logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
+#            raise Exception("running test failed")
 
         # print("---run test  %s seconds ---" % (time.time() - start_time))
         logger.debug(code)
         logger.debug("Test run log")
         logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
-        return str.decode('UTF-8').replace('\n', '\r\n')
+        return ((code == 0), str.decode('UTF-8').replace('\n', '\r\n'))
 
 
 
@@ -112,6 +135,7 @@ class DockerSandboxImage(ABC):
 
     def __del__(self):
         self._client.close()
+
     @abstractmethod
     def get_container(self, proformAChecker, studentenv):
         """ return an instance created from this template """
@@ -140,9 +164,10 @@ class DockerSandboxImage(ABC):
 
 class GoogletestSandbox(DockerSandbox):
     remote_result = "/sandbox/test_detail.xml"
-    def __init__(self, container, studentenv, command):
-        super().__init__(container, studentenv)
+    def __init__(self, client, studentenv, command):
+        super().__init__(client, studentenv)
         self._command = command
+
 
     def _get_remote_command(self):
         """ name of image """
@@ -203,16 +228,9 @@ class GoogletestImage(DockerSandboxImage):
         tag = self._get_image_tag()
         logger.debug("tag needed is " + tag)
 
-        # with the init flag set to True signals are handled properly so that
-        # stopping the container is much faster
-        container = self._client.containers.create(image=self._get_image_name() + ':' + tag,
-                                                   volumes=[],
-                                                   init=True)
-
-        if container is None:
-            raise Exception("could not create container")
-
-        return GoogletestSandbox(container, studentenv, command)
+        sandbox = GoogletestSandbox(self._client, studentenv, command)
+        sandbox.create(self._get_image_name() + ':' + tag)
+        return sandbox
 
 
 

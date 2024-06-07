@@ -5,7 +5,7 @@ import traceback
 
 from lxml import etree
 
-from checker.basemodels import CheckerResult # , truncated_log, CheckerEnvironment
+from checker.basemodels import CheckerResult, truncated_log #, CheckerEnvironment
 # from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
@@ -99,12 +99,17 @@ class PythonUnittestChecker(ProFormAChecker):
         self.prepare_run(env)
         logger.debug('task code is in ' + test_dir)
 
-        sandbox = python_sandbox.PythonSandboxImage(self).get_container(test_dir)
-        sandbox.uploadEnvironmment()
+        p_sandbox = python_sandbox.PythonUnittestImage(self).get_container(test_dir)
+        p_sandbox.upload_environmment()
         # run test
         result = self.create_result(env)
-        output = sandbox.runTests()
-        sandbox.get_result_file()
+        (passed, output) = p_sandbox.runTests()
+        if passed:
+            p_sandbox.get_result_file()
+        else:
+            (output, truncated) = truncated_log(output)
+            result.set_log(output, timed_out=False, truncated=truncated, oom_ed=False,
+                           log_format=CheckerResult.TEXT_LOG)
 
         # XSLT
         if os.path.exists(test_dir + "/unittest_results.xml") and \
@@ -127,7 +132,7 @@ class PythonUnittestChecker(ProFormAChecker):
                 # logger.error('could not convert to XML format')
                 # raise Exception('Inconclusive test result (1)')
         else:
-            if result.passed:
+            if passed:
                 # Test is passed but there is no XML file.
                 # (exit in submission?)
                 result.set_passed(False)

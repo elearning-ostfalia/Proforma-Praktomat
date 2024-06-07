@@ -113,11 +113,12 @@ class GoogleTestChecker(ProFormAChecker):
 
 
         gt_sandbox = sandbox.GoogletestImage(self).get_container(test_dir, self.exec_command)
-        gt_sandbox.uploadEnvironmment()
+        gt_sandbox.upload_environmment()
         # run test
         result = self.create_result(env)
-        output = gt_sandbox.runTests()
-        gt_sandbox.get_result_file()
+        (passed, output) = gt_sandbox.runTests()
+        if passed:
+            gt_sandbox.get_result_file()
 
 
         # compile
@@ -157,7 +158,7 @@ class GoogleTestChecker(ProFormAChecker):
                 # logger.error('could not convert to XML format')
                 # raise Exception('Inconclusive test result (1)')
         else:
-            if result.passed:
+            if passed:
                 # Test is passed but there is no XML file.
                 # (exit in submission?)
                 result.set_passed(False)
