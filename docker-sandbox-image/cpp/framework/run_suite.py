@@ -17,10 +17,10 @@ def compile_make(sandbox_dir):
         # cmake --build .
         if subprocess.call(['cmake', '.'], cwd=sandbox_dir, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT) != 0:
             # repeat call in order to get output
-            subprocess.call(['cmake', '.'], cwd=sandbox_dir)
+            subprocess.run(['cmake', '.'], cwd=sandbox_dir, stderr=subprocess.STDOUT)
             raise Exception("CMake failed")
         if subprocess.call(['cmake', '--build', '.'], cwd=sandbox_dir, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT) != 0:
-            subprocess.call(['cmake', '--build', '.'], cwd=sandbox_dir)
+            subprocess.run(['cmake', '--build', '.'], cwd=sandbox_dir, stderr=subprocess.STDOUT)
             raise Exception("Compilation failed")
 
 #        [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['cmake', '.'], sandbox_dir, unsafe=True)
@@ -34,7 +34,7 @@ def compile_make(sandbox_dir):
         # run make
         # print('make')
         if subprocess.call(['make'], cwd=sandbox_dir) != 0:
-            subprocess.call(['make'], cwd=sandbox_dir)
+            subprocess.run(['make'], cwd=sandbox_dir, stderr=subprocess.STDOUT)
             raise Exception("make failed")
 
         # [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], sandbox_dir, unsafe=True)
@@ -94,11 +94,11 @@ else:
     cmd = [exec_command, '--gtest_output=xml']
 
 # print(exec_command)
-exitcode = subprocess.call(cmd, cwd=sandbox_dir)
+completed_process = subprocess.run(cmd, cwd=sandbox_dir, stderr=subprocess.STDOUT, universal_newlines=True)
 
 # os.system("ls -al " + sandbox_dir)
 
-exit(exitcode)
+exit(completed_process.returncode)
 
 
 
