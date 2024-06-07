@@ -136,9 +136,9 @@ class DockerSandbox(ABC):
         # capture output from generator
         text = output.decode('UTF-8').replace('\n', '\r\n')
         logger.debug(text)
-        if code < 0:
+#        if code < 0:
             # append signal message
-            text = text + '\r\nSignal:\r\n' + signal.strsignal(- code)
+#            text = text + '\r\nSignal:\r\n' + signal.strsignal(- code)
         return (code == 0), text
 
     def runTests(self):
@@ -155,10 +155,10 @@ class DockerSandbox(ABC):
         # capture output from generator
         text = output.decode('UTF-8').replace('\n', '\r\n')
         logger.debug(text)
-        if code < 0:
+#        if code < 0:
             # append signal message
-            text = text + '\r\nSignal:\r\n' + signal.strsignal(- code)
-        return ((code == 0), text)
+#            text = text + '\r\nSignal:\r\n' + signal.strsignal(- code)
+        return (code == 0), text
 
 
 
@@ -215,15 +215,18 @@ class GoogletestSandbox(DockerSandbox):
     def get_result_file(self):
         self._container.stop()
         logger.debug("get result")
-        tar, dict = self._container.get_archive(GoogletestSandbox.remote_result)
-        logger.debug(dict)
-
-        with open(self._studentenv + '/result.tar', mode='bw') as f:
-            for block in tar:
-                f.write(block)
-        with tarfile.open(self._studentenv + '/result.tar', 'r') as tar:
-            tar.extractall(path=self._studentenv)
-        os.unlink(self._studentenv + '/result.tar')
+        tar = None
+        try:
+            tar, dict = self._container.get_archive(GoogletestSandbox.remote_result)
+            logger.debug(dict)
+            with open(self._studentenv + '/result.tar', mode='bw') as f:
+                for block in tar:
+                    f.write(block)
+            with tarfile.open(self._studentenv + '/result.tar', 'r') as tar:
+                tar.extractall(path=self._studentenv)
+            os.unlink(self._studentenv + '/result.tar')
+        except:
+            pass
 
         # os.system("ls -al " + self._studentenv)
 
