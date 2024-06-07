@@ -6,9 +6,10 @@ from lxml import etree
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from checker.basemodels import CheckerResult, truncated_log
-from utilities.safeexec import execute_arglist
+# from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
+from proforma import sandbox
 
 import logging
 logger = logging.getLogger(__name__)
@@ -100,6 +101,7 @@ class GoogleTestChecker(ProFormAChecker):
     def run(self, env):
         # copy files and unzip zip file if submission consists of just a zip file.
         self.prepare_run(env)
+        test_dir = env.tmpdir()
 
         # TODO
         # RXSECURE = re.compile(r"(exit|test_detail\.xml)", re.MULTILINE)
@@ -109,33 +111,42 @@ class GoogleTestChecker(ProFormAChecker):
         #    result.set_log("Invalid keyword found in submission (e.g. exit)", log_format=CheckerResult.TEXT_LOG)
         #    return result
 
-        # compile
-        build_result = self.compile_make(env)
-        if build_result != True:
-            return build_result
 
-        # remove source code files
-        extensions = ('.c', '.C', '.hxx', '.hpp', '.h', '.cpp', '.cxx', '.o', '.a',
-                      'CMakeCache.txt', 'Makefile', 'makefile', 'CMakeLists.txt', 'cmake_install.cmake')
-        self.remove_source_files(env, extensions)
-
-        # copy shared objects
-        self.copy_shared_objects(env)
-
+        gt_sandbox = sandbox.GoogletestImage(self).get_container(test_dir, self.exec_command)
+        gt_sandbox.uploadEnvironmment()
         # run test
-        logger.debug('run ' + self.exec_command)
-        cmd = [self.exec_command, '--gtest_output=xml']
-        # get result
-        (result, output) = self.run_command(cmd, env)
-#        if not result.passed:
-            # error
-#            return result
+        result = self.create_result(env)
+        output = gt_sandbox.runTests()
+        gt_sandbox.get_result_file()
+
+
+        # compile
+        # build_result = self.compile_make(env)
+        # if build_result != True:
+        #     return build_result
+
+#         # remove source code files
+#         extensions = ('.c', '.C', '.hxx', '.hpp', '.h', '.cpp', '.cxx', '.o', '.a',
+#                       'CMakeCache.txt', 'Makefile', 'makefile', 'CMakeLists.txt', 'cmake_install.cmake')
+#         self.remove_source_files(env, extensions)
+#
+#         # copy shared objects
+#         self.copy_shared_objects(env)
+#
+#         # run test
+#         logger.debug('run ' + self.exec_command)
+#         cmd = [self.exec_command, '--gtest_output=xml']
+#         # get result
+#         (result, output) = self.run_command(cmd, env)
+# #        if not result.passed:
+#             # error
+# #            return result
 
         # XSLT
-        if os.path.exists(env.tmpdir() + "/test_detail.xml") and \
-                os.path.isfile(env.tmpdir() + "/test_detail.xml"):
+        if os.path.exists(test_dir + "/test_detail.xml") and \
+                os.path.isfile(test_dir + "/test_detail.xml"):
             try:
-                xmloutput = self.convert_xml(env.tmpdir() + "/test_detail.xml")
+                xmloutput = self.convert_xml(test_dir + "/test_detail.xml")
                 result.set_log(xmloutput, timed_out=False, truncated=False, oom_ed=False,
                                log_format=CheckerResult.PROFORMA_SUBTESTS)
                 result.set_extralog(output)

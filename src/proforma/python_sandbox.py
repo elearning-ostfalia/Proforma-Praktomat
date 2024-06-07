@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 compile_python = False
 
 
-class PythonDockerSandbox(sandbox.DockerSandbox):
+class PythonSandbox(sandbox.DockerSandbox):
     remote_result_subfolder = "__result__"
     remote_result_folder = "/sandbox/" + remote_result_subfolder
     def __init__(self, container, studentenv):
@@ -49,7 +49,7 @@ class PythonDockerSandbox(sandbox.DockerSandbox):
     def get_result_file(self):
         self._container.stop()
         logger.debug("get result")
-        tar, dict = self._container.get_archive(PythonDockerSandbox.remote_result_folder)
+        tar, dict = self._container.get_archive(PythonSandbox.remote_result_folder)
         logger.debug(dict)
 
         with open(self._studentenv + '/result.tar', mode='bw') as f:
@@ -60,31 +60,31 @@ class PythonDockerSandbox(sandbox.DockerSandbox):
         os.unlink(self._studentenv + '/result.tar')
 
 #        os.system("ls -al " + self._studentenv)
-        resultpath = self._studentenv + '/' + PythonDockerSandbox.remote_result_subfolder + '/unittest_results.xml'
+        resultpath = self._studentenv + '/' + PythonSandbox.remote_result_subfolder + '/unittest_results.xml'
         if not os.path.exists(resultpath):
             raise Exception("No test result file found")
 
         os.system("mv " + resultpath + " " + self._studentenv + '/unittest_results.xml')
         return "todo read result"
 
-class PythonSandboxImage(sandbox.SandboxImage):
+class PythonUnittestImage(sandbox.DockerSandboxImage):
     """ python sandbox template for python tests """
 
     # name of python docker image
     image_name = "python-praktomat_sandbox"
     dockerfile_path = '/praktomat/docker-sandbox-image/python'
-    base_image_tag = image_name + ':' + sandbox.SandboxImage.base_tag
+    base_image_tag = image_name + ':' + sandbox.DockerSandboxImage.base_tag
 
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test)
 
     def _get_image_name(self):
         """ name of base image """
-        return PythonSandboxImage.image_name
+        return PythonUnittestImage.image_name
 
     def _get_dockerfile_path(self):
         """ path to Dockerfile """
-        return PythonSandboxImage.dockerfile_path
+        return PythonUnittestImage.dockerfile_path
 
     def get_hash(requirements_txt):
         """ create simple hash for requirements.txt content """
@@ -121,11 +121,11 @@ class PythonSandboxImage(sandbox.SandboxImage):
             return
 
         # check
-        if not self._image_exists(PythonSandboxImage.base_image_tag):
+        if not self._image_exists(PythonUnittestImage.base_image_tag):
             yield 'data: create new python base image\n\n'
-            logger.debug("create python image for tag " + PythonSandboxImage.base_image_tag + " from " + self.dockerfile_path)
+            logger.debug("create python image for tag " + PythonUnittestImage.base_image_tag + " from " + self.dockerfile_path)
             image, logs_gen = self._client.images.build(path=self._get_dockerfile_path(),
-                                                        tag=PythonSandboxImage.base_image_tag,
+                                                        tag=PythonUnittestImage.base_image_tag,
                                                         rm =True, forcerm=True)
             yield logs_gen
 
@@ -146,8 +146,8 @@ class PythonSandboxImage(sandbox.SandboxImage):
         # install modules from requirements.txt if available
         yield 'data: install requirements\n\n'
         logger.info('install requirements from ' + requirements_path)
-        logger.debug('create container from ' + PythonSandboxImage.base_image_tag)
-        container = self._client.containers.create(image=PythonSandboxImage.base_image_tag,
+        logger.debug('create container from ' + PythonUnittestImage.base_image_tag)
+        container = self._client.containers.create(image=PythonUnittestImage.base_image_tag,
                                                    init=True)
         tmp_filename = None
         try:
@@ -173,8 +173,8 @@ class PythonSandboxImage(sandbox.SandboxImage):
                 raise Exception('Cannot install requirements.txt')
 
             yield 'data: commit image\n\n'
-            logger.debug("** commit image to " + PythonSandboxImage.image_name + ':' + tag)
-            container.commit(repository=PythonSandboxImage.image_name,
+            logger.debug("** commit image to " + PythonUnittestImage.image_name + ':' + tag)
+            container.commit(repository=PythonUnittestImage.image_name,
                              tag=tag)
 #                             tag=PythonSandboxTemplate.image_name + ':' + tag)
         finally:
@@ -200,7 +200,7 @@ class PythonSandboxImage(sandbox.SandboxImage):
             requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
 
         if requirements_path is not None:
-            self._tag = PythonSandboxImage.get_hash(requirements_path)
+            self._tag = PythonUnittestImage.get_hash(requirements_path)
         else:
             self._tag = super()._get_image_tag()
 
@@ -231,4 +231,4 @@ class PythonSandboxImage(sandbox.SandboxImage):
                                                    volumes=[],
                                                    init=True)
 
-        return PythonDockerSandbox(container, studentenv)
+        return PythonSandbox(container, studentenv)

@@ -1,4 +1,5 @@
-FROM ubuntu:jammy
+# FROM ubuntu:jammy
+FROM python:3.11.9-slim-bookworm
 
 MAINTAINER Ostfalia
 
@@ -25,22 +26,27 @@ RUN groupadd -g ${GROUP_ID} praktomat \
 
 # Install C, cmake, Googletest (must be compiled)
 # pkg-config can be used to locate gmock (and other packages) after installation
-RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletest pkg-config && \
-    mkdir -p /tmp/googletest && cd /tmp/googletest && cmake /usr/src/googletest && cmake --build . && cmake --install . && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update  \
+    && apt-get install -y cmake libcunit1 libcunit1-dev googletest pkg-config build-essential \
+    && mkdir -p /tmp/googletest \
+    && cd /tmp/googletest \
+    && cmake /usr/src/googletest  \
+    && cmake --build .  \
+    && cmake --install .  \
+    && cd / \
+    && rm -rf /tmp/googletest \
+    && rm -rf /var/lib/apt/lists/*
 
 # create sandbox folder and copy framework files into it
 WORKDIR /sandbox
 
-# ADD framework /sandbox
+ADD framework /sandbox
 
 # prepare sandbox folder: 
 # - set permissions
 # - create result folder
 # - create folder for matplotlib cache (suppresses warning)
-RUN chmod -R 777 /sandbox \
-	&& mkdir -p __result__ \
-	&& chmod -R 777 __result__
+RUN chmod -R 777 /sandbox
 
 
 # RUN apt-get update && apt-get -y install sudo strace && adduser praktomat sudo
