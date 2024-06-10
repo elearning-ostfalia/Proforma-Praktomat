@@ -56,19 +56,6 @@ class DockerSandbox(ABC):
     def create(self, image_name):
         # with the init flag set to True signals are handled properly so that
         # stopping the container is much faster
-        ulimits = [
-#            docker.types.Ulimit(name='nproc', soft=250),
-#            docker.types.Ulimit(name='nproc', hard=250),
-#            docker.types.Ulimit(name='CPU', soft=25),
-#            docker.types.Ulimit(name='CPU', hard=30),
-#            docker.types.Ulimit(name='AS', soft=1024 * 1024 * 1500), # 1.5GB
-#            docker.types.Ulimit(name='AS', hard=1024 * 1024 * 2000), # 2.0GB
-            docker.types.Ulimit(name='nofile', soft=64),
-            docker.types.Ulimit(name='nofile', hard=64),
-        ]
-        ulimits = []
-        #hc = self._client.create_host_config(ulimits=[nproc_limit])
-
         # self._container = self._client.containers.run(
         #     image_name, init=True,
         #     network_disabled=True,
@@ -76,8 +63,8 @@ class DockerSandbox(ABC):
         self._container = self._client.containers.create(
             image_name, init=True,
             mem_limit="1g",
-            network_disabled=True,
-            ulimits=ulimits)
+            cpu_period=100000, cpu_quota=70000,  # max. 70% of the CPU time => configure
+            network_disabled=True)
 
         if self._container is None:
             raise Exception("could not create container")
@@ -144,7 +131,30 @@ class DockerSandbox(ABC):
     def runTests(self):
         logger.debug("** run tests in sandbox")
         # start_time = time.time()
-        code, output = self._container.exec_run(self._get_remote_command(), user="999")
+        ulimits = [
+            #            docker.types.Ulimit(name='nproc', soft=250),
+            #            docker.types.Ulimit(name='nproc', hard=250),
+            #            docker.types.Ulimit(name='CPU', soft=25),
+            #            docker.types.Ulimit(name='CPU', hard=30),
+            #            docker.types.Ulimit(name='AS', soft=1024 * 1024 * 1500), # 1.5GB
+            #            docker.types.Ulimit(name='AS', hard=1024 * 1024 * 2000), # 2.0GB
+            docker.types.Ulimit(name='nofile', soft=64),
+            docker.types.Ulimit(name='nofile', hard=64),
+        ]
+        # ulimits = []
+        # hc = self._client.create_host_config(ulimits=[nproc_limit])
+
+        # mem_limit=
+        # self._container.update()
+        # code, output = self._container.exec_run("ulimit -n 64", user="999")
+        # logger.debug("exitcode is "+ str(code))
+        # print(output.decode('UTF-8').replace('\n', '\r\n'))
+
+        warning_dict = self._container.update(mem_limit="1g",
+                               cpu_period=100000, cpu_quota=20000 # max. 20% of the CPU time => configure
+                               )
+        print(warning_dict)
+        code, output = self._container.exec_run(self._get_remote_command(), user="root")
 #        if code != 0:
 #            logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
 #            raise Exception("running test failed")
