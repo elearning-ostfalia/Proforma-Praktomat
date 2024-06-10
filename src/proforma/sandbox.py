@@ -32,10 +32,25 @@ import tarfile
 from abc import ABC, abstractmethod
 import os
 import tempfile
+# import signal
 
 import logging
 
 logger = logging.getLogger(__name__)
+
+# class TimeoutException(Exception):
+#     pass
+# def timeout_handler(signum, frame):
+#     signame = signal.Signals(signum).name
+#     print(f'Signal handler called with signal {signame} ({signum})')
+#     print("timeout_handler called")
+#     raise TimeoutException
+
+# approach:
+# - create container with no command
+# => map solution via volumes (solution -> /solution)
+# - run_exec detached, wait for stop
+# => map result via volumes (or restart container and get_archive)
 
 class DockerSandbox(ABC):
     remote_command = "python3 /sandbox/run_suite.py"
@@ -166,19 +181,33 @@ class DockerSandbox(ABC):
             docker.types.Ulimit(name='nofile', soft=64),
             docker.types.Ulimit(name='nofile', hard=64),
         ]
+
+
         # use stronger limits for test run
         warning_dict = self._container.update(mem_limit="1g",
                                cpu_period=100000, cpu_quota=20000 # max. 20% of the CPU time => configure
                                )
         print(warning_dict)
 
-        TIMEOUT = 30000
-        code, output = self._container.exec_run(self._get_remote_command(), user="999")
+        TIMEOUT = 20000
+        # signal.signal(signal.SIGALRM, timeout_handler)
+        # signal.alarm(TIMEOUT)
+
+        try:
+            code, output = self._container.exec_run(self._get_remote_command(), user="999")
 #                                                , detach=True)
-        logger.debug("exitcode is "+ str(code))
-        logger.debug("Test run log")
-        text = output.decode('UTF-8').replace('\n', '\r\n')
-        logger.debug(output)
+            logger.debug("exitcode is "+ str(code))
+            logger.debug("Test run log")
+            text = output.decode('UTF-8').replace('\n', '\r\n')
+            logger.debug(output)
+
+            # signal.alarm(0) # stop timer
+        # except TimeoutException as ex:
+        #     logger.error("command execution timed out")
+        except Exception as ex:
+            logger.error("command execution failed")
+            logger.error(ex)
+
 
         # wait for exit of command
         # wait_dict = self._container.wait(timeout=30, condition="next-exit")
