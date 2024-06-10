@@ -173,7 +173,7 @@ class DockerSandbox(ABC):
         print(warning_dict)
 
         TIMEOUT = 30000
-        code, output = self._container.exec_run(self._get_remote_command(), user="root")
+        code, output = self._container.exec_run(self._get_remote_command(), user="999")
 #                                                , detach=True)
         logger.debug("exitcode is "+ str(code))
         logger.debug("Test run log")
