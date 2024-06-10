@@ -55,4 +55,4 @@ USER praktomat
 
 # run entrypoint.sh as user praktomat
 # CMD ["sleep", "10000"]
-ENTRYPOINT ["tail", "-f", "/dev/null"]
+# ENTRYPOINT ["tail", "-f", "/dev/null"]

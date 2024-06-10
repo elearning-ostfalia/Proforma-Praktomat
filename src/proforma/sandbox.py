@@ -50,8 +50,21 @@ class DockerSandbox(ABC):
         """ remove container
         """
         if self._container is not None:
-            self._container.stop()
-            self._container.remove()
+            try:
+                # try and stop container
+                self._container.stop()
+            except Exception as e:
+                # ignore error if failed
+                logger.error(e)
+            try:
+                # try and remove container
+                self._container.remove()
+            except Exception as e:
+                logger.error(e)
+                # if container cannot be removed, try and force remove
+                logger.info("try and force kill")
+                self._container.remove(force=True)
+                logger.info("force kill succeeded")
 
     def create(self, image_name):
         # with the init flag set to True signals are handled properly so that
@@ -60,11 +73,23 @@ class DockerSandbox(ABC):
         #     image_name, init=True,
         #     network_disabled=True,
         #     ulimits = ulimits, detach=True)
+
+        healthcheck = {
+            "test": ["CMD-SHELL", "ls"],
+            "interval": 500000000, # 500ms
+            "timeout": 500000000, # 500ms
+            "retries": 1,
+            "start_period": 1000000000 # start after 1s
+        }
         self._container = self._client.containers.create(
             image_name, init=True,
             mem_limit="1g",
             cpu_period=100000, cpu_quota=70000,  # max. 70% of the CPU time => configure
-            network_disabled=True)
+            network_disabled=True,
+            command='tail -f /dev/null', detach=True,
+            healthcheck=healthcheck
+#            tty=True
+        )
 
         if self._container is None:
             raise Exception("could not create container")
@@ -141,30 +166,34 @@ class DockerSandbox(ABC):
             docker.types.Ulimit(name='nofile', soft=64),
             docker.types.Ulimit(name='nofile', hard=64),
         ]
-        # ulimits = []
-        # hc = self._client.create_host_config(ulimits=[nproc_limit])
-
-        # mem_limit=
-        # self._container.update()
-        # code, output = self._container.exec_run("ulimit -n 64", user="999")
-        # logger.debug("exitcode is "+ str(code))
-        # print(output.decode('UTF-8').replace('\n', '\r\n'))
-
+        # use stronger limits for test run
         warning_dict = self._container.update(mem_limit="1g",
                                cpu_period=100000, cpu_quota=20000 # max. 20% of the CPU time => configure
                                )
         print(warning_dict)
-        code, output = self._container.exec_run(self._get_remote_command(), user="root")
-#        if code != 0:
-#            logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
-#            raise Exception("running test failed")
 
-        # print("---run test  %s seconds ---" % (time.time() - start_time))
+        TIMEOUT = 30000
+        code, output = self._container.exec_run(self._get_remote_command(), user="root")
+#                                                , detach=True)
         logger.debug("exitcode is "+ str(code))
         logger.debug("Test run log")
-        # capture output from generator
         text = output.decode('UTF-8').replace('\n', '\r\n')
-        logger.debug(text)
+        logger.debug(output)
+
+        # wait for exit of command
+        # wait_dict = self._container.wait(timeout=30, condition="next-exit")
+        # print(wait_dict)
+
+        # logger.debug("container status is " + self._container.status) # created
+
+
+        # print("---run test  %s seconds ---" % (time.time() - start_time))
+#        output = self._container.logs()
+#        logger.debug("exitcode is "+ str(code))
+#        logger.debug("Test run log")
+        # capture output from generator
+#        text = output.decode('UTF-8').replace('\n', '\r\n')
+#        logger.debug(text)
 #        if code < 0:
             # append signal message
 #            text = text + '\r\nSignal:\r\n' + signal.strsignal(- code)
