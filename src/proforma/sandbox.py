@@ -32,19 +32,11 @@ import tarfile
 from abc import ABC, abstractmethod
 import os
 import tempfile
-# import signal
+# import requests => for Timeout Exception
 
 import logging
 
 logger = logging.getLogger(__name__)
-
-# class TimeoutException(Exception):
-#     pass
-# def timeout_handler(signum, frame):
-#     signame = signal.Signals(signum).name
-#     print(f'Signal handler called with signal {signame} ({signum})')
-#     print("timeout_handler called")
-#     raise TimeoutException
 
 # approach:
 # - create container with no command
@@ -101,7 +93,8 @@ class DockerSandbox(ABC):
             mem_limit="1g",
             cpu_period=100000, cpu_quota=70000,  # max. 70% of the CPU time => configure
             network_disabled=True,
-            command='tail -f /dev/null', detach=True,
+            command='tail -f /dev/null', # keep container running
+            detach=True,
             healthcheck=healthcheck
 #            tty=True
         )
@@ -110,7 +103,42 @@ class DockerSandbox(ABC):
             raise Exception("could not create container")
         self._container.start()
 
+        self.wait_test(image_name)
 
+    def wait_test(self, image_name):
+        """ wait seems to work only with run, not with exec_run :-(
+        """
+        try:
+            print("wait_test") # sleep 2 seconds
+            # code, output = self._container.exec_run(cmd="sleep 2", user="999", detach=True)
+            tmp_container = self._client.containers.run(image_name, command="sleep 20", user="999", detach=True)
+
+            try:
+                # wait_dict = self._container.wait(timeout=5, condition="next-exit") # timeout in seconds
+                wait_dict = tmp_container.wait(timeout=5) # , condition="next-exit") # timeout in seconds
+                print(wait_dict)
+#            except requests.exceptions.ReadTimeout as e:
+                print("failed")
+            except Exception  as e:
+                print("passed")
+                logger.error(e)
+
+                tmp_container = self._client.containers.run(image_name, command="sleep 2", user="999", detach=True)
+                try:
+                    # wait_dict = self._container.wait(timeout=5, condition="next-exit") # timeout in seconds
+                    wait_dict = tmp_container.wait(timeout=5)  # , condition="next-exit") # timeout in seconds
+                    print(wait_dict)
+                    print("passed")
+                except Exception as e:
+                    print("failed")
+                    logger.error(e)
+
+            print("end of wait_test")
+            logger.debug("end of sleep")
+
+        except Exception as ex:
+            logger.error("command execution failed")
+            logger.error(ex)
 
     @abstractmethod
     def _get_remote_command(self):
@@ -118,6 +146,9 @@ class DockerSandbox(ABC):
 
     def _get_compile_command(self):
         return None
+
+    def _get_run_timeout(self):
+        return 20000
 
     def upload_environmment(self):
         if not os.path.exists(self._studentenv):
@@ -188,22 +219,26 @@ class DockerSandbox(ABC):
                                cpu_period=100000, cpu_quota=20000 # max. 20% of the CPU time => configure
                                )
         print(warning_dict)
-
-        TIMEOUT = 20000
-        # signal.signal(signal.SIGALRM, timeout_handler)
-        # signal.alarm(TIMEOUT)
+        cmd = self._get_remote_command()
+        cmd = "sleep 2"
+        logger.debug("cmd is " + str(cmd))
 
         try:
-            code, output = self._container.exec_run(self._get_remote_command(), user="999")
-#                                                , detach=True)
+            code, output = self._container.exec_run(cmd, user="999", detach=True)
+
             logger.debug("exitcode is "+ str(code))
             logger.debug("Test run log")
-            text = output.decode('UTF-8').replace('\n', '\r\n')
+            # text = output.decode('UTF-8').replace('\n', '\r\n')
             logger.debug(output)
 
-            # signal.alarm(0) # stop timer
-        # except TimeoutException as ex:
-        #     logger.error("command execution timed out")
+            logger.debug("wait timeout is " + str(self._get_run_timeout()))
+            try:
+                wait_dict = self._container.wait(timeout=self._get_run_timeout())
+                print(wait_dict)
+            except Exception as e:
+                logger.error(e)
+            logger.debug("end of cmd")
+
         except Exception as ex:
             logger.error("command execution failed")
             logger.error(ex)
