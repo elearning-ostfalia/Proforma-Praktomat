@@ -65,7 +65,7 @@ def load_defaults(settings):
 
     # A tuple in the same format as ADMINS that specifies who should get broken
     # link notifications when BrokenLinkEmailsMiddleware is enabled.
-    d.MANAGERS = ADMINS
+    d.MANAGERS = d.ADMINS
 
     # If you set this to False, Django will make some optimizations so as not
     # to load the internationalization machinery.
@@ -173,7 +173,7 @@ def load_defaults(settings):
         {
             'BACKEND': 'django.template.backends.django.DjangoTemplates',
             'DIRS': [
-                join(PRAKTOMAT_ROOT, "src", "templates"),
+                join(d.PRAKTOMAT_ROOT, "src", "templates"),
             ],
             'APP_DIRS': True,
             'OPTIONS': {
@@ -255,11 +255,11 @@ def load_defaults(settings):
     d.C_BINARY = 'gcc'
     d.CXX_BINARY = 'c++'
     d.JAVA_BINARY = 'javac'
-    d.JAVA_BINARY_SECURE = PRAKTOMAT_ROOT + '/src/checker/scripts/javac'
+    d.JAVA_BINARY_SECURE = d.PRAKTOMAT_ROOT + '/src/checker/scripts/javac'
     d.JAVA_GCC_BINARY = 'gcj'
     d.JVM = 'java'
-    d.JVM_SECURE = PRAKTOMAT_ROOT + '/src/checker/scripts/java'
-    d.JVM_POLICY = PRAKTOMAT_ROOT + '/src/checker/scripts/java.policy'
+    d.JVM_SECURE = d.PRAKTOMAT_ROOT + '/src/checker/scripts/java'
+    d.JVM_POLICY = d.PRAKTOMAT_ROOT + '/src/checker/scripts/java.policy'
     d.FORTRAN_BINARY = 'g77'
     d.ISABELLE_BINARY = 'isabelle' # Isabelle should be in PATH
     d.DEJAGNU_RUNTEST = '/usr/bin/runtest'

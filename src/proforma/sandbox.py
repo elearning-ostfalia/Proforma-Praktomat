@@ -52,6 +52,7 @@ class DockerSandbox(ABC):
         self._client = client
         self._studentenv = studentenv
         self._container = None
+        self._image = None
 
     def __del__(self):
         """ remove container
@@ -72,6 +73,12 @@ class DockerSandbox(ABC):
                 logger.info("try and force kill")
                 self._container.remove(force=True)
                 logger.info("force kill succeeded")
+        if self._image is not None:
+            try:
+                self._image.remove()
+            except Exception as e:
+                logger.error(e)
+
 
     def create(self, image_name):
         # with the init flag set to True signals are handled properly so that
@@ -103,7 +110,7 @@ class DockerSandbox(ABC):
             raise Exception("could not create container")
         self._container.start()
 
-        self.wait_test(image_name)
+        # self.wait_test(image_name)
 
     def wait_test(self, image_name):
         """ wait seems to work only with run, not with exec_run :-(
@@ -148,7 +155,9 @@ class DockerSandbox(ABC):
         return None
 
     def _get_run_timeout(self):
-        return 20000
+        """ in seconds
+        """
+        return 25
 
     def upload_environmment(self):
         if not os.path.exists(self._studentenv):
@@ -218,25 +227,36 @@ class DockerSandbox(ABC):
         warning_dict = self._container.update(mem_limit="1g",
                                cpu_period=100000, cpu_quota=20000 # max. 20% of the CPU time => configure
                                )
+
+        self._image = self._container.commit("tmp")
+        self._container.stop()
+        self._container.remove()
+        print(self._image.tags)
+
         print(warning_dict)
         cmd = self._get_remote_command()
-        cmd = "sleep 2"
-        logger.debug("cmd is " + str(cmd))
-
+        code = None
         try:
-            code, output = self._container.exec_run(cmd, user="999", detach=True)
+            # code, output = self._container.exec_run(cmd, user="999", detach=True)
+            tmp_container = self._client.containers.run(self._image.tags[0],
+                                                        command=cmd, user="999", detach=True,
+                                                        stderr=True)
+            self._container = tmp_container
 
-            logger.debug("exitcode is "+ str(code))
-            logger.debug("Test run log")
+            #logger.debug("exitcode is "+ str(code))
+            #logger.debug("Test run log")
             # text = output.decode('UTF-8').replace('\n', '\r\n')
-            logger.debug(output)
+            #logger.debug(output)
 
             logger.debug("wait timeout is " + str(self._get_run_timeout()))
             try:
-                wait_dict = self._container.wait(timeout=self._get_run_timeout())
+                wait_dict = tmp_container.wait(timeout=self._get_run_timeout())
+                # wait_dict = self._container.wait(timeout=self._get_run_timeout())
                 print(wait_dict)
+                code = wait_dict['StatusCode']
             except Exception as e:
                 logger.error(e)
+                code = 1
             logger.debug("end of cmd")
 
         except Exception as ex:
@@ -252,11 +272,12 @@ class DockerSandbox(ABC):
 
 
         # print("---run test  %s seconds ---" % (time.time() - start_time))
-#        output = self._container.logs()
+        output = self._container.logs()
+#        code = wait_dict.
 #        logger.debug("exitcode is "+ str(code))
 #        logger.debug("Test run log")
         # capture output from generator
-#        text = output.decode('UTF-8').replace('\n', '\r\n')
+        text = output.decode('UTF-8').replace('\n', '\r\n')
 #        logger.debug(text)
 #        if code < 0:
             # append signal message
