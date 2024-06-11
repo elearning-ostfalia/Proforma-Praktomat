@@ -32,6 +32,8 @@ import tarfile
 from abc import ABC, abstractmethod
 import os
 import tempfile
+import random
+
 # import requests => for Timeout Exception
 
 import logging
@@ -39,7 +41,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 # approach:
-# - create container with no command
+# 1. create container from image
+# 1.a. python: upload and install requirements
+# 1.b. python: commit new image (and reuse later for tests with same requirements.txt)
+# 2 upload task files
+# 3 commit container to temporary image
+#
+# 4 run tests with run command detached
+# 5 wait for exit of container
+# 6 get result file
+
 # => map solution via volumes (solution -> /solution)
 # - run_exec detached, wait for stop
 # => map result via volumes (or restart container and get_archive)
@@ -53,6 +64,13 @@ class DockerSandbox(ABC):
         self._studentenv = studentenv
         self._container = None
         self._image = None
+        self._healthcheck = {
+            "test": ["CMD-SHELL", "ls"],
+            "interval": 500000000, # 500ms
+            "timeout": 500000000, # 500ms
+            "retries": 1,
+            "start_period": 1000000000 # start after 1s
+        }
 
     def __del__(self):
         """ remove container
@@ -88,13 +106,7 @@ class DockerSandbox(ABC):
         #     network_disabled=True,
         #     ulimits = ulimits, detach=True)
 
-        healthcheck = {
-            "test": ["CMD-SHELL", "ls"],
-            "interval": 500000000, # 500ms
-            "timeout": 500000000, # 500ms
-            "retries": 1,
-            "start_period": 1000000000 # start after 1s
-        }
+
         self._container = self._client.containers.create(
             image_name, init=True,
             mem_limit="1g",
@@ -102,7 +114,7 @@ class DockerSandbox(ABC):
             network_disabled=True,
             command='tail -f /dev/null', # keep container running
             detach=True,
-            healthcheck=healthcheck
+            healthcheck=self._healthcheck
 #            tty=True
         )
 
@@ -225,10 +237,10 @@ class DockerSandbox(ABC):
 
         # use stronger limits for test run
         warning_dict = self._container.update(mem_limit="1g",
-                               cpu_period=100000, cpu_quota=20000 # max. 20% of the CPU time => configure
-                               )
+                               cpu_period=100000, cpu_quota=20000) # max. 20% of the CPU time => configure
 
-        self._image = self._container.commit("tmp")
+        number = random.randrange(1000000000)
+        self._image = self._container.commit("tmp", str(number))
         self._container.stop()
         self._container.remove()
         print(self._image.tags)
@@ -240,7 +252,9 @@ class DockerSandbox(ABC):
             # code, output = self._container.exec_run(cmd, user="999", detach=True)
             tmp_container = self._client.containers.run(self._image.tags[0],
                                                         command=cmd, user="999", detach=True,
+                                                        healthcheck=self._healthcheck,
                                                         stderr=True)
+#                                                        ulimits=ulimits)
             self._container = tmp_container
 
             #logger.debug("exitcode is "+ str(code))
