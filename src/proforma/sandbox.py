@@ -124,40 +124,40 @@ class DockerSandbox(ABC):
 
         # self.wait_test(image_name)
 
-    def wait_test(self, image_name):
-        """ wait seems to work only with run, not with exec_run :-(
-        """
-        try:
-            print("wait_test") # sleep 2 seconds
-            # code, output = self._container.exec_run(cmd="sleep 2", user="999", detach=True)
-            tmp_container = self._client.containers.run(image_name, command="sleep 20", user="999", detach=True)
-
-            try:
-                # wait_dict = self._container.wait(timeout=5, condition="next-exit") # timeout in seconds
-                wait_dict = tmp_container.wait(timeout=5) # , condition="next-exit") # timeout in seconds
-                print(wait_dict)
-#            except requests.exceptions.ReadTimeout as e:
-                print("failed")
-            except Exception  as e:
-                print("passed")
-                logger.error(e)
-
-                tmp_container = self._client.containers.run(image_name, command="sleep 2", user="999", detach=True)
-                try:
-                    # wait_dict = self._container.wait(timeout=5, condition="next-exit") # timeout in seconds
-                    wait_dict = tmp_container.wait(timeout=5)  # , condition="next-exit") # timeout in seconds
-                    print(wait_dict)
-                    print("passed")
-                except Exception as e:
-                    print("failed")
-                    logger.error(e)
-
-            print("end of wait_test")
-            logger.debug("end of sleep")
-
-        except Exception as ex:
-            logger.error("command execution failed")
-            logger.error(ex)
+#     def wait_test(self, image_name):
+#         """ wait seems to work only with run, not with exec_run :-(
+#         """
+#         try:
+#             print("wait_test") # sleep 2 seconds
+#             # code, output = self._container.exec_run(cmd="sleep 2", user="999", detach=True)
+#             tmp_container = self._client.containers.run(image_name, command="sleep 20", user="999", detach=True)
+#
+#             try:
+#                 # wait_dict = self._container.wait(timeout=5, condition="next-exit") # timeout in seconds
+#                 wait_dict = tmp_container.wait(timeout=5) # , condition="next-exit") # timeout in seconds
+#                 print(wait_dict)
+# #            except requests.exceptions.ReadTimeout as e:
+#                 print("failed")
+#             except Exception  as e:
+#                 print("passed")
+#                 logger.error(e)
+#
+#                 tmp_container = self._client.containers.run(image_name, command="sleep 2", user="999", detach=True)
+#                 try:
+#                     # wait_dict = self._container.wait(timeout=5, condition="next-exit") # timeout in seconds
+#                     wait_dict = tmp_container.wait(timeout=5)  # , condition="next-exit") # timeout in seconds
+#                     print(wait_dict)
+#                     print("passed")
+#                 except Exception as e:
+#                     print("failed")
+#                     logger.error(e)
+#
+#             print("end of wait_test")
+#             logger.debug("end of sleep")
+#
+#         except Exception as ex:
+#             logger.error("command execution failed")
+#             logger.error(ex)
 
     @abstractmethod
     def _get_remote_command(self):
@@ -203,7 +203,6 @@ class DockerSandbox(ABC):
         command = self._get_compile_command()
         if command is None:
             return True, ""
-
         code, output = self._container.exec_run(command, user="999")
         #        if code != 0:
         #            logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
@@ -223,12 +222,6 @@ class DockerSandbox(ABC):
     def runTests(self):
         logger.debug("** run tests in sandbox")
         # start_time = time.time()
-        ulimits = [
-            #            docker.types.Ulimit(name='AS', soft=1024 * 1024 * 1500, hard=1024 * 1024 * 2000)), # 1.5/2.0GB
-            docker.types.Ulimit(name='CPU', soft=25, hard=30),
-            docker.types.Ulimit(name='nproc', soft=250, hard=250),
-            docker.types.Ulimit(name='nofile', soft=64, hard=64),
-        ]
 
 
         # use stronger limits for test run
@@ -242,6 +235,13 @@ class DockerSandbox(ABC):
         self._container.remove()
         print(self._image.tags)
 
+        ulimits = [
+            docker.types.Ulimit(name='AS', soft=1024 * 1024 * 1500, hard=1024 * 1024 * 2000), # 1.5/2.0GB
+            docker.types.Ulimit(name='CPU', soft=25, hard=30),
+            docker.types.Ulimit(name='nproc', soft=250, hard=250),
+            docker.types.Ulimit(name='nofile', soft=64, hard=64),
+            docker.types.Ulimit(name='fsize', soft=1024 * 50, hard=1024 * 50), # 50MB
+        ]
         cmd = self._get_remote_command()
         code = None
         try:
