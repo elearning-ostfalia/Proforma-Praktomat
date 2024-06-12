@@ -4,6 +4,8 @@ import unittest
 import xmlrunner
 import compileall
 import os
+import contextlib
+import io
 
 result_folder = "__result__"
 
@@ -97,8 +99,13 @@ delete_py_files(start_dir)
 
 os.makedirs(result_folder, exist_ok=True)
 with open(result_folder + '/unittest_results.xml', 'wb') as output:
-    runner=xmlrunner.XMLTestRunner(output=output, outsuffix='')
-    runner.run(suite)    
+    with io.StringIO() as buf:
+        # run the tests
+        # ensure stdout and stderr are in correct order
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            runner = xmlrunner.XMLTestRunner(output=output, stream=buf, outsuffix='')
+            #unittest.TextTestRunner(stream=buf).run(suite)
+            runner.run(suite)
 
+        print(buf.getvalue())
 
-# os.system("ls -al ./__result__")
