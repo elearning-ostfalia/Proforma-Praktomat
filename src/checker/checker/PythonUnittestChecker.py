@@ -105,7 +105,7 @@ class PythonUnittestChecker(ProFormAChecker):
         result = self.create_result(env)
         (passed, output) = p_sandbox.runTests()
         if passed:
-            p_sandbox.get_result_file()
+            p_sandbox.download_result_file()
         else:
             (output, truncated) = truncated_log(output)
             result.set_log(output, timed_out=False, truncated=truncated, oom_ed=False,

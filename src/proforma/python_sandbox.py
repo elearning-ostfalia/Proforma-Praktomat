@@ -46,32 +46,20 @@ class PythonSandbox(sandbox.DockerSandbox):
         """ name of image """
         return "python3 /sandbox/run_suite.py"
 
-    def get_result_file(self):
-        logger.debug("get result")
-        tar, dict = self._container.get_archive(PythonSandbox.remote_result_folder)
-        logger.debug(dict)
-
-        with open(self._studentenv + '/result.tar', mode='bw') as f:
-            for block in tar:
-                f.write(block)
-        with tarfile.open(self._studentenv + '/result.tar', 'r') as tar:
-            tar.extractall(path=self._studentenv)
-        os.unlink(self._studentenv + '/result.tar')
+    def download_result_file(self):
+        self._download_file(PythonSandbox.remote_result_folder)
 
 #        os.system("ls -al " + self._studentenv)
         resultpath = self._studentenv + '/' + PythonSandbox.remote_result_subfolder + '/unittest_results.xml'
         if not os.path.exists(resultpath):
             raise Exception("No test result file found")
-
         os.system("mv " + resultpath + " " + self._studentenv + '/unittest_results.xml')
-        return "todo read result"
 
 class PythonUnittestImage(sandbox.DockerSandboxImage):
     """ python sandbox template for python tests """
 
     # name of python docker image
     image_name = "python-praktomat_sandbox"
-    dockerfile_path = '/praktomat/docker-sandbox-image/python'
     base_image_tag = image_name + ':' + sandbox.DockerSandboxImage.base_tag
 
     def __init__(self, praktomat_test):
@@ -83,9 +71,9 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
 
     def _get_dockerfile_path(self):
         """ path to Dockerfile """
-        return PythonUnittestImage.dockerfile_path
+        return '/praktomat/docker-sandbox-image/python'
 
-    def get_hash(requirements_txt):
+    def _get_hash(requirements_txt):
         """ create simple hash for requirements.txt content """
         import hashlib
         with open(requirements_txt, 'r') as f:
@@ -119,14 +107,8 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
             # already exists => return
             return
 
-        # check
-        if not self._image_exists(PythonUnittestImage.base_image_tag):
-            yield 'data: create new python base image\n\n'
-            logger.debug("create python image for tag " + PythonUnittestImage.base_image_tag + " from " + self.dockerfile_path)
-            image, logs_gen = self._client.images.build(path=self._get_dockerfile_path(),
-                                                        tag=PythonUnittestImage.base_image_tag,
-                                                        rm =True, forcerm=True)
-            yield logs_gen
+        # ensure base image exists
+        self._create_image_for_tag(sandbox.DockerSandboxImage.base_tag)
 
         requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
         if len(requirements_txt) == 0:
@@ -147,7 +129,9 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
         logger.info('install requirements from ' + requirements_path)
         logger.debug('create container from ' + PythonUnittestImage.base_image_tag)
         container = self._client.containers.create(image=PythonUnittestImage.base_image_tag,
-                                                   init=True)
+                                                   init=True,
+                                                   command=sandbox.DockerSandbox.default_cmd,  # keep container running
+                                                   )
         tmp_filename = None
         try:
             container.start()
@@ -164,6 +148,7 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
                 if not container.put_archive(path='/sandbox', data=fd):
                     raise Exception('cannot put requirements.tar/' + tmp_filename)
 
+            logger.debug(container.status);
             code, log = container.exec_run("pip install -r /sandbox/requirements.txt", user="root")
             yield log
             logger.debug(log.decode('UTF-8').replace('\n', '\r\n'))
@@ -199,25 +184,11 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
             requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
 
         if requirements_path is not None:
-            self._tag = PythonUnittestImage.get_hash(requirements_path)
+            self._tag = PythonUnittestImage._get_hash(requirements_path)
         else:
             self._tag = super()._get_image_tag()
 
         return self._tag
-
-    # def get_container(self, studentenv):
-    #     """ return an instance created from this template """
-    #     self.create()
-    #     tag = self._get_image_tag()
-    #
-    #     # with the init flag set to True signals are handled properly so that
-    #     # stopping the container is much faster
-    #     container = self._client.containers.create(image=self._get_image_name() + ':' + tag,
-    #                                                volumes=[],
-    #                                                init=True)
-    #
-    #     return DockerSandbox(container, studentenv)
-
 
     def get_container(self, studentenv):
         """ return an instance created from this template """

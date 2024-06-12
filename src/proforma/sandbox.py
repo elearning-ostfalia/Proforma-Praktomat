@@ -51,30 +51,34 @@ logger = logging.getLogger(__name__)
 # 5 wait for exit of container
 # 6 get result file
 
-# => map solution via volumes (solution -> /solution)
-# - run_exec detached, wait for stop
-# => map result via volumes (or restart container and get_archive)
+# working without commit and using exec_run is faster but wait does not work with exec_run :-(
+
 
 class DockerSandbox(ABC):
     remote_command = "python3 /sandbox/run_suite.py"
     remote_result_subfolder = "__result__"
     remote_result_folder = "/sandbox/" + remote_result_subfolder
+    millisec = 1000000
+    sec = millisec * 1000
+    default_cmd = 'tail -f /dev/null'
+
     def __init__(self, client, studentenv):
         self._client = client
         self._studentenv = studentenv
         self._container = None
         self._image = None
         self._healthcheck = {
-            "test": ["CMD-SHELL", "ls"],
-            "interval": 500000000, # 500ms
-            "timeout": 500000000, # 500ms
+            "test": [], # ["CMD", "ls"],
+            "interval": (DockerSandbox.sec * 1), # 500000000, # 500ms
+            "timeout": (DockerSandbox.sec * 1), # 500000000, # 500ms
             "retries": 1,
-            "start_period": 1000000000 # start after 1s
+            "start_period": (DockerSandbox.sec * 3), # 1000000000 # start after 1s
         }
 
     def __del__(self):
         """ remove container
         """
+        logger.debug('__del__')
         if self._container is not None:
             try:
                 # try and stop container
@@ -96,6 +100,7 @@ class DockerSandbox(ABC):
                 self._image.remove()
             except Exception as e:
                 logger.error(e)
+        logger.debug('__del__')
 
 
     def create(self, image_name):
@@ -106,13 +111,13 @@ class DockerSandbox(ABC):
         #     network_disabled=True,
         #     ulimits = ulimits, detach=True)
 
-
+        logger.debug('create container')
         self._container = self._client.containers.create(
             image_name, init=True,
             mem_limit="1g",
             cpu_period=100000, cpu_quota=70000,  # max. 70% of the CPU time => configure
             network_disabled=True,
-            command='tail -f /dev/null', # keep container running
+            command=DockerSandbox.default_cmd, # keep container running
             detach=True,
             healthcheck=self._healthcheck
 #            tty=True
@@ -120,6 +125,7 @@ class DockerSandbox(ABC):
 
         if self._container is None:
             raise Exception("could not create container")
+        logger.debug('start container')
         self._container.start()
 
         # self.wait_test(image_name)
@@ -172,6 +178,8 @@ class DockerSandbox(ABC):
         return 25
 
     def upload_environmment(self):
+        logger.debug('upload')
+
         if not os.path.exists(self._studentenv):
             raise Exception("subfolder " + self._studentenv + " does not exist")
 
@@ -204,35 +212,29 @@ class DockerSandbox(ABC):
         if command is None:
             return True, ""
         code, output = self._container.exec_run(command, user="999")
-        #        if code != 0:
-        #            logger.debug(str.decode('UTF-8').replace('\n', '\r\n'))
-        #            raise Exception("running test failed")
-
-        # print("---run test  %s seconds ---" % (time.time() - start_time))
         logger.debug("exitcode is " + str(code))
         logger.debug("Test compilation log")
         # capture output from generator
         text = output.decode('UTF-8').replace('\n', '\r\n')
         logger.debug(text)
-#        if code < 0:
-            # append signal message
-#            text = text + '\r\nSignal:\r\n' + signal.strsignal(- code)
         return (code == 0), text
 
     def runTests(self):
         logger.debug("** run tests in sandbox")
         # start_time = time.time()
 
-
         # use stronger limits for test run
 #        warning_dict = self._container.update(mem_limit="1g",
 #                               cpu_period=100000, cpu_quota=20000) # max. 20% of the CPU time => configure
 #       print(warning_dict)
 
+        # commit intermediate container to image
         number = random.randrange(1000000000)
         self._image = self._container.commit("tmp", str(number))
+        # stop old container and remove
         self._container.stop()
         self._container.remove()
+        self._container = None
         print(self._image.tags)
 
         ulimits = [
@@ -244,60 +246,55 @@ class DockerSandbox(ABC):
         ]
         cmd = self._get_remote_command()
         code = None
+        # code, output = self._container.exec_run(cmd, user="999", detach=True)
+        self._container = self._client.containers.run(self._image.tags[0],
+                                                    command=cmd, user="999", detach=True,
+                                                    healthcheck=self._healthcheck, init=True,
+                                                    mem_limit="1g",
+                                                    cpu_period=100000, cpu_quota=20000,  # max. 20% of the CPU time => configure
+                                                    network_disabled=True,
+                                                    stdout=True,
+                                                    stderr=True,
+                                                    ulimits=ulimits,
+                                                    working_dir="/sandbox"
+                                                    )
+
+        logger.debug("wait timeout is " + str(self._get_run_timeout()))
         try:
-            # code, output = self._container.exec_run(cmd, user="999", detach=True)
-            tmp_container = self._client.containers.run(self._image.tags[0],
-                                                        command=cmd, user="999", detach=True,
-                                                        healthcheck=self._healthcheck, init=True,
-                                                        mem_limit="1g",
-                                                        cpu_period=100000, cpu_quota=20000,  # max. 20% of the CPU time => configure
-                                                        network_disabled=True,
-                                                        stdout=True,
-                                                        stderr=True,
-                                                        ulimits=ulimits)
-            self._container = tmp_container
-
-            logger.debug("wait timeout is " + str(self._get_run_timeout()))
-            try:
-                wait_dict = tmp_container.wait(timeout=self._get_run_timeout())
-                # wait_dict = self._container.wait(timeout=self._get_run_timeout())
-                print(wait_dict)
-                code = wait_dict['StatusCode']
-            except Exception as e:
-                # propabely timeout
-                logger.error(e)
-                code = 1
-                output = self._container.logs()
-                logger.debug("got logs")
-                text = output.decode('UTF-8').replace('\n', '\r\n')
-                text = text + '\r\n+++ Test Timeout +++'
-                return False, text
-            logger.debug("end of cmd")
-
-        except Exception as ex:
-            logger.error("command execution failed")
-            logger.error(ex)
-
-
-        # wait for exit of command
-        # wait_dict = self._container.wait(timeout=30, condition="next-exit")
-        # print(wait_dict)
-
-        # logger.debug("container status is " + self._container.status) # created
-
-
-        # print("---run test  %s seconds ---" % (time.time() - start_time))
+            wait_dict = self._container.wait(timeout=self._get_run_timeout())
+            # wait_dict = self._container.wait(timeout=self._get_run_timeout())
+            # print(wait_dict)
+            code = wait_dict['StatusCode']
+        except Exception as e:
+            # probably timeout
+            code = 1
+            logger.error(e)
+            output = self._container.logs()
+            logger.debug("got logs")
+            text = output.decode('UTF-8').replace('\n', '\r\n')
+            text = text + '\r\n+++ Test Timeout +++'
+            return False, text
+        logger.debug("run finished")
         output = self._container.logs()
-#        code = wait_dict.
-#        logger.debug("exitcode is "+ str(code))
-#        logger.debug("Test run log")
         # capture output from generator
         text = output.decode('UTF-8').replace('\n', '\r\n')
-#        logger.debug(text)
-#        if code < 0:
-            # append signal message
-#            text = text + '\r\nSignal:\r\n' + signal.strsignal(- code)
         return (code == 0), text
+
+
+    def _download_file(self, remote_path):
+        logger.debug("get result")
+        try:
+            tar, dict = self._container.get_archive(remote_path)
+            logger.debug(dict)
+
+            with open(self._studentenv + '/result.tar', mode='bw') as f:
+                for block in tar:
+                    f.write(block)
+            with tarfile.open(self._studentenv + '/result.tar', 'r') as tar:
+                tar.extractall(path=self._studentenv)
+            os.unlink(self._studentenv + '/result.tar')
+        except:
+            pass
 
 
 
@@ -338,6 +335,19 @@ class DockerSandboxImage(ABC):
         print(images)
         return len(images) > 0
 
+    def _create_image_for_tag(self, tag):
+        """ creates the docker image """
+        if self._image_exists(tag):
+            logger.debug("image for tag " + tag + " already exists")
+            return
+
+        # check
+        logger.debug("create image for tag " + tag + " from " + self._get_dockerfile_path())
+        image, logs_gen = self._client.images.build(path=self._get_dockerfile_path(),
+                                                    tag=self._get_image_name() + ':' + tag,
+                                                    rm =True, forcerm=True)
+        return self._get_image_name() + ':' + tag
+
 
 class GoogletestSandbox(DockerSandbox):
     remote_result = "/sandbox/test_detail.xml"
@@ -351,24 +361,8 @@ class GoogletestSandbox(DockerSandbox):
     def _get_remote_command(self):
         return "python3 /sandbox/run_suite.py " + self._command
 
-    def get_result_file(self):
-        logger.debug("stop container")
-        self._container.stop()
-        logger.debug("get result")
-        tar = None
-        try:
-            tar, dict = self._container.get_archive(GoogletestSandbox.remote_result)
-            logger.debug(dict)
-            with open(self._studentenv + '/result.tar', mode='bw') as f:
-                for block in tar:
-                    f.write(block)
-            with tarfile.open(self._studentenv + '/result.tar', 'r') as tar:
-                tar.extractall(path=self._studentenv)
-            os.unlink(self._studentenv + '/result.tar')
-        except:
-            pass
-
-        # os.system("ls -al " + self._studentenv)
+    def download_result_file(self):
+        self._download_file(GoogletestSandbox.remote_result)
 
 class GoogletestImage(DockerSandboxImage):
     def __init__(self, praktomat_test):
@@ -385,27 +379,10 @@ class GoogletestImage(DockerSandboxImage):
     def _create_image(self):
         """ creates the docker image """
         logger.debug("create GoogletestImage image (if it does not exist)")
+        self._create_image_for_tag(self._get_image_tag())
 
-        tag = self._get_image_tag()
-        logger.debug("tag is " + tag)
-        if self._image_exists(tag):
-            logger.debug("image for tag " + tag + " already exists")
-            # yield 'data: image for tag ' + tag + ' already exists\n\n'
-            # already exists => return
-            return
-
-        # check
-        # yield 'data: create new image\n\n'
-        logger.debug("create image for tag " + tag + " from " + self._get_dockerfile_path())
-        image, logs_gen = self._client.images.build(path=self._get_dockerfile_path(),
-                                                    tag=self._get_image_name() + ':' + tag,
-                                                    rm =True, forcerm=True)
-        # yield logs_gen
 
     def get_container(self, studentenv, command):
-        """ return an instance created from this template """
-        logger.debug("request for Googletest container")
-
         self._create_image()
         tag = self._get_image_tag()
         logger.debug("tag needed is " + tag)
