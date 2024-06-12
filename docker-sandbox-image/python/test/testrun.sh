@@ -22,7 +22,8 @@ cp -r ../framework/* sandbox
 echo "Run tests"
 
 # change directory (otherwise all python files get removed in task and solution folder)
-cd sandbox && python3 run_suite.py && cd ..
+cd sandbox && python3 run_suite.py
+cd ..
 
 echo "show result folder"
 

@@ -53,6 +53,7 @@ logger = logging.getLogger(__name__)
 
 # working without commit and using exec_run is faster but wait does not work with exec_run :-(
 
+debug_sand_box = False
 
 class DockerSandbox(ABC):
     remote_command = "python3 /sandbox/run_suite.py"
@@ -78,7 +79,8 @@ class DockerSandbox(ABC):
     def __del__(self):
         """ remove container
         """
-        logger.debug('__del__')
+        if debug_sand_box:
+            logger.debug('__del__')
         if self._container is not None:
             try:
                 # try and stop container
@@ -100,7 +102,8 @@ class DockerSandbox(ABC):
                 self._image.remove()
             except Exception as e:
                 logger.error(e)
-        logger.debug('__del__')
+        if debug_sand_box:
+            logger.debug('__del__')
 
 
     def create(self, image_name):
@@ -111,7 +114,8 @@ class DockerSandbox(ABC):
         #     network_disabled=True,
         #     ulimits = ulimits, detach=True)
 
-        logger.debug('create container')
+        if debug_sand_box:
+            logger.debug('create container')
         self._container = self._client.containers.create(
             image_name, init=True,
             mem_limit="1g",
@@ -125,7 +129,8 @@ class DockerSandbox(ABC):
 
         if self._container is None:
             raise Exception("could not create container")
-        logger.debug('start container')
+        if debug_sand_box:
+            logger.debug('start container')
         self._container.start()
 
         # self.wait_test(image_name)
@@ -178,7 +183,8 @@ class DockerSandbox(ABC):
         return 25
 
     def upload_environmment(self):
-        logger.debug('upload')
+        if debug_sand_box:
+            logger.debug('upload')
 
         if not os.path.exists(self._studentenv):
             raise Exception("subfolder " + self._studentenv + " does not exist")
@@ -196,7 +202,8 @@ class DockerSandbox(ABC):
                 tmp_filename = f.name
                 with tarfile.open(fileobj=f, mode='w:gz') as tar:
                     tar.add(self._studentenv, arcname=".", recursive=True)
-            logger.debug("** upload to sandbox " + tmp_filename)
+            if debug_sand_box:
+                logger.debug("** upload to sandbox " + tmp_filename)
             # os.system("ls -al " + tmp_filename)
             with open(tmp_filename, 'rb') as fd:
                 if not self._container.put_archive(path='/sandbox', data=fd):
@@ -206,21 +213,24 @@ class DockerSandbox(ABC):
                 os.unlink(tmp_filename)
 
     def compile_tests(self):
-        logger.debug("** compile tests in sandbox")
+        if debug_sand_box:
+            logger.debug("** compile tests in sandbox")
         # start_time = time.time()
         command = self._get_compile_command()
         if command is None:
             return True, ""
         code, output = self._container.exec_run(command, user="999")
-        logger.debug("exitcode is " + str(code))
-        logger.debug("Test compilation log")
+        if debug_sand_box:
+            logger.debug("exitcode is " + str(code))
+            logger.debug("Test compilation log")
         # capture output from generator
         text = output.decode('UTF-8').replace('\n', '\r\n')
         logger.debug(text)
         return (code == 0), text
 
     def runTests(self):
-        logger.debug("** run tests in sandbox")
+        if debug_sand_box:
+            logger.debug("** run tests in sandbox")
         # start_time = time.time()
 
         # use stronger limits for test run
@@ -242,7 +252,7 @@ class DockerSandbox(ABC):
             docker.types.Ulimit(name='CPU', soft=25, hard=30),
             docker.types.Ulimit(name='nproc', soft=250, hard=250),
             docker.types.Ulimit(name='nofile', soft=64, hard=64),
-            docker.types.Ulimit(name='fsize', soft=1024 * 50, hard=1024 * 50), # 50MB
+            docker.types.Ulimit(name='fsize', soft=1024 * 100, hard=1024 * 100), # 100MB
         ]
         cmd = self._get_remote_command()
         code = None
@@ -270,11 +280,13 @@ class DockerSandbox(ABC):
             code = 1
             logger.error(e)
             output = self._container.logs()
-            logger.debug("got logs")
+            if debug_sand_box:
+                logger.debug("got logs")
             text = output.decode('UTF-8').replace('\n', '\r\n')
             text = text + '\r\n+++ Test Timeout +++'
             return False, text
-        logger.debug("run finished")
+        if debug_sand_box:
+            logger.debug("run finished")
         output = self._container.logs()
         # capture output from generator
         text = output.decode('UTF-8').replace('\n', '\r\n')
@@ -282,7 +294,8 @@ class DockerSandbox(ABC):
 
 
     def _download_file(self, remote_path):
-        logger.debug("get result")
+        if debug_sand_box:
+            logger.debug("get result")
         try:
             tar, dict = self._container.get_archive(remote_path)
             logger.debug(dict)
