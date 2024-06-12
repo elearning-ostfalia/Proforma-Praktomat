@@ -47,7 +47,6 @@ class PythonSandbox(sandbox.DockerSandbox):
         return "python3 /sandbox/run_suite.py"
 
     def get_result_file(self):
-        self._container.stop()
         logger.debug("get result")
         tar, dict = self._container.get_archive(PythonSandbox.remote_result_folder)
         logger.debug(dict)
