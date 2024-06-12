@@ -252,7 +252,8 @@ class DockerSandbox(ABC):
             # code, output = self._container.exec_run(cmd, user="999", detach=True)
             tmp_container = self._client.containers.run(self._image.tags[0],
                                                         command=cmd, user="999", detach=True,
-                                                        healthcheck=self._healthcheck,
+                                                        healthcheck=self._healthcheck, init=True,
+                                                        stdout=True,
                                                         stderr=True)
 #                                                        ulimits=ulimits)
             self._container = tmp_container
@@ -269,8 +270,14 @@ class DockerSandbox(ABC):
                 print(wait_dict)
                 code = wait_dict['StatusCode']
             except Exception as e:
+                # propabely timeout
                 logger.error(e)
                 code = 1
+                output = self._container.logs()
+                logger.debug("got logs")
+                text = output.decode('UTF-8').replace('\n', '\r\n')
+                text = text + '\r\n+++ Test Timeout +++'
+                return False, text
             logger.debug("end of cmd")
 
         except Exception as ex:
@@ -351,6 +358,7 @@ class GoogletestSandbox(DockerSandbox):
         return "python3 /sandbox/run_suite.py " + self._command
 
     def get_result_file(self):
+        logger.debug("stop container")
         self._container.stop()
         logger.debug("get result")
         tar = None
