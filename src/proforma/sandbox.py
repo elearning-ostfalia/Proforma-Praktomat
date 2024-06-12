@@ -224,20 +224,17 @@ class DockerSandbox(ABC):
         logger.debug("** run tests in sandbox")
         # start_time = time.time()
         ulimits = [
-            #            docker.types.Ulimit(name='nproc', soft=250),
-            #            docker.types.Ulimit(name='nproc', hard=250),
-            #            docker.types.Ulimit(name='CPU', soft=25),
-            #            docker.types.Ulimit(name='CPU', hard=30),
-            #            docker.types.Ulimit(name='AS', soft=1024 * 1024 * 1500), # 1.5GB
-            #            docker.types.Ulimit(name='AS', hard=1024 * 1024 * 2000), # 2.0GB
-            docker.types.Ulimit(name='nofile', soft=64),
-            docker.types.Ulimit(name='nofile', hard=64),
+            #            docker.types.Ulimit(name='AS', soft=1024 * 1024 * 1500, hard=1024 * 1024 * 2000)), # 1.5/2.0GB
+            docker.types.Ulimit(name='CPU', soft=25, hard=30),
+            docker.types.Ulimit(name='nproc', soft=250, hard=250),
+            docker.types.Ulimit(name='nofile', soft=64, hard=64),
         ]
 
 
         # use stronger limits for test run
-        warning_dict = self._container.update(mem_limit="1g",
-                               cpu_period=100000, cpu_quota=20000) # max. 20% of the CPU time => configure
+#        warning_dict = self._container.update(mem_limit="1g",
+#                               cpu_period=100000, cpu_quota=20000) # max. 20% of the CPU time => configure
+#       print(warning_dict)
 
         number = random.randrange(1000000000)
         self._image = self._container.commit("tmp", str(number))
@@ -245,7 +242,6 @@ class DockerSandbox(ABC):
         self._container.remove()
         print(self._image.tags)
 
-        print(warning_dict)
         cmd = self._get_remote_command()
         code = None
         try:
@@ -253,15 +249,13 @@ class DockerSandbox(ABC):
             tmp_container = self._client.containers.run(self._image.tags[0],
                                                         command=cmd, user="999", detach=True,
                                                         healthcheck=self._healthcheck, init=True,
+                                                        mem_limit="1g",
+                                                        cpu_period=100000, cpu_quota=20000,  # max. 20% of the CPU time => configure
+                                                        network_disabled=True,
                                                         stdout=True,
-                                                        stderr=True)
-#                                                        ulimits=ulimits)
+                                                        stderr=True,
+                                                        ulimits=ulimits)
             self._container = tmp_container
-
-            #logger.debug("exitcode is "+ str(code))
-            #logger.debug("Test run log")
-            # text = output.decode('UTF-8').replace('\n', '\r\n')
-            #logger.debug(output)
 
             logger.debug("wait timeout is " + str(self._get_run_timeout()))
             try:
