@@ -429,15 +429,15 @@ class Task_2_00:
         x = Praktomat_Test_2_0(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, None)
-        template = python_sandbox.PythonUnittestImage(inst)
-        template.check_preconditions()
+        image = python_sandbox.PythonUnittestImage(inst)
+        image.check_preconditions()
         x.save()
-        # Check preconditions for template
+        # Check preconditions for image
 #        requirements_txt = inst.files.filter(filename='requirements.txt', path='')
 #        if len(requirements_txt) > 1:
 #            raise Exception('more than one requirements.txt found')
-        yield 'data: create sandbox template for python unit test\n\n'
-        yield from template.create()
+        yield 'data: create sandbox image for python unit test\n\n'
+        yield from image.create()
 
     def _create_java_checkstyle_test(self, xmlTest):
         checker_ns = self._ns.copy()
@@ -521,7 +521,7 @@ class Task_2_00:
         logger.debug('uuid is ' + task_uuid)
         task_title = self._xml_obj.xpath("/p:task/p:title", namespaces=self._ns)[0]
         logger.debug('title is "' + task_title + '"')
-        yield 'data: Import task\n\n'
+        yield 'data: import task\n\n'
 #        yield 'data: Import task "' + task_title + '"\n\n'
         task_proglang = self._xml_obj.xpath("/p:task/p:proglang", namespaces=self._ns)[0]
         logger.debug('proglang is "' + task_proglang + '"')
@@ -532,7 +532,7 @@ class Task_2_00:
             old_task = task.get_task(self._hash, task_uuid, task_title)
             if old_task is not None:
                 logger.debug('task already exists, no import')
-                yield 'data: Task already exists, no import\n\n'
+                yield 'data: task already exists, no import\n\n'
                 self._imported_task = old_task
                 return
                 # return old_task

@@ -65,6 +65,15 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test)
 
+    def yield_log(self, log):
+        if log is None:
+            return
+        log = log.decode('UTF-8').replace('\n', '\r\n')
+
+        lines = filter(str.strip, log.splitlines())
+        for line in lines:
+            yield "data: " + line + "\n\n"
+
     def _get_image_name(self):
         """ name of base image """
         return PythonUnittestImage.image_name
@@ -150,10 +159,9 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
 
             logger.debug(container.status);
             code, log = container.exec_run("pip install -r /sandbox/requirements.txt", user="root")
-            yield log
+            yield from self.yield_log(log)
             logger.debug(log.decode('UTF-8').replace('\n', '\r\n'))
             if code != 0:
-                logger.error(log.decode('UTF-8').replace('\n', '\r\n'))
                 raise Exception('Cannot install requirements.txt')
 
             yield 'data: commit image\n\n'

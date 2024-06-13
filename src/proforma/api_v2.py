@@ -252,7 +252,7 @@ class Proforma_Request:
             # run tests
             yield from grader.grade(submission_files, version_control, True)
             # get result
-            yield "data: Get result\n\n"
+            yield "data: get result\n\n"
             grade_result = grader.get_result(self.templatefile)
 
             # return result
