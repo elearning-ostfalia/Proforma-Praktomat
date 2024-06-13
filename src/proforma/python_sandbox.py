@@ -62,8 +62,10 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
 
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test,
-                         '/praktomat/docker-sandbox-image/python',
-                         PythonUnittestImage.image_name)
+                         dockerfile_path='/praktomat/docker-sandbox-image/python',
+                         image_name=PythonUnittestImage.image_name,
+                         dockerfilename='Dockerfile.alpine',
+                         )
 
     def yield_log(self, log):
         if log is None:
@@ -150,7 +152,7 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
                     raise Exception('cannot put requirements.tar/' + tmp_filename)
 
             logger.debug(container.status);
-            code, log = container.exec_run("pip install -r /sandbox/requirements.txt", user="root")
+            code, log = container.exec_run("pip3 install -r /sandbox/requirements.txt", user="root")
             yield from self.yield_log(log)
             logger.debug(log.decode('UTF-8').replace('\n', '\r\n'))
             if code != 0:

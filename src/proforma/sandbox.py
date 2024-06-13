@@ -216,7 +216,7 @@ class DockerSandbox(ABC):
         # start_time = time.time()
         if self._compile_command is None:
             return True, ""
-        code, output = self._container.exec_run(self._compile_command, user="999")
+        code, output = self._container.exec_run(self._compile_command, user="praktomat")
         if debug_sand_box:
             logger.debug("exitcode is " + str(code))
             logger.debug("Test compilation log")
@@ -254,7 +254,7 @@ class DockerSandbox(ABC):
         code = None
         # code, output = self._container.exec_run(cmd, user="999", detach=True)
         self._container = self._client.containers.run(self._image.tags[0],
-                                                    command=self._run_command, user="999", detach=True,
+                                                    command=self._run_command, user="praktomat", detach=True,
                                                     healthcheck=self._healthcheck, init=True,
                                                     mem_limit="1g",
                                                     cpu_period=100000, cpu_quota=20000,  # max. 20% of the CPU time => configure
@@ -262,7 +262,8 @@ class DockerSandbox(ABC):
                                                     stdout=True,
                                                     stderr=True,
                                                     ulimits=ulimits,
-                                                    working_dir="/sandbox"
+                                                    working_dir="/sandbox",
+                                                    name="tmp_" + str(number)
                                                     )
 
         logger.debug("wait timeout is " + str(self._get_run_timeout()))
@@ -310,13 +311,14 @@ class DockerSandbox(ABC):
 class DockerSandboxImage(ABC):
     base_tag = '0' # default tag name
 
-    def __init__(self, checker, dockerfile_path, image_name):
+    def __init__(self, checker, dockerfile_path, image_name, dockerfilename = 'Dockerfile'):
         self._checker = checker
         logger.debug("constructor for sandbox of checker.proforma_id: " + self._checker.proforma_id)
         self._client = docker.from_env()
         self._tag = None
         self._dockerfile_path = dockerfile_path
         self._image_name = image_name
+        self._dockerfilename = dockerfilename
 
     def __del__(self):
         self._client.close()
@@ -349,6 +351,7 @@ class DockerSandboxImage(ABC):
         # check
         logger.debug("create image for tag " + tag + " from " + self._dockerfile_path)
         image, logs_gen = self._client.images.build(path=self._dockerfile_path,
+                                                    dockerfile=self._dockerfilename,
                                                     tag=self._image_name + ':' + tag,
                                                     rm =True, forcerm=True)
         return self._image_name + ':' + tag

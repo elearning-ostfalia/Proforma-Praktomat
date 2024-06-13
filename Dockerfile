@@ -18,7 +18,7 @@ ARG GROUP_ID=999
 # docker group id (name=docker cannot be used here)
 # figure it out by call of "/etc/group"
 ARG DOCKER_GROUP_ID=2000
-ARG PRAKTOMAT_ID=999
+ARG PRAKTOMAT_ID=1100
 ARG TESTER_ID=777
 
 

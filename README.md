@@ -57,6 +57,14 @@ ProFormA Praktomat requires
 * docker (https://docs.docker.com/engine/install/) and 
 * docker-compose (https://docs.docker.com/compose/install/). 
 
+tests run in a separate docker container. This requires the user in the main container 
+to be member of the docker group. 
+So you need to figure out the group id of that group. 
+
+        grep "docker" /etc/group
+
+Set this group id value in the docker-compose.yml file as DOCKER_GROUP_ID.
+
 #### Configuration
 
 ##### Mandatory: Credentials
@@ -233,6 +241,22 @@ This can easily be done by calling
     docker dompose up 
   
 There is no need to back-up anything!
+
+As the tests run in their own Docker containers, it cannot be ruled out that containers or images sometimes remain after test. 
+The images are always reused (with the exception of Python images with a tag not equal to 0).
+
+Remove dangling containers:
+
+        docker rm $(docker container ls -a -q --filter name=tmp_* --filter status=exited)
+
+or if all exited containers shall be removed: 
+
+        docker rm $(docker container ls -a -q --filter status=exited)
+
+
+Remove unused images: 
+
+        docker rmi $(docker images --filter=reference="tmp:*" -q)
 
 ### Software Update
 
