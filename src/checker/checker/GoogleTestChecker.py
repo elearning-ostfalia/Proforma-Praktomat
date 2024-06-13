@@ -120,7 +120,7 @@ class GoogleTestChecker(ProFormAChecker):
         logger.debug(output)
         if not passed:
             return self.handle_compile_error(env, output, "", False, False)
-        (passed, output) = gt_sandbox.runTests()
+        (passed, output, timeout) = gt_sandbox.runTests()
         gt_sandbox.download_result_file()
         result = self.create_result(env)
 
@@ -153,7 +153,7 @@ class GoogleTestChecker(ProFormAChecker):
         logger.debug("passed is "+ str(passed))
         logger.debug(output)
 
-        result.set_log(output, timed_out=False, truncated=truncated, oom_ed=False,
+        result.set_log(output, timed_out=timeout, truncated=truncated, oom_ed=False,
                        log_format=CheckerResult.TEXT_LOG)
         result.set_passed(passed and not truncated)
         # XSLT
@@ -161,7 +161,7 @@ class GoogleTestChecker(ProFormAChecker):
                 os.path.isfile(test_dir + "/test_detail.xml"):
             try:
                 xmloutput = self.convert_xml(test_dir + "/test_detail.xml")
-                result.set_log(xmloutput, timed_out=False, truncated=False, oom_ed=False,
+                result.set_log(xmloutput, timed_out=timeout, truncated=False, oom_ed=False,
                                log_format=CheckerResult.PROFORMA_SUBTESTS)
                 result.set_extralog(output)
                 result.set_passed(passed)

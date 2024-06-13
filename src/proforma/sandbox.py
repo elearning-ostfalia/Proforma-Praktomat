@@ -226,6 +226,9 @@ class DockerSandbox(ABC):
         return (code == 0), text
 
     def runTests(self):
+        """
+        returns passed?, logs, timnout?
+        """
         if debug_sand_box:
             logger.debug("** run tests in sandbox")
         # start_time = time.time()
@@ -279,15 +282,16 @@ class DockerSandbox(ABC):
             output = self._container.logs()
             if debug_sand_box:
                 logger.debug("got logs")
-            text = output.decode('UTF-8').replace('\n', '\r\n')
-            text = text + '\r\n+++ Test Timeout +++'
-            return False, text
+            text = 'Execution timed out... (Check for infinite loop in your code)'
+            text += output.decode('UTF-8').replace('\n', '\r\n')
+#            text += '\r\n+++ Test Timeout +++'
+            return False, text, True
         if debug_sand_box:
             logger.debug("run finished")
         output = self._container.logs()
         # capture output from generator
         text = output.decode('UTF-8').replace('\n', '\r\n')
-        return (code == 0), text
+        return (code == 0), text, False
 
 
     def download_result_file(self):

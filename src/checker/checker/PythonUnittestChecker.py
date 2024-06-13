@@ -109,12 +109,12 @@ class PythonUnittestChecker(ProFormAChecker):
             return self.handle_compile_error(env, output, "", False, False)
         # run test
         result = self.create_result(env)
-        (passed, output) = p_sandbox.runTests()
+        (passed, output, timeout) = p_sandbox.runTests()
         if passed:
             p_sandbox.download_result_file()
         else:
             (output, truncated) = truncated_log(output)
-            result.set_log(output, timed_out=False, truncated=truncated, oom_ed=False,
+            result.set_log(output, timed_out=timeout, truncated=truncated, oom_ed=False,
                            log_format=CheckerResult.TEXT_LOG)
 
         # XSLT
@@ -125,7 +125,7 @@ class PythonUnittestChecker(ProFormAChecker):
                 # logger.debug(f.read())
 
                 xmloutput = self.convert_xml(test_dir + "/unittest_results.xml")
-                result.set_log(xmloutput, timed_out=False, truncated=False, oom_ed=False,
+                result.set_log(xmloutput, timed_out=timeout, truncated=False, oom_ed=False,
                                log_format=CheckerResult.PROFORMA_SUBTESTS)
                 result.set_extralog(output)
                 return result
