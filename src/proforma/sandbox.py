@@ -44,28 +44,32 @@ logger = logging.getLogger(__name__)
 # 1. create container from image
 # 1.a. python: upload and install requirements
 # 1.b. python: commit new image (and reuse later for tests with same requirements.txt)
-# 2 upload task files
-# 3 commit container to temporary image
-#
-# 4 run tests with run command detached
-# 5 wait for exit of container
-# 6 get result file
+# 2 upload task files and student files
+# 3 compile
+# 4 commit container to temporary image
+# 5 run tests with run command detached
+# 6 wait for exit of container
+# 7 get result file
 
 # working without commit and using exec_run is faster but wait does not work with exec_run :-(
 
 debug_sand_box = False
 
 class DockerSandbox(ABC):
-    remote_command = "python3 /sandbox/run_suite.py"
-    remote_result_subfolder = "__result__"
-    remote_result_folder = "/sandbox/" + remote_result_subfolder
+    # remote_command = "python3 /sandbox/run_suite.py"
+    # remote_result_subfolder = "__result__"
+    # remote_result_folder = "/sandbox/" + remote_result_subfolder
     millisec = 1000000
     sec = millisec * 1000
     default_cmd = 'tail -f /dev/null'
 
-    def __init__(self, client, studentenv):
+    def __init__(self, client, studentenv,
+                 compile_command, run_command, download_path):
         self._client = client
         self._studentenv = studentenv
+        self._compile_command = compile_command
+        self._run_command = run_command
+        self._download_path = download_path
         self._container = None
         self._image = None
         self._healthcheck = {
@@ -170,12 +174,6 @@ class DockerSandbox(ABC):
 #             logger.error("command execution failed")
 #             logger.error(ex)
 
-    @abstractmethod
-    def _get_remote_command(self):
-        return
-
-    def _get_compile_command(self):
-        return None
 
     def _get_run_timeout(self):
         """ in seconds
@@ -216,10 +214,9 @@ class DockerSandbox(ABC):
         if debug_sand_box:
             logger.debug("** compile tests in sandbox")
         # start_time = time.time()
-        command = self._get_compile_command()
-        if command is None:
+        if self._compile_command is None:
             return True, ""
-        code, output = self._container.exec_run(command, user="999")
+        code, output = self._container.exec_run(self._compile_command, user="999")
         if debug_sand_box:
             logger.debug("exitcode is " + str(code))
             logger.debug("Test compilation log")
@@ -254,11 +251,10 @@ class DockerSandbox(ABC):
             docker.types.Ulimit(name='nofile', soft=64, hard=64),
             docker.types.Ulimit(name='fsize', soft=1024 * 100, hard=1024 * 100), # 100MB
         ]
-        cmd = self._get_remote_command()
         code = None
         # code, output = self._container.exec_run(cmd, user="999", detach=True)
         self._container = self._client.containers.run(self._image.tags[0],
-                                                    command=cmd, user="999", detach=True,
+                                                    command=self._run_command, user="999", detach=True,
                                                     healthcheck=self._healthcheck, init=True,
                                                     mem_limit="1g",
                                                     cpu_period=100000, cpu_quota=20000,  # max. 20% of the CPU time => configure
@@ -293,11 +289,11 @@ class DockerSandbox(ABC):
         return (code == 0), text
 
 
-    def _download_file(self, remote_path):
+    def download_result_file(self):
         if debug_sand_box:
             logger.debug("get result")
         try:
-            tar, dict = self._container.get_archive(remote_path)
+            tar, dict = self._container.get_archive(self._download_path)
             logger.debug(dict)
 
             with open(self._studentenv + '/result.tar', mode='bw') as f:
@@ -360,17 +356,11 @@ class DockerSandboxImage(ABC):
 
 class GoogletestSandbox(DockerSandbox):
     def __init__(self, client, studentenv, command):
-        super().__init__(client, studentenv)
-        self._command = command
+        super().__init__(client, studentenv,
+                         "python3 /sandbox/compile_suite.py", # compile command
+                         "python3 /sandbox/run_suite.py " + command, # run command
+                         "/sandbox/test_detail.xml") # download path
 
-    def _get_compile_command(self):
-        return "python3 /sandbox/compile_suite.py "
-
-    def _get_remote_command(self):
-        return "python3 /sandbox/run_suite.py " + self._command
-
-    def download_result_file(self):
-        self._download_file("/sandbox/test_detail.xml")
 
 class GoogletestImage(DockerSandboxImage):
     def __init__(self, praktomat_test):
@@ -380,11 +370,8 @@ class GoogletestImage(DockerSandboxImage):
 
     def get_container(self, studentenv, command):
         self._create_image()
-        tag = self._get_image_tag()
-        logger.debug("tag needed is " + tag)
-
         sandbox = GoogletestSandbox(self._client, studentenv, command)
-        sandbox.create(self._image_name + ':' + tag)
+        sandbox.create(self._image_name + ':' + self._get_image_tag())
         return sandbox
 
 

@@ -40,17 +40,13 @@ class PythonSandbox(sandbox.DockerSandbox):
     remote_result_subfolder = "__result__"
     remote_result_folder = "/sandbox/" + remote_result_subfolder
     def __init__(self, container, studentenv):
-        super().__init__(container, studentenv)
-
-    def _get_remote_command(self):
-        """ name of image """
-        return "python3 /sandbox/run_suite.py"
-
-    def _get_compile_command(self):
-        return "python3 -m compileall /sandbox -q"
+        super().__init__(container, studentenv,
+                         "python3 -m compileall /sandbox -q",
+                         "python3 /sandbox/run_suite.py",
+                         PythonSandbox.remote_result_folder)
 
     def download_result_file(self):
-        self._download_file(PythonSandbox.remote_result_folder)
+        super().download_result_file()
 
         resultpath = self._studentenv + '/' + PythonSandbox.remote_result_subfolder + '/unittest_results.xml'
         if not os.path.exists(resultpath):
@@ -99,7 +95,7 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
             raise Exception('more than one requirements.txt found')
 
 
-    def create(self):
+    def create_image(self):
         """ creates the docker image """
         logger.debug("create python image (if it does not exist)")
 
@@ -196,11 +192,9 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
 
     def get_container(self, studentenv):
         """ return an instance created from this template """
-        self.create()
-        tag = self._get_image_tag()
-
+        self.create_image()
         p_sandbox = PythonSandbox(self._client, studentenv)
-        p_sandbox.create(self._image_name + ':' + tag)
+        p_sandbox.create(self._image_name + ':' + self._get_image_tag())
         return p_sandbox
 
 
