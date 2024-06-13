@@ -101,6 +101,12 @@ class PythonUnittestChecker(ProFormAChecker):
 
         p_sandbox = python_sandbox.PythonUnittestImage(self).get_container(test_dir)
         p_sandbox.upload_environmment()
+        # precompile
+        (passed, output) = p_sandbox.compile_tests()
+        logger.debug("compilation passed is "+ str(passed))
+        logger.debug(output)
+        if not passed:
+            return self.handle_compile_error(env, output, "", False, False)
         # run test
         result = self.create_result(env)
         (passed, output) = p_sandbox.runTests()

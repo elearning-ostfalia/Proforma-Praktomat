@@ -9,48 +9,48 @@ import io
 
 result_folder = "__result__"
 
-def compile_test_code(start_folder):
-    """ compile test code in order to remove it before testing """
-    import compileall
-    for dirpath, dirs, files in os.walk(start_folder):
-        # print(dirpath)
-        # print(dirs)
-#        dirs = filter(lambda folder: folder not in [".venv", "lib", "lib64", "usr", "tmp"], dirs)
-        # print(dirs)
-        for folder in dirs:
-            # print("compile folder " + folder)
-            # if not compileall.compile_dir(os.path.join(env.tmpdir(), folder), quiet=True):
-            #    logger.error('could not compile ' + folder)
-            command = "python3 -m compileall " + start_folder + "/" + folder
-            exitcode = os.system(command)
-            # exitcode = subprocess.run(['python3', '-m', 'compileall', folder], cwd=start_folder)
-            if exitcode != 0:
-                print(exitcode)
-                # could not compile.
-                # TODO: run without compilation in order to generate better output???
-                regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)),(?<line>[0-9]+)'
-                # regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
-                #return self.handle_compile_error(env, output, error, timed_out, oom_ed, regexp)
-                raise Exception("compilation failed of folder " + folder + " failed")
-
-        for file in files:
-            # print("compile file " + file)
-            command = "python3 -m compileall " + start_folder + "/" + file
-            exitcode = os.system(command)            
-            # exitcode = subprocess.run(['python3', '-m', 'compileall', file], cwd=start_folder)
-            if exitcode != 0:
-                print(exitcode)                
-                # could not compile.
-                # TODO: run without compilation in order to generate better output???
-                regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)),(?<line>[0-9]+)'
-                # regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
-                #return self.handle_compile_error(env, output, error, timed_out, oom_ed, regexp)
-                raise Exception("compilation failed of file "+ file + " failed")
-
-
-        # only upper level => break
-        break
-        return None
+# def compile_test_code(start_folder):
+#     """ compile test code in order to remove it before testing """
+#     import compileall
+#     for dirpath, dirs, files in os.walk(start_folder):
+#         # print(dirpath)
+#         # print(dirs)
+# #        dirs = filter(lambda folder: folder not in [".venv", "lib", "lib64", "usr", "tmp"], dirs)
+#         # print(dirs)
+#         for folder in dirs:
+#             # print("compile folder " + folder)
+#             # if not compileall.compile_dir(os.path.join(env.tmpdir(), folder), quiet=True):
+#             #    logger.error('could not compile ' + folder)
+#             command = "python3 -m compileall " + start_folder + "/" + folder
+#             exitcode = os.system(command)
+#             # exitcode = subprocess.run(['python3', '-m', 'compileall', folder], cwd=start_folder)
+#             if exitcode != 0:
+#                 print(exitcode)
+#                 # could not compile.
+#                 # TODO: run without compilation in order to generate better output???
+#                 regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)),(?<line>[0-9]+)'
+#                 # regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
+#                 #return self.handle_compile_error(env, output, error, timed_out, oom_ed, regexp)
+#                 raise Exception("compilation failed of folder " + folder + " failed")
+#
+#         for file in files:
+#             # print("compile file " + file)
+#             command = "python3 -m compileall " + start_folder + "/" + file
+#             exitcode = os.system(command)
+#             # exitcode = subprocess.run(['python3', '-m', 'compileall', file], cwd=start_folder)
+#             if exitcode != 0:
+#                 print(exitcode)
+#                 # could not compile.
+#                 # TODO: run without compilation in order to generate better output???
+#                 regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)),(?<line>[0-9]+)'
+#                 # regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
+#                 #return self.handle_compile_error(env, output, error, timed_out, oom_ed, regexp)
+#                 raise Exception("compilation failed of file "+ file + " failed")
+#
+#
+#         # only upper level => break
+#         break
+#         return None
 
 def delete_py_files(start_folder):
     # delete python files in order to prevent leaking testcode to student (part 2)
@@ -90,7 +90,7 @@ loader = unittest.TestLoader()
 start_dir = '.'
 suite = loader.discover(start_dir, "*test*.py")
 
-os.system("python3 -m compileall " + start_dir + " -q")
+# os.system("python3 -m compileall " + start_dir + " -q")
 # if not compileall.compile_dir(start_dir, quiet=1):
 #    raise Exception('could not compile ' + start_dir)
 

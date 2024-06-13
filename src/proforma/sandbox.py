@@ -314,11 +314,13 @@ class DockerSandbox(ABC):
 class DockerSandboxImage(ABC):
     base_tag = '0' # default tag name
 
-    def __init__(self, checker):
+    def __init__(self, checker, dockerfile_path, image_name):
         self._checker = checker
         logger.debug("constructor for sandbox of checker.proforma_id: " + self._checker.proforma_id)
         self._client = docker.from_env()
         self._tag = None
+        self._dockerfile_path = dockerfile_path
+        self._image_name = image_name
 
     def __del__(self):
         self._client.close()
@@ -328,25 +330,19 @@ class DockerSandboxImage(ABC):
         """ return an instance created from this template """
         return
 
-    @abstractmethod
-    def _get_image_name(self):
-        """ name of image """
-        return
-
-    @abstractmethod
-    def _get_dockerfile_path(self):
-        """ path to Dockerfile """
-        return
-
     def _get_image_tag(self):
         return DockerSandboxImage.base_tag
 
     def _image_exists(self, tag):
-        imagename = self._get_image_name() + ":" + tag
-        logger.debug("check if image exists: " + imagename)
-        images = self._client.images.list(filters = {"reference": imagename})
+        full_imagename = self._image_name + ":" + tag
+        logger.debug("check if image exists: " + full_imagename)
+        images = self._client.images.list(filters = {"reference": full_imagename})
         print(images)
         return len(images) > 0
+
+    def _create_image(self):
+        """ creates the default docker image """
+        self._create_image_for_tag(self._get_image_tag())
 
     def _create_image_for_tag(self, tag):
         """ creates the docker image """
@@ -355,15 +351,14 @@ class DockerSandboxImage(ABC):
             return
 
         # check
-        logger.debug("create image for tag " + tag + " from " + self._get_dockerfile_path())
-        image, logs_gen = self._client.images.build(path=self._get_dockerfile_path(),
-                                                    tag=self._get_image_name() + ':' + tag,
+        logger.debug("create image for tag " + tag + " from " + self._dockerfile_path)
+        image, logs_gen = self._client.images.build(path=self._dockerfile_path,
+                                                    tag=self._image_name + ':' + tag,
                                                     rm =True, forcerm=True)
-        return self._get_image_name() + ':' + tag
+        return self._image_name + ':' + tag
 
 
 class GoogletestSandbox(DockerSandbox):
-    remote_result = "/sandbox/test_detail.xml"
     def __init__(self, client, studentenv, command):
         super().__init__(client, studentenv)
         self._command = command
@@ -375,25 +370,13 @@ class GoogletestSandbox(DockerSandbox):
         return "python3 /sandbox/run_suite.py " + self._command
 
     def download_result_file(self):
-        self._download_file(GoogletestSandbox.remote_result)
+        self._download_file("/sandbox/test_detail.xml")
 
 class GoogletestImage(DockerSandboxImage):
     def __init__(self, praktomat_test):
-        super().__init__(praktomat_test)
-
-    def _get_image_name(self):
-        """ name of base image """
-        return "cpp-praktomat_sandbox"
-
-    def _get_dockerfile_path(self):
-        """ path to Dockerfile """
-        return '/praktomat/docker-sandbox-image/cpp'
-
-    def _create_image(self):
-        """ creates the docker image """
-        logger.debug("create GoogletestImage image (if it does not exist)")
-        self._create_image_for_tag(self._get_image_tag())
-
+        super().__init__(praktomat_test,
+                         '/praktomat/docker-sandbox-image/cpp',
+                         "cpp-praktomat_sandbox")
 
     def get_container(self, studentenv, command):
         self._create_image()
@@ -401,7 +384,7 @@ class GoogletestImage(DockerSandboxImage):
         logger.debug("tag needed is " + tag)
 
         sandbox = GoogletestSandbox(self._client, studentenv, command)
-        sandbox.create(self._get_image_name() + ':' + tag)
+        sandbox.create(self._image_name + ':' + tag)
         return sandbox
 
 

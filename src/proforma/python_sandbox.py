@@ -46,10 +46,12 @@ class PythonSandbox(sandbox.DockerSandbox):
         """ name of image """
         return "python3 /sandbox/run_suite.py"
 
+    def _get_compile_command(self):
+        return "python3 -m compileall /sandbox -q"
+
     def download_result_file(self):
         self._download_file(PythonSandbox.remote_result_folder)
 
-#        os.system("ls -al " + self._studentenv)
         resultpath = self._studentenv + '/' + PythonSandbox.remote_result_subfolder + '/unittest_results.xml'
         if not os.path.exists(resultpath):
             raise Exception("No test result file found")
@@ -63,7 +65,9 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
     base_image_tag = image_name + ':' + sandbox.DockerSandboxImage.base_tag
 
     def __init__(self, praktomat_test):
-        super().__init__(praktomat_test)
+        super().__init__(praktomat_test,
+                         '/praktomat/docker-sandbox-image/python',
+                         PythonUnittestImage.image_name)
 
     def yield_log(self, log):
         if log is None:
@@ -73,14 +77,6 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
         lines = filter(str.strip, log.splitlines())
         for line in lines:
             yield "data: " + line + "\n\n"
-
-    def _get_image_name(self):
-        """ name of base image """
-        return PythonUnittestImage.image_name
-
-    def _get_dockerfile_path(self):
-        """ path to Dockerfile """
-        return '/praktomat/docker-sandbox-image/python'
 
     def _get_hash(requirements_txt):
         """ create simple hash for requirements.txt content """
@@ -204,7 +200,7 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
         tag = self._get_image_tag()
 
         p_sandbox = PythonSandbox(self._client, studentenv)
-        p_sandbox.create(self._get_image_name() + ':' + tag)
+        p_sandbox.create(self._image_name + ':' + tag)
         return p_sandbox
 
 
