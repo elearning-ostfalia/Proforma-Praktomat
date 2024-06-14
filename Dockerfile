@@ -64,7 +64,7 @@ RUN apt-get update && \
 ###RUN sudo apt-get update && apt-get install -y bellsoft-java17
 
 # Install Java 17 and JavaFX
-RUN apt-get update && apt-get install -y openjdk-17-jdk openjfx && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y openjdk-21-jdk openjfx && rm -rf /var/lib/apt/lists/*
 # Install C, cmake, Googletest (must be compiled)
 # pkg-config can be used to locate gmock (and other packages) after installation
 # RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletest pkg-config && \
@@ -121,6 +121,7 @@ COPY cron.conf /etc/cron.d/praktomat-cron
 
 # add JAVA test specific libraries
 # Checkstyle
+ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.0/checkstyle-10.17.0-all.jar /praktomat/lib/
 ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.1/checkstyle-10.1-all.jar /praktomat/lib/
 ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.23/checkstyle-8.23-all.jar /praktomat/lib/
 ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.29/checkstyle-8.29-all.jar /praktomat/lib/

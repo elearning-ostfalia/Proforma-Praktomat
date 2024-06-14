@@ -24,13 +24,13 @@ but you can follow the Dockerfile.
 
 The following programming languages and test frameworks are provided with the ProFormA interface.
 
-| Language     |               Test Frameworks                |
-| :---:        |:--------------------------------------------:|         
-| Java 17      |   JUnit 4.12/5, Checkstyle 8.23/8.29/10.1    |
-| C++          |            Googletest, Make/CMake            |
-| C            |        Googletest, CUnit, Make/CMake         |
-| Python 3.8   | Unittest with Pip <br/>(Doctest preparation) |
-| SetlX        |          Simple test, Syntax Check           |
+|  Language   |               Test Frameworks                |
+|:-----------:|:--------------------------------------------:|         
+|   Java 21   |   JUnit 4.12/5, Checkstyle 8.23/8.29/10.1    |
+|     C++     |            Googletest, Make/CMake            |
+|      C      |        Googletest, CUnit, Make/CMake         |
+| Python 3.11 | Unittest with Pip <br/>(Doctest preparation) |
+|    SetlX    |          Simple test, Syntax Check           |
 
 
 For running SetlX tests (https://randoom.org/Software/SetlX/) you need to copy the `setlx-2.7.x.jar` 
@@ -57,9 +57,11 @@ ProFormA Praktomat requires
 * docker (https://docs.docker.com/engine/install/) and 
 * docker-compose (https://docs.docker.com/compose/install/). 
 
-tests run in a separate docker container. This requires the user in the main container 
-to be member of the docker group. 
-So you need to figure out the group id of that group. 
+Each test run in its own docker container. This requires the user in the main container 
+to be member of the docker group of the host computer. 
+This is achieved by adding him to a group whose ID is identical to the ID of the Docker group on the host.
+
+So you need to figure out the group id of the docker group on your computer: 
 
         grep "docker" /etc/group
 
