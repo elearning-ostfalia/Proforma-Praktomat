@@ -18,7 +18,6 @@ ENV LANGUAGE ${LOCALE}
 
 ARG GROUP_ID=999
 ARG PRAKTOMAT_ID=999
-ARG TESTER_ID=777
 
 # create user with less capabilties
 RUN groupadd -g ${GROUP_ID} praktomat \

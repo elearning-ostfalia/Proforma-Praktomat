@@ -210,13 +210,10 @@ class DockerSandbox(ABC):
             if tmp_filename:
                 os.unlink(tmp_filename)
 
-    def compile_tests(self):
+    def exec(self, command):
         if debug_sand_box:
             logger.debug("** compile tests in sandbox")
-        # start_time = time.time()
-        if self._compile_command is None:
-            return True, ""
-        code, output = self._container.exec_run(self._compile_command, user="praktomat")
+        code, output = self._container.exec_run(command, user="praktomat")
         if debug_sand_box:
             logger.debug("exitcode is " + str(code))
             logger.debug("Test compilation log")
@@ -224,6 +221,14 @@ class DockerSandbox(ABC):
         text = output.decode('UTF-8').replace('\n', '\r\n')
         logger.debug(text)
         return (code == 0), text
+
+    def compile_tests(self):
+        if debug_sand_box:
+            logger.debug("** compile tests in sandbox")
+        # start_time = time.time()
+        if self._compile_command is None:
+            return True, ""
+        return self.exec(self._compile_command)
 
     def runTests(self):
         """
@@ -256,6 +261,7 @@ class DockerSandbox(ABC):
         ]
         code = None
         # code, output = self._container.exec_run(cmd, user="999", detach=True)
+        logger.debug("execute '" + self._run_command + "'")
         self._container = self._client.containers.run(self._image.tags[0],
                                                     command=self._run_command, user="praktomat", detach=True,
                                                     healthcheck=self._healthcheck, init=True,

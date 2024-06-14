@@ -183,72 +183,72 @@ class ProFormAChecker(Checker):
                  )
 
 
-    def compile_make(self, env):
-        # compile CMakeLists.txt
-        if os.path.exists(env.tmpdir() + '/CMakeLists.txt'):
-            logger.debug('cmakefile found, execute cmake')
-            # cmake .
-            # cmake --build .
-            [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['cmake', '.'], env.tmpdir(), unsafe=True)
-            if exitcode != 0:
-                return self.handle_compile_error(env, output, error, timed_out, oom_ed)
-            [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['cmake', '--build', '.'], env.tmpdir(), unsafe=True)
-            if exitcode != 0:
-                return self.handle_compile_error(env, output, error, timed_out, oom_ed)
-        else:
-            # run make
-            logger.debug('make')
-            [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir(), unsafe=True)
-            if exitcode != 0:
-                # suppress as much information as possible
-                # call make twice in order to get only errors in student code
-                [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir(), unsafe=True)
-                if error != None:
-                    # delete output when error text exists because output contains a lot of irrelevant information
-                    # for student
-                    # logger.error(error)
-                    output = error
-                    error = ''
-                return self.handle_compile_error(env, output, error, timed_out, oom_ed)
-            
-        return True
-
-    def run_command(self, cmd, env):
-        [output, error, exitcode, timed_out, oom_ed] = \
-            execute_arglist(cmd, env.tmpdir(),
-                            timeout=settings.TEST_TIMEOUT,
-                            fileseeklimit=settings.TEST_MAXFILESIZE,
-                            environment_variables = env.variables())
-        # logger.debug("output: <" + output + ">")
-        logger.debug("exitcode: " + str(exitcode))
-        if error != None and len(error) > 0:
-            logger.debug("error: " + error)
-            output = output + error
-
-        result = self.create_result(env)
-        if timed_out or oom_ed:
-            # ERROR: Execution timed out
-            logger.error('Execution timeout')
-            # clear log for timeout
-            # because truncating log will result in invalid XML.
-            truncated = False
-            output = '\Execution timed out... (Check for infinite loop in your code)\r\n' + output
-            (output, truncated) = truncated_log(output)
-            # Do not set timout flag in order to handle timeout only as failed testcase.
-            # Student shall be motivated to look for error in his or her code and not in testcode.
-            result.set_log(output, timed_out=timed_out, truncated=truncated, oom_ed=oom_ed, log_format=CheckerResult.TEXT_LOG)
-            result.set_passed(False)
-            return result, output
-
-        if exitcode != 0:
-            (output, truncated) = truncated_log(output)
-            if exitcode < 0:
-                # append signal message
-                output = output + '\r\nSignal:\r\n' + signal.strsignal(- exitcode)
-            result.set_log(output, timed_out=False, truncated=truncated, oom_ed=False, log_format=CheckerResult.TEXT_LOG)
-            result.set_passed(False)
-            return result, output
-
-        result.set_passed(True)
-        return result, output
+    # def compile_make(self, env):
+    #     # compile CMakeLists.txt
+    #     if os.path.exists(env.tmpdir() + '/CMakeLists.txt'):
+    #         logger.debug('cmakefile found, execute cmake')
+    #         # cmake .
+    #         # cmake --build .
+    #         [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['cmake', '.'], env.tmpdir(), unsafe=True)
+    #         if exitcode != 0:
+    #             return self.handle_compile_error(env, output, error, timed_out, oom_ed)
+    #         [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['cmake', '--build', '.'], env.tmpdir(), unsafe=True)
+    #         if exitcode != 0:
+    #             return self.handle_compile_error(env, output, error, timed_out, oom_ed)
+    #     else:
+    #         # run make
+    #         logger.debug('make')
+    #         [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir(), unsafe=True)
+    #         if exitcode != 0:
+    #             # suppress as much information as possible
+    #             # call make twice in order to get only errors in student code
+    #             [output, error, exitcode, timed_out, oom_ed] = execute_arglist(['make'], env.tmpdir(), unsafe=True)
+    #             if error != None:
+    #                 # delete output when error text exists because output contains a lot of irrelevant information
+    #                 # for student
+    #                 # logger.error(error)
+    #                 output = error
+    #                 error = ''
+    #             return self.handle_compile_error(env, output, error, timed_out, oom_ed)
+    #
+    #     return True
+    #
+    # def run_command(self, cmd, env):
+    #     [output, error, exitcode, timed_out, oom_ed] = \
+    #         execute_arglist(cmd, env.tmpdir(),
+    #                         timeout=settings.TEST_TIMEOUT,
+    #                         fileseeklimit=settings.TEST_MAXFILESIZE,
+    #                         environment_variables = env.variables())
+    #     # logger.debug("output: <" + output + ">")
+    #     logger.debug("exitcode: " + str(exitcode))
+    #     if error != None and len(error) > 0:
+    #         logger.debug("error: " + error)
+    #         output = output + error
+    #
+    #     result = self.create_result(env)
+    #     if timed_out or oom_ed:
+    #         # ERROR: Execution timed out
+    #         logger.error('Execution timeout')
+    #         # clear log for timeout
+    #         # because truncating log will result in invalid XML.
+    #         truncated = False
+    #         output = '\Execution timed out... (Check for infinite loop in your code)\r\n' + output
+    #         (output, truncated) = truncated_log(output)
+    #         # Do not set timout flag in order to handle timeout only as failed testcase.
+    #         # Student shall be motivated to look for error in his or her code and not in testcode.
+    #         result.set_log(output, timed_out=timed_out, truncated=truncated, oom_ed=oom_ed, log_format=CheckerResult.TEXT_LOG)
+    #         result.set_passed(False)
+    #         return result, output
+    #
+    #     if exitcode != 0:
+    #         (output, truncated) = truncated_log(output)
+    #         if exitcode < 0:
+    #             # append signal message
+    #             output = output + '\r\nSignal:\r\n' + signal.strsignal(- exitcode)
+    #         result.set_log(output, timed_out=False, truncated=truncated, oom_ed=False, log_format=CheckerResult.TEXT_LOG)
+    #         result.set_passed(False)
+    #         return result, output
+    #
+    #     result.set_passed(True)
+    #     return result, output
     

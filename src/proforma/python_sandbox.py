@@ -64,7 +64,7 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
         super().__init__(praktomat_test,
                          dockerfile_path='/praktomat/docker-sandbox-image/python',
                          image_name=PythonUnittestImage.image_name,
-                         dockerfilename='Dockerfile.alpine',
+#                         dockerfilename='Dockerfile.alpine',
                          )
 
     def yield_log(self, log):
@@ -179,16 +179,11 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
         if len(requirements_txt) > 1:
             raise Exception('more than one requirements.txt found')
         if len(requirements_txt) == 0:
-            requirements_txt = None
-            requirements_path = None
+            self._tag = super()._get_image_tag()
         else:
             requirements_txt = requirements_txt.first()
             requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
-
-        if requirements_path is not None:
             self._tag = PythonUnittestImage._get_hash(requirements_path)
-        else:
-            self._tag = super()._get_image_tag()
 
         return self._tag
 
@@ -198,5 +193,10 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
         p_sandbox = PythonSandbox(self._client, studentenv)
         p_sandbox.create(self._image_name + ':' + self._get_image_tag())
         return p_sandbox
+
+
+
+
+
 
 
