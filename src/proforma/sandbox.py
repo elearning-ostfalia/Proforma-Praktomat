@@ -62,6 +62,7 @@ class DockerSandbox(ABC):
     millisec = 1000000
     sec = millisec * 1000
     default_cmd = 'tail -f /dev/null'
+    meg_byte = 1024 * 1024
 
     def __init__(self, client, studentenv,
                  compile_command, run_command, download_path):
@@ -79,6 +80,7 @@ class DockerSandbox(ABC):
             "retries": 1,
             "start_period": (DockerSandbox.sec * 3), # 1000000000 # start after 1s
         }
+        self._mem_limit = DockerSandbox.meg_byte * 1000
 
     def __del__(self):
         """ remove container
@@ -122,7 +124,7 @@ class DockerSandbox(ABC):
             logger.debug('create container')
         self._container = self._client.containers.create(
             image_name, init=True,
-            mem_limit="1g",
+            mem_limit=self._mem_limit,
             cpu_period=100000, cpu_quota=70000,  # max. 70% of the CPU time => configure
             network_disabled=True,
             command=DockerSandbox.default_cmd, # keep container running
@@ -223,20 +225,24 @@ class DockerSandbox(ABC):
         logger.debug(text)
         return (code == 0), text
 
-    def compile_tests(self):
+    def compile_tests(self, command=None):
         if debug_sand_box:
             logger.debug("** compile tests in sandbox")
         # start_time = time.time()
+        if not command is None:
+            self._compile_command = command
         if self._compile_command is None:
             return True, ""
         return self.exec(self._compile_command)
 
-    def runTests(self):
+    def runTests(self, command=None):
         """
         returns passed?, logs, timnout?
         """
         if debug_sand_box:
             logger.debug("** run tests in sandbox")
+        if not command is None:
+            self._run_command = command
         # start_time = time.time()
 
         # use stronger limits for test run
@@ -254,19 +260,21 @@ class DockerSandbox(ABC):
         print(self._image.tags)
 
         ulimits = [
-            docker.types.Ulimit(name='AS', soft=1024 * 1024 * 1500, hard=1024 * 1024 * 2000), # 1.5/2.0GB
             docker.types.Ulimit(name='CPU', soft=25, hard=30),
             docker.types.Ulimit(name='nproc', soft=250, hard=250),
             docker.types.Ulimit(name='nofile', soft=64, hard=64),
             docker.types.Ulimit(name='fsize', soft=1024 * 100, hard=1024 * 100), # 100MB
         ]
+        if self._mem_limit < 1200 * DockerSandbox.meg_byte:
+            ulimits.append(docker.types.Ulimit(name='AS', soft=self._mem_limit, hard=self._mem_limit))
+
         code = None
         # code, output = self._container.exec_run(cmd, user="999", detach=True)
         logger.debug("execute '" + self._run_command + "'")
         self._container = self._client.containers.run(self._image.tags[0],
                                                     command=self._run_command, user="praktomat", detach=True,
                                                     healthcheck=self._healthcheck, init=True,
-                                                    mem_limit="1g",
+                                                    mem_limit=self._mem_limit,
                                                     cpu_period=100000, cpu_quota=20000,  # max. 20% of the CPU time => configure
                                                     network_disabled=True,
                                                     stdout=True,
@@ -398,6 +406,7 @@ class JavaSandbox(DockerSandbox):
 #                         "javac -classpath . -nowarn -d . @sources.txt",  # compile command: java
                          command, # run command
                          None) # download path
+        self._mem_limit = DockerSandbox.meg_byte * 2000 # increase memory limit
 
 
 class JavaImage(DockerSandboxImage):

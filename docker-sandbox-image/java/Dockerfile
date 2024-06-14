@@ -61,7 +61,9 @@ RUN wget http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.z
 ADD https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.6.1/junit-platform-console-standalone-1.6.1.jar /praktomat/lib/
 
 # set permissions
-RUN chmod 0644 -R /praktomat/lib /praktomat/extra
+# RUN chmod -R 0644 /praktomat/lib /praktomat/extra
+RUN find /praktomat -type d -exec chmod 755 {} \;
+RUN find /praktomat -type f -exec chmod 644 {} \;
 
 
 # create sandbox folder and copy framework files into it
