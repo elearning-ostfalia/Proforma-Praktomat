@@ -6,7 +6,6 @@ FROM ubuntu:jammy
 MAINTAINER Ostfalia
 
 ENV PYTHONUNBUFFERED 1
-ARG PASSWORD=123
 
 ARG PRAKTOMAT_ID=1100
 
@@ -25,7 +24,7 @@ ENV LC_ALL ${LOCALE}
 # libffi-dev is used for python unittests with pandas (avoid extra RUN command)
 # squashfs-tools is used for sandbox templates
 RUN apt-get update \
-    && apt-get install -y wget \
+    && apt-get install -y wget unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Java:
@@ -40,15 +39,11 @@ RUN apt-get update \
 ###RUN echo "deb [arch=amd64] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list
 ###RUN sudo apt-get update && apt-get install -y bellsoft-java17
 
-# Install Java 17 and JavaFX
+# Install Java and JavaFX
 RUN apt-get update && apt-get install -y openjdk-21-jdk openjfx && rm -rf /var/lib/apt/lists/*
-# Install C, cmake, Googletest (must be compiled)
-# pkg-config can be used to locate gmock (and other packages) after installation
-# RUN apt-get update && apt-get install -y cmake libcunit1 libcunit1-dev googletest pkg-config && \
-#    mkdir -p /tmp/googletest && cd /tmp/googletest && cmake /usr/src/googletest && cmake --build . && cmake --install . && \
-#    rm -rf /var/lib/apt/lists/*
 
 
+ADD extra /praktomat/extra
 
 
 
@@ -66,7 +61,8 @@ RUN wget http://www.java2s.com/Code/JarDownload/hamcrest/hamcrest-core-1.3.jar.z
 ADD https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.6.1/junit-platform-console-standalone-1.6.1.jar /praktomat/lib/
 
 # set permissions
-RUN chmod 0644 /praktomat/lib/* /praktomat/extra/*
+RUN chmod 0644 -R /praktomat/lib /praktomat/extra
+
 
 # create sandbox folder and copy framework files into it
 WORKDIR /sandbox

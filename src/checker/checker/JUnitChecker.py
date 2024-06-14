@@ -12,6 +12,7 @@ from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from solutions.models import Solution
 import xml.etree.ElementTree as ET
+from proforma import sandbox
 
 from checker.compiler.JavaBuilder import JavaBuilder
 import logging
@@ -233,10 +234,35 @@ class JUnitChecker(ProFormAChecker):
             # JUNIT4
             [cmd, use_run_listener] = self.get_run_command_junit4(java_builder.libs()[1])
 
-        # use Java security manager instead of restrict application        
+################
+
+
+        # # use sandbox instead of Java security manager
+        # os.system("cd " + env.tmpdir() + " && find -name \"*.java\" > sources.txt")
+        # cmd = ' '.join(cmd)
+        # # cmd = "java -cp .:/praktomat/lib/junit-4.12.jar:/praktomat/lib/hamcrest-core-1.3.jar:.:/praktomat/extra/Junit4RunListener.jar --module-path /usr/share/openjfx/lib --add-modules=javafx.base,javafx.controls,javafx.fxml,javafx.graphics,javafx.media,javafx.swing,javafx.web de.ostfalia.zell.praktomat.Junit4ProFormAListener de.ostfalia.zell.isPalindromTask.PalindromTest"
+        # logger.debug("*** command is " + cmd)
+        # j_sandbox = sandbox.JavaImage(self).get_container(env.tmpdir(), cmd)
+        # j_sandbox.upload_environmment()
+        # # j_sandbox.exec("ls -al")
+        # # j_sandbox.exec("cat sources.txt")
+        # # precompile
+        # (passed, output) = j_sandbox.compile_tests()
+        # logger.debug("compilation passed is "+ str(passed))
+        # logger.debug(output)
+        # if not passed:
+        #     return self.handle_compile_error(env, output, "", False, False)
+        # j_sandbox.exec("ls -al")
+        # (passed, output, timeout) = j_sandbox.runTests()
+
+################
+
         [output, error, exitcode, timed_out, oom_ed] = \
             execute_arglist(cmd, env.tmpdir(), environment_variables=environ, timeout=settings.TEST_TIMEOUT,
                             fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[script_dir], unsafe=True)
+
+
+################
 
         # Remove deprecated warning for Java 17 and security manager
         output = JUnitChecker.remove_deprecated_warning(output)

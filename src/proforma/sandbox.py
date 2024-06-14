@@ -213,6 +213,7 @@ class DockerSandbox(ABC):
     def exec(self, command):
         if debug_sand_box:
             logger.debug("** compile tests in sandbox")
+        logger.debug(command)
         code, output = self._container.exec_run(command, user="praktomat")
         if debug_sand_box:
             logger.debug("exitcode is " + str(code))
@@ -367,6 +368,7 @@ class DockerSandboxImage(ABC):
         return self._image_name + ':' + tag
 
 
+## CPP/C tests
 class GoogletestSandbox(DockerSandbox):
     def __init__(self, client, studentenv, command):
         super().__init__(client, studentenv,
@@ -388,4 +390,24 @@ class GoogletestImage(DockerSandboxImage):
         return sandbox
 
 
+## Java tests
+class JavaSandbox(DockerSandbox):
+    def __init__(self, client, studentenv, command):
+        super().__init__(client, studentenv,
+                        "javac -classpath . @sources.txt", # compile command: java
+#                         "javac -classpath . -nowarn -d . @sources.txt",  # compile command: java
+                         command, # run command
+                         None) # download path
 
+
+class JavaImage(DockerSandboxImage):
+    def __init__(self, praktomat_test):
+        super().__init__(praktomat_test,
+                         '/praktomat/docker-sandbox-image/java',
+                         "java-praktomat_sandbox")
+
+    def get_container(self, studentenv, command):
+        self._create_image()
+        sandbox = JavaSandbox(self._client, studentenv, command)
+        sandbox.create(self._image_name + ':' + self._get_image_tag())
+        return sandbox
