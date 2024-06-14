@@ -20,14 +20,11 @@
 # functions for creating sandboxes
 
 import os
-import subprocess
-import docker
 import tarfile
 import tempfile
 
 from . import sandbox, task
 from django.conf import settings
-#from utilities.safeexec import execute_command, escape_xml_invalid_chars
 
 import logging
 

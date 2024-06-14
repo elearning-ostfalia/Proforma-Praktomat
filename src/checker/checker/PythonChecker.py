@@ -36,10 +36,11 @@ class PythonDoctestSandbox(sandbox.DockerSandbox):
         super().__init__(client, studentenv,
                          "python3 -m compileall /sandbox -q", # compile command
                          command, # run command
-                         "/sandbox/test_detail.xml") # download path
+                         None) # download path
 
 
 class PythonDoctestImage(python_sandbox.PythonUnittestImage):
+    """ derive from PythonUnittestImage in order to support requirements """
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test)
 
@@ -90,11 +91,6 @@ class PythonChecker(ProFormAChecker):
                 return True
         else:
             return False
-
-    # def removeSystemPath(self, output, env):
-    #     output = re.sub(env.tmpdir(), "", output, flags=re.MULTILINE)
-    #     output = re.sub("/usr/lib/python2.7/", "", output, flags=re.MULTILINE)
-    #     return output
 
     def run(self, env):
         """ Runs tests in a special environment. Here's the actual work.
