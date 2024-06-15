@@ -229,7 +229,7 @@ class JUnitChecker(ProFormAChecker):
             exitcode = 0
 
             (passed, out) = j_sandbox.exec('ls -al')
-            (passed, out) = j_sandbox.exec('jaotc --output MyString.so MyString.class')
+            # (passed, out) = j_sandbox.exec('jaotc --output MyString.so MyString.class')
 
             (passed, out) = j_sandbox.exec('find . -name *.java -delete')
             if not passed:
@@ -283,8 +283,11 @@ class JUnitChecker(ProFormAChecker):
         if use_sandbox:
             # run
             cmd = ' '.join(cmd)  # convert cmd to string
+            logger.debug(cmd)
+
             (passed, output, timed_out) = j_sandbox.runTests(cmd)
-            logger.debug(output)
+#            (passed, output, timed_out) = j_sandbox.runTests("tail -f /dev/null")
+#            logger.debug(output)
             exitcode = 0 if passed else 1
             oom_ed = False
 
