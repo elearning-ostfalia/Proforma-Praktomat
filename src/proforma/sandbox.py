@@ -275,7 +275,7 @@ class DockerSandbox(ABC):
                                                     command=self._run_command, user="praktomat", detach=True,
                                                     healthcheck=self._healthcheck, init=True,
                                                     mem_limit=self._mem_limit,
-                                                    cpu_period=100000, cpu_quota=20000,  # max. 20% of the CPU time => configure
+                                                    cpu_period=100000, cpu_quota=40000,  # max. 40% of the CPU time => configure
                                                     network_disabled=True,
                                                     stdout=True,
                                                     stderr=True,

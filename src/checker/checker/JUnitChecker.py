@@ -228,7 +228,7 @@ class JUnitChecker(ProFormAChecker):
                 return self.handle_compile_error(env, output, "", False, False)
             exitcode = 0
 
-            (passed, out) = j_sandbox.exec('ls -al')
+            # (passed, out) = j_sandbox.exec('ls -al')
             # (passed, out) = j_sandbox.exec('jaotc --output MyString.so MyString.class')
 
             (passed, out) = j_sandbox.exec('find . -name *.java -delete')
