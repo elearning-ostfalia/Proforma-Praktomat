@@ -190,6 +190,7 @@ class JUnitChecker(ProFormAChecker):
         # This is only done if the student code consists of exactly one file,
         # otherwise there is a risk that the student code contains test files that would overwrite the teacher's tests.
         from pathlib import Path
+        logger.debug("---- junit test start ----")
         test_dir = env.tmpdir()
         files = list(Path(test_dir).rglob("*.[jJ][aA][vV][aA]"))
         if len(files) == 1:
@@ -368,6 +369,8 @@ class JUnitChecker(ProFormAChecker):
             result.set_log(output, timed_out=timed_out or oom_ed, truncated=truncated, oom_ed=oom_ed)
 
         result.set_passed(not exitcode and self.output_ok(output) and not truncated)
+        logger.debug("---- junit test end ----")
+
         return result
 
 

@@ -32,7 +32,7 @@ from django.core.files import File
 from checker.checker import PythonChecker, PythonUnittestChecker, SetlXChecker
 from checker.checker import CheckStyleChecker, JUnitChecker,  \
     CreateFileChecker, MakeChecker, GoogleTestChecker
-from checker.compiler import JavaBuilder, CBuilder
+from checker.compiler import JavaBuilder, SandboxJavaBuilder
 from os.path import dirname
 from . import task
 from tasks.models import Task
@@ -305,7 +305,8 @@ class Task_2_00:
 
 
     def _create_java_compilertest(self, xmlTest):
-        inst = JavaBuilder.JavaBuilder.objects.create(task=self._praktomat_task.object,
+        #        inst = JavaBuilder.JavaBuilder.objects.create(task=self._praktomat_task.object,
+        inst = SandboxJavaBuilder.SandboxJavaBuilder.objects.create(task=self._praktomat_task.object,
                                                       order=self._val_order,
                                                       _flags="",
                                                       _output_flags="",
