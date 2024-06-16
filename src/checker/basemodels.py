@@ -81,7 +81,6 @@ class Checker(models.Model):
         assert isinstance(env.solution(), Solution)
         result = CheckerResult(checker=self, solution=env.solution())
         result.save() # otherwise we cannot attach artefacts to it
-        logger.debug("result.save() " + str(result.id))
         return result
 
     def show_publicly(self, passed):

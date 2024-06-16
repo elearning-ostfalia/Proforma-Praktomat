@@ -215,11 +215,10 @@ class DockerSandbox(ABC):
     def exec(self, command):
         if debug_sand_box:
             logger.debug("** compile tests in sandbox")
-        logger.debug(command)
+        logger.debug("exec: " + command)
         code, output = self._container.exec_run(command, user="praktomat")
         if debug_sand_box:
             logger.debug("exitcode is " + str(code))
-            logger.debug("Test compilation log")
         # capture output from generator
         text = output.decode('UTF-8').replace('\n', '\r\n')
         logger.debug(text)

@@ -1,7 +1,6 @@
 # This results in a small docker image.
 # But if numpy (?) needs to be installed this will fail
 
-# FROM python:3.11.9-slim-bookworm
 FROM python:3.11.9-alpine3.20
 
 MAINTAINER Ostfalia
@@ -12,13 +11,7 @@ ENV PYTHONUNBUFFERED 1
 ARG LOCALE_PLAIN=de_DE
 ARG LOCALE=${LOCALE_PLAIN}.UTF-8
 
-# this is how to set locale for debian (from https://hub.docker.com/_/debian):
-# RUN apt-get update && apt-get install -y locales && rm -rf /var/lib/apt/lists/* \
-#	&& localedef -i ${LOCALE_PLAIN} -c -f UTF-8 -A /usr/share/locale/locale.alias ${LOCALE}
-
-
-
-RUN apk add --no-cache --update musl musl-utils musl-locales tzdata
+RUN apk add --no-cache --update musl musl-utils musl-locales tzdata pkgconfig
 ENV TZ=Europe/Berlin
 RUN cp /usr/share/zoneinfo/Europe/Berlin /etc/localtime
 RUN echo 'export LC_ALL=${LOCALE}' >> /etc/profile.d/locale.sh && \

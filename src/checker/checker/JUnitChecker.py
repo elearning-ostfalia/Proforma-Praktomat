@@ -61,7 +61,13 @@ class IgnoringJavaBuilder(JavaBuilder):
                 pass
 
         filenames = [name for name in self.get_file_names(env)]
-        args = ["javac"] + self.output_flags(env) + self.flags(env) + filenames + self.libs()
+        args = ["javac"]
+#        args = ["javac"] + self.output_flags(env) + self.flags(env) + filenames + self.libs()
+        if use_sandbox:
+            args += ['-d'] + ['.']
+        args += self.output_flags(env) + self.flags(env) + filenames + self.libs()
+
+
         return ' '.join(args)
 
 
@@ -212,8 +218,6 @@ class JUnitChecker(ProFormAChecker):
                 java_builder.add_custom_lib(file)
         java_builder._ignore = self.ignore.split(" ")
 
-        build_result = java_builder.run(env)
-
 ################
         if use_sandbox:
             # use sandbox instead of Java security manager
@@ -229,17 +233,17 @@ class JUnitChecker(ProFormAChecker):
                 return self.handle_compile_error(env, output, "", False, False)
             exitcode = 0
 
-            # (passed, out) = j_sandbox.exec('ls -al')
+            # (passed1, out) = j_sandbox.exec('ls -al')
             # (passed, out) = j_sandbox.exec('jaotc --output MyString.so MyString.class')
 
-            (passed, out) = j_sandbox.exec('find . -name *.java -delete')
-            if not passed:
+            (passed1, out) = j_sandbox.exec('find . -name *.java -delete')
+            if not passed1:
                 logger.error('java files deletion failed')
                 logger.error(out)
             if len(files) == 1:
                 # restore single backup file in case of Java parser testcode
                 # Pfad stimmt vermutlich NICHT
-                (passed, out) = j_sandbox.exec('cp ' + str(files[0].absolute()) + '__.bak ' + str(files[0].absolute()))
+                (passed1, out) = j_sandbox.exec('cp ' + str(files[0].absolute()) + '__.bak ' + str(files[0].absolute()))
 
         else:
             build_result = java_builder.run(env)
@@ -280,15 +284,14 @@ class JUnitChecker(ProFormAChecker):
 
 ################
 
-            # j_sandbox.exec("ls -al")
         if use_sandbox:
             # run
             cmd = ' '.join(cmd)  # convert cmd to string
-            logger.debug(cmd)
+            # logger.debug(cmd)
 
             (passed, output, timed_out) = j_sandbox.runTests(cmd)
 #            (passed, output, timed_out) = j_sandbox.runTests("tail -f /dev/null")
-#            logger.debug(output)
+            # logger.debug(output)
             exitcode = 0 if passed else 1
             oom_ed = False
 
