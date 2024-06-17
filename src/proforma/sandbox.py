@@ -20,13 +20,8 @@ import signal
 #
 # functions for creating sandboxes
 
-#import os
-#import shutil
-#from checker.basemodels import CheckerEnvironment
-#from utilities.file_operations import copy_file
-#from utilities.safeexec import execute_command
 
-#from django.conf import settings
+from django.conf import settings
 import docker
 import tarfile
 from abc import ABC, abstractmethod
@@ -180,7 +175,7 @@ class DockerSandbox(ABC):
     def _get_run_timeout(self):
         """ in seconds
         """
-        return 25
+        return settings.TEST_TIMEOUT
 
     def upload_environmment(self):
         if debug_sand_box:

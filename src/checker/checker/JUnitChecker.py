@@ -199,12 +199,16 @@ class JUnitChecker(ProFormAChecker):
         logger.debug("---- junit test start ----")
         test_dir = env.tmpdir()
         files = list(Path(test_dir).rglob("*.[jJ][aA][vV][aA]"))
+        restore_backup = False
+        restore_filename = None
         if len(files) == 1:
+            restore_backup = True
             # create backup file
-            logger.debug(files[0])
+            restore_filename = str(files[0].absolute())[len(test_dir)+1:]
             import shutil
             shutil.copyfile(str(files[0].absolute()), str(files[0].absolute()) + '__.bak')
 
+        # os.system('ls -al ' + test_dir)
         self.copy_files(env)
 
 
@@ -221,29 +225,23 @@ class JUnitChecker(ProFormAChecker):
 ################
         if use_sandbox:
             # use sandbox instead of Java security manager
-            # list all sources into a text file
-            # os.system("cd " + test_dir + " && find -name \"*.java\" > sources.txt")
             j_sandbox = sandbox.JavaImage(self).get_container(test_dir, None)
             j_sandbox.upload_environmment()
             # compile
+            # j_sandbox.exec('ls -al')
             (passed, output) = j_sandbox.compile_tests(java_builder.get_run_command(env))
             logger.debug("compilation passed is " + str(passed))
             logger.debug(output)
             if not passed:
                 return self.handle_compile_error(env, output, "", False, False)
             exitcode = 0
-
-            # (passed1, out) = j_sandbox.exec('ls -al')
-            # (passed, out) = j_sandbox.exec('jaotc --output MyString.so MyString.class')
-
             (passed1, out) = j_sandbox.exec('find . -name *.java -delete')
             if not passed1:
                 logger.error('java files deletion failed')
                 logger.error(out)
-            if len(files) == 1:
+            if restore_backup:
                 # restore single backup file in case of Java parser testcode
-                # Pfad stimmt vermutlich NICHT
-                (passed1, out) = j_sandbox.exec('cp ' + str(files[0].absolute()) + '__.bak ' + str(files[0].absolute()))
+                (passed1, out) = j_sandbox.exec('mv ' + restore_filename + '__.bak ' + restore_filename)
 
         else:
             build_result = java_builder.run(env)
@@ -269,7 +267,7 @@ class JUnitChecker(ProFormAChecker):
             if len(files) == 1:
                 # restore single backup file in case of Java parser testcode
                 import shutil
-                shutil.copyfile(str(files[0].absolute()) + '__.bak', str(files[0].absolute()))
+                shutil.move(str(files[0].absolute()) + '__.bak', str(files[0].absolute()))
 
 ################
 
@@ -288,6 +286,7 @@ class JUnitChecker(ProFormAChecker):
             # run
             cmd = ' '.join(cmd)  # convert cmd to string
             # logger.debug(cmd)
+            # j_sandbox.exec('ls -al')
 
             (passed, output, timed_out) = j_sandbox.runTests(cmd)
 #            (passed, output, timed_out) = j_sandbox.runTests("tail -f /dev/null")
