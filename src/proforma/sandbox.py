@@ -120,7 +120,7 @@ class DockerSandbox(ABC):
         self._container = self._client.containers.create(
             image_name, init=True,
             mem_limit=self._mem_limit,
-            cpu_period=100000, cpu_quota=70000,  # max. 70% of the CPU time => configure
+#            cpu_period=100000, cpu_quota=90000,  # max. 70% of the CPU time => configure
             network_disabled=True,
             command=DockerSandbox.default_cmd, # keep container running
             detach=True,
@@ -269,7 +269,7 @@ class DockerSandbox(ABC):
                                                     command=self._run_command, user="praktomat", detach=True,
                                                     healthcheck=self._healthcheck, init=True,
                                                     mem_limit=self._mem_limit,
-                                                    cpu_period=100000, cpu_quota=40000,  # max. 40% of the CPU time => configure
+#                                                    cpu_period=100000, cpu_quota=90000,  # max. 40% of the CPU time => configure
                                                     network_disabled=True,
                                                     stdout=True,
                                                     stderr=True,
