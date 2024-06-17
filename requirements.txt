@@ -10,7 +10,7 @@ lxml==5.2.2 #
 # lxml==4.9.4 # faster than 5.2.2??
 
 # for getting shared objects for sandbox
-lddcollect==0.2.0 #
+# lddcollect==0.2.0 #
 
 
 psycopg2-binary==2.9.9 #
