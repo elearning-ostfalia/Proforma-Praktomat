@@ -1,5 +1,5 @@
 from . import sandbox
-from . import python_sandbox
+# from . import python_sandbox
 
 def create_images():
     sandbox.module_init_called = True

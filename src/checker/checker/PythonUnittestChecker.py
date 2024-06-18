@@ -99,7 +99,7 @@ class PythonUnittestChecker(ProFormAChecker):
         self.prepare_run(env)
         logger.debug('task code is in ' + test_dir)
 
-        p_sandbox = python_sandbox.PythonUnittestImage(self).get_container(test_dir)
+        p_sandbox = python_sandbox.PythonImage(self).get_container(test_dir)
         p_sandbox.upload_environmment()
         # precompile
         (passed, output) = p_sandbox.compile_tests()

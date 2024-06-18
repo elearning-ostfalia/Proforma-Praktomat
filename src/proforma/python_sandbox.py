@@ -50,7 +50,7 @@ class PythonSandbox(sandbox.DockerSandbox):
             raise Exception("No test result file found")
         os.system("mv " + resultpath + " " + self._studentenv + '/unittest_results.xml')
 
-class PythonUnittestImage(sandbox.DockerSandboxImage):
+class PythonImage(sandbox.DockerSandboxImage):
     """ python sandbox template for python tests """
 
     # name of python docker image
@@ -60,8 +60,8 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test,
                          dockerfile_path='/praktomat/docker-sandbox-image/python',
-                         image_name=PythonUnittestImage.image_name,
-#                         dockerfilename='Dockerfile.alpine',
+                         image_name=PythonImage.image_name,
+                         #                         dockerfilename='Dockerfile.alpine',
                          )
 
     def yield_log(self, log):
@@ -127,8 +127,8 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
         # install modules from requirements.txt if available
         yield 'data: install requirements\n\n'
         logger.info('install requirements from ' + requirements_path)
-        logger.debug('create container from ' + PythonUnittestImage.base_image_tag)
-        container = self._client.containers.create(image=PythonUnittestImage.base_image_tag,
+        logger.debug('create container from ' + PythonImage.base_image_tag)
+        container = self._client.containers.create(image=PythonImage.base_image_tag,
                                                    init=True,
                                                    command=sandbox.DockerSandbox.default_cmd,  # keep container running
                                                    )
@@ -156,8 +156,8 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
                 raise Exception('Cannot install requirements.txt')
 
             yield 'data: commit image\n\n'
-            logger.debug("** commit image to " + PythonUnittestImage.image_name + ':' + tag)
-            container.commit(repository=PythonUnittestImage.image_name,
+            logger.debug("** commit image to " + PythonImage.image_name + ':' + tag)
+            container.commit(repository=PythonImage.image_name,
                              tag=tag)
 #                             tag=PythonSandboxTemplate.image_name + ':' + tag)
         finally:
@@ -180,7 +180,7 @@ class PythonUnittestImage(sandbox.DockerSandboxImage):
         else:
             requirements_txt = requirements_txt.first()
             requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
-            self._tag = PythonUnittestImage._get_hash(requirements_path)
+            self._tag = PythonImage._get_hash(requirements_path)
 
         return self._tag
 

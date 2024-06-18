@@ -39,8 +39,8 @@ class PythonDoctestSandbox(sandbox.DockerSandbox):
                          None) # download path
 
 
-class PythonDoctestImage(python_sandbox.PythonUnittestImage):
-    """ derive from PythonUnittestImage in order to support requirements """
+class PythonDoctestImage(python_sandbox.PythonImage):
+    """ derive from PythonImage in order to support requirements """
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test)
 
