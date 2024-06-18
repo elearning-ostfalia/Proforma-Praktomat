@@ -439,7 +439,7 @@ class Task_2_00:
             requirements_path = None
 
         image = sandbox.PythonImage(inst, requirements_path)
-        image.check_preconditions()
+#        image.check_preconditions()
         x.save()
         # Check preconditions for image
 #        requirements_txt = inst.files.filter(filename='requirements.txt', path='')

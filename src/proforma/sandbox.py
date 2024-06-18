@@ -28,6 +28,7 @@ from abc import ABC, abstractmethod
 import os
 import tempfile
 import random
+import glob
 
 # import requests => for Timeout Exception
 
@@ -48,7 +49,7 @@ logger = logging.getLogger(__name__)
 
 # working without commit and using exec_run is faster but wait does not work with exec_run :-(
 
-debug_sand_box = True
+debug_sand_box = False
 
 
 class DockerSandbox(ABC):
@@ -434,7 +435,6 @@ class PythonSandbox(DockerSandbox):
     remote_result_subfolder = "__result__"
     remote_result_folder = "/sandbox/" + remote_result_subfolder
     def __init__(self, container, studentenv):
-        print("PythonSandbox.__init__")
         super().__init__(container, studentenv,
                          "python3 -m compileall /sandbox -q",
                          "python3 /sandbox/run_suite.py",
@@ -455,6 +455,14 @@ class PythonImage(DockerSandboxImage):
     # name of python docker image
     image_name = "python-praktomat_sandbox"
     base_image_tag = image_name + ':' + DockerSandboxImage.base_tag
+
+    def look_for_requirements_txt(path):
+        filelist = glob.glob(path + '/*requirements.txt')
+        if (len(filelist) > 0):
+            logger.debug(filelist)
+            return filelist[0]
+        else:
+            return None
 
     def __init__(self, praktomat_test, requirements_path = None):
         super().__init__(praktomat_test,
@@ -488,27 +496,16 @@ class PythonImage(DockerSandboxImage):
             md5 = hashlib.md5('\n'.join(modules).encode('utf-8')).hexdigest()
             return md5
 
-    def check_preconditions(self):
-        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
-        if len(requirements_txt) > 1:
-            raise Exception('more than one requirements.txt found')
+#    def check_preconditions(self):
+#        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
+#        if len(requirements_txt) > 1:
+#            raise Exception('more than one requirements.txt found')
 
-    def look_for_requirements_txt(path):
-        import glob
-        filelist = glob.glob(path + '/*requirements.txt')
-        if (len(filelist) > 0):
-            logger.debug(filelist)
-            return filelist[0]
-        else:
-            return None
-
-    def create_python_image(self):
-        print("hier geht es lang")
+    def create_image(self):
 #        """ creates the docker image """
-        print("=> create python image (if it does not exist)")
         logger.debug("create python image (if it does not exist)")
 
-        self.check_preconditions()
+#        self.check_preconditions()
 
         tag = self._get_image_tag()
         print("tag " + str(tag))
@@ -519,22 +516,10 @@ class PythonImage(DockerSandboxImage):
             return
 
         # ensure base image exists
-        print("create base image")
         self._create_image_for_tag(DockerSandboxImage.base_tag)
 
         if self._requirements_path is None:
             return
-#        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
-#        if len(requirements_txt) == 0:
-            # no requirements.txt is available =>
-            # use default image => finished
-#            return
-
-#        requirements_txt = requirements_txt.first()
-#        requirements_path = os.path.join(settings.UPLOAD_ROOT,
-#                                         task.get_storage_path(requirements_txt, requirements_txt.filename))
-
-#        logger.info('Create Python image for ' + templ_dir)
 
         # create container from base image, install requirements
         # and commit container to image
@@ -605,13 +590,13 @@ class PythonImage(DockerSandboxImage):
 
     def get_container(self, studentenv):
         """ return an instance created from this template """
-        print("self.create_python_image()")
-        self.create_python_image()
-        print("p_sandbox = PythonSandbox(self._client, studentenv)")
+        for a in self.create_image():  # function is generator, so this must be handled in order to be executed
+            pass
         p_sandbox = PythonSandbox(self._client, studentenv)
-        print("p_sandbox.create(self._image_name + ':' + self._get_image_tag())")
         p_sandbox.create(self._image_name + ':' + self._get_image_tag())
         return p_sandbox
+    def empty_function(self):
+        return True
 
 def create_images():
     # create images
