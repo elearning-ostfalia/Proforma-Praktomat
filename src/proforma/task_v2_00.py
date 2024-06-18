@@ -37,7 +37,7 @@ from os.path import dirname
 from . import task
 from tasks.models import Task
 from django.conf import settings
-from . import python_sandbox
+from . import sandbox
 
 import logging
 
@@ -429,7 +429,16 @@ class Task_2_00:
         x = Praktomat_Test_2_0(inst, self._ns)
         x.set_test_base_parameters(xmlTest)
         self._val_order = x.add_files_to_test(xmlTest, self._praktomat_files, self._val_order, None)
-        image = python_sandbox.PythonImage(inst)
+
+        requirements_txt = inst.files.filter(filename='requirements.txt', path='')
+        if len(requirements_txt) != 0:
+            requirements_txt = requirements_txt.first()
+            requirements_path = os.path.join(settings.UPLOAD_ROOT,
+                                         task.get_storage_path(requirements_txt, requirements_txt.filename))
+        else:
+            requirements_path = None
+
+        image = sandbox.PythonImage(inst, requirements_path)
         image.check_preconditions()
         x.save()
         # Check preconditions for image

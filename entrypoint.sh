@@ -11,6 +11,9 @@ then
     echo "PostgreSQL started"
 fi
 
+python3 /praktomat/src/proforma/sandbox.py
+
+
 
 echo start cron
 sudo -n /usr/sbin/cron -f &

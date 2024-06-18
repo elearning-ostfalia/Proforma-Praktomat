@@ -48,9 +48,8 @@ logger = logging.getLogger(__name__)
 
 # working without commit and using exec_run is faster but wait does not work with exec_run :-(
 
-debug_sand_box = False
+debug_sand_box = True
 
-# module_init_called = False
 
 class DockerSandbox(ABC):
     # remote_command = "python3 /sandbox/run_suite.py"
@@ -399,9 +398,9 @@ class CppImage(DockerSandboxImage):
 
     def get_container(self, studentenv, command):
         self._create_image()
-        sandbox = CppSandbox(self._client, studentenv, command)
-        sandbox.create(self._image_name + ':' + self._get_image_tag())
-        return sandbox
+        cpp_sandbox = CppSandbox(self._client, studentenv, command)
+        cpp_sandbox.create(self._image_name + ':' + self._get_image_tag())
+        return cpp_sandbox
 
 
 ## Java tests
@@ -423,23 +422,211 @@ class JavaImage(DockerSandboxImage):
 
     def get_container(self, studentenv, command):
         self._create_image()
-        sandbox = JavaSandbox(self._client, studentenv, command)
-        sandbox.create(self._image_name + ':' + self._get_image_tag())
-        return sandbox
+        j_sandbox = JavaSandbox(self._client, studentenv, command)
+        j_sandbox.create(self._image_name + ':' + self._get_image_tag())
+        return j_sandbox
 
 
 
-# def create_images():
-#     global main_called
-#     main_called = True
-#     # create images
-#     print("create docker image for c/C++ tests")
-#     CppImage(None).get_container('/', 'ls')
-#     print("create docker image for java tests")
-#     JavaImage(None).get_container('/', 'ls')
-#
-# if __name__ == '__main__':
-#     create_images()
-#
-#
-#
+
+
+class PythonSandbox(DockerSandbox):
+    remote_result_subfolder = "__result__"
+    remote_result_folder = "/sandbox/" + remote_result_subfolder
+    def __init__(self, container, studentenv):
+        print("PythonSandbox.__init__")
+        super().__init__(container, studentenv,
+                         "python3 -m compileall /sandbox -q",
+                         "python3 /sandbox/run_suite.py",
+                         PythonSandbox.remote_result_folder)
+
+    def download_result_file(self):
+        super().download_result_file()
+
+        resultpath = self._studentenv + '/' + PythonSandbox.remote_result_subfolder + '/unittest_results.xml'
+        if not os.path.exists(resultpath):
+            raise Exception("No test result file found")
+        os.system("mv " + resultpath + " " + self._studentenv + '/unittest_results.xml')
+
+
+class PythonImage(DockerSandboxImage):
+    """ python sandbox template for python tests """
+
+    # name of python docker image
+    image_name = "python-praktomat_sandbox"
+    base_image_tag = image_name + ':' + DockerSandboxImage.base_tag
+
+    def __init__(self, praktomat_test, requirements_path = None):
+        super().__init__(praktomat_test,
+                         dockerfile_path='/praktomat/docker-sandbox-image/python',
+                         image_name=PythonImage.image_name,
+                         #                         dockerfilename='Dockerfile.alpine',
+                         )
+        self._requirements_path = requirements_path
+
+    def yield_log(self, log):
+        if log is None:
+            return
+        log = log.decode('UTF-8').replace('\n', '\r\n')
+
+        lines = filter(str.strip, log.splitlines())
+        for line in lines:
+            yield "data: " + line + "\n\n"
+
+    def _get_hash(requirements_txt):
+        """ create simple hash for requirements.txt content """
+        import hashlib
+        with open(requirements_txt, 'r') as f:
+            # read strip lines
+            modules = [line.strip() for line in f.readlines()]
+            # skip empty lines
+            modules = list(filter(lambda line: len(line) > 0, modules))
+            # I do not know if the order matters so I do not sort the modules!
+            # Otherwise a wrong order can never be corrected.
+            # modules.sort()
+            # print('Modules: ' + '\n'.join(modules))
+            md5 = hashlib.md5('\n'.join(modules).encode('utf-8')).hexdigest()
+            return md5
+
+    def check_preconditions(self):
+        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
+        if len(requirements_txt) > 1:
+            raise Exception('more than one requirements.txt found')
+
+    def look_for_requirements_txt(path):
+        import glob
+        filelist = glob.glob(path + '/*requirements.txt')
+        if (len(filelist) > 0):
+            logger.debug(filelist)
+            return filelist[0]
+        else:
+            return None
+
+    def create_python_image(self):
+        print("hier geht es lang")
+#        """ creates the docker image """
+        print("=> create python image (if it does not exist)")
+        logger.debug("create python image (if it does not exist)")
+
+        self.check_preconditions()
+
+        tag = self._get_image_tag()
+        print("tag " + str(tag))
+        if self._image_exists(tag):
+            logger.debug("python image for tag " + tag + " already exists")
+            yield 'data: python image for tag ' + tag + ' already exists\n\n'
+            # already exists => return
+            return
+
+        # ensure base image exists
+        print("create base image")
+        self._create_image_for_tag(DockerSandboxImage.base_tag)
+
+        if self._requirements_path is None:
+            return
+#        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
+#        if len(requirements_txt) == 0:
+            # no requirements.txt is available =>
+            # use default image => finished
+#            return
+
+#        requirements_txt = requirements_txt.first()
+#        requirements_path = os.path.join(settings.UPLOAD_ROOT,
+#                                         task.get_storage_path(requirements_txt, requirements_txt.filename))
+
+#        logger.info('Create Python image for ' + templ_dir)
+
+        # create container from base image, install requirements
+        # and commit container to image
+        # install modules from requirements.txt if available
+        yield 'data: install requirements\n\n'
+        logger.info('install requirements from ' + self._requirements_path)
+        logger.debug('create container from ' + PythonImage.base_image_tag)
+        container = self._client.containers.create(image=PythonImage.base_image_tag,
+                                                   init=True,
+                                                   command=DockerSandbox.default_cmd,  # keep container running
+                                                   )
+        tmp_filename = None
+        try:
+            container.start()
+            # start_time = time.time()
+
+            with tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False) as f:
+                tmp_filename = f.name
+                with tarfile.open(fileobj=f, mode='w:gz') as tar:
+                    tar.add(self._requirements_path, arcname="requirements.txt", recursive=False)
+
+            logger.debug("** upload to sandbox " + tmp_filename)
+            # os.system("ls -al " + tmp_filename)
+            with open(tmp_filename, 'rb') as fd:
+                if not container.put_archive(path='/sandbox', data=fd):
+                    raise Exception('cannot put requirements.tar/' + tmp_filename)
+
+            logger.debug(container.status);
+            code, log = container.exec_run("pip3 install -r /sandbox/requirements.txt", user="root")
+            yield from self.yield_log(log)
+            logger.debug(log.decode('UTF-8').replace('\n', '\r\n'))
+            if code != 0:
+                raise Exception('Cannot install requirements.txt')
+
+            yield 'data: commit image\n\n'
+            logger.debug("** commit image to " + PythonImage.image_name + ':' + tag)
+            container.commit(repository=PythonImage.image_name,
+                             tag=tag)
+#                             tag=PythonSandboxTemplate.image_name + ':' + tag)
+        finally:
+            if tmp_filename:
+                os.unlink(tmp_filename)
+            container.stop()
+            container.remove()
+            pass
+
+
+    def _get_image_tag(self):
+        if not self._tag is None:
+            return self._tag
+
+        if self._requirements_path is None:
+            self._tag = super()._get_image_tag()
+        else:
+            self._tag = PythonImage._get_hash(self._requirements_path)
+
+            #        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
+#        if len(requirements_txt) > 1:
+#            raise Exception('more than one requirements.txt found')
+#        if len(requirements_txt) == 0:
+#            self._tag = super()._get_image_tag()
+#        else:
+#            requirements_txt = requirements_txt.first()
+#            requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
+#            self._tag = PythonImage._get_hash(requirements_path)
+
+        return self._tag
+
+    def get_container(self, studentenv):
+        """ return an instance created from this template """
+        print("self.create_python_image()")
+        self.create_python_image()
+        print("p_sandbox = PythonSandbox(self._client, studentenv)")
+        p_sandbox = PythonSandbox(self._client, studentenv)
+        print("p_sandbox.create(self._image_name + ':' + self._get_image_tag())")
+        p_sandbox.create(self._image_name + ':' + self._get_image_tag())
+        return p_sandbox
+
+def create_images():
+    # create images
+    print("creating docker image for python tests ...")
+    PythonImage(None).get_container('/')
+    print("done")
+    print("creating docker image for c/C++ tests ...")
+    CppImage(None).get_container('/', 'ls')
+    print("done")
+    print("creating docker image for java tests ...")
+    JavaImage(None).get_container('/', 'ls')
+    print("done")
+
+if __name__ == '__main__':
+    create_images()
+
+
+

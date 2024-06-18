@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 import os.path
-import re
 import traceback
 
 from lxml import etree
 
-from checker.basemodels import CheckerResult, truncated_log #, CheckerEnvironment
-# from utilities.safeexec import execute_arglist
+from checker.basemodels import CheckerResult, truncated_log
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
-# from django.conf import settings
-from proforma import python_sandbox
-# from utilities.safeexec import execute_command
+from proforma import sandbox
 
 import logging
 
@@ -99,7 +95,8 @@ class PythonUnittestChecker(ProFormAChecker):
         self.prepare_run(env)
         logger.debug('task code is in ' + test_dir)
 
-        p_sandbox = python_sandbox.PythonImage(self).get_container(test_dir)
+        req_txt = sandbox.PythonImage.look_for_requirements_txt(test_dir)
+        p_sandbox = sandbox.PythonImage(self, req_txt).get_container(test_dir)
         p_sandbox.upload_environmment()
         # precompile
         (passed, output) = p_sandbox.compile_tests()
