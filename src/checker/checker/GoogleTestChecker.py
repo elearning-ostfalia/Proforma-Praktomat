@@ -112,7 +112,7 @@ class GoogleTestChecker(ProFormAChecker):
         #    return result
 
 
-        gt_sandbox = sandbox.GoogletestImage(self).get_container(test_dir, self.exec_command)
+        gt_sandbox = sandbox.CppImage(self).get_container(test_dir, self.exec_command)
         gt_sandbox.upload_environmment()
         # run test
         (passed, output) = gt_sandbox.compile_tests()

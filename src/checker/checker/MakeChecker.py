@@ -47,7 +47,7 @@ class MakeChecker(ProFormAChecker):
         test_dir = env.tmpdir()
 
         # cmd = [self.class_name]
-        gt_sandbox = sandbox.GoogletestImage(self).get_container(test_dir, self.class_name)
+        gt_sandbox = sandbox.CppImage(self).get_container(test_dir, self.class_name)
         gt_sandbox.upload_environmment()
         # run test
         (passed, output) = gt_sandbox.compile_tests()

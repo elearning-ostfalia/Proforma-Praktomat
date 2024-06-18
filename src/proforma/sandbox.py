@@ -50,6 +50,8 @@ logger = logging.getLogger(__name__)
 
 debug_sand_box = False
 
+# module_init_called = False
+
 class DockerSandbox(ABC):
     # remote_command = "python3 /sandbox/run_suite.py"
     # remote_result_subfolder = "__result__"
@@ -61,6 +63,9 @@ class DockerSandbox(ABC):
 
     def __init__(self, client, studentenv,
                  compile_command, run_command, download_path):
+        if debug_sand_box:
+            logger.debug('__init__')
+
         self._client = client
         self._studentenv = studentenv
         self._compile_command = compile_command
@@ -82,7 +87,7 @@ class DockerSandbox(ABC):
         """
         if debug_sand_box:
             logger.debug('__del__')
-        if self._container is not None:
+        if hasattr(self, '_container') and self._container is not None:
             try:
                 # try and stop container
                 self._container.stop()
@@ -98,7 +103,7 @@ class DockerSandbox(ABC):
                 logger.info("try and force kill")
                 self._container.remove(force=True)
                 logger.info("force kill succeeded")
-        if self._image is not None:
+        if hasattr(self, '_image') and self._image is not None:
             try:
                 self._image.remove()
             except Exception as e:
@@ -325,16 +330,23 @@ class DockerSandboxImage(ABC):
     base_tag = '0' # default tag name
 
     def __init__(self, checker, dockerfile_path, image_name, dockerfilename = 'Dockerfile'):
-        self._checker = checker
-        logger.debug("constructor for sandbox of checker.proforma_id: " + self._checker.proforma_id)
+        self._checker = None
+        # global module_init_called
+        # if not module_init_called:
+        #    logger.debug("constructor for sandbox of checker.proforma_id: " + self._checker.proforma_id)
         self._client = docker.from_env()
         self._tag = None
         self._dockerfile_path = dockerfile_path
         self._image_name = image_name
         self._dockerfilename = dockerfilename
+        self._checker = checker
 
     def __del__(self):
-        self._client.close()
+        if hasattr(self, '_client') and self._client is not None:
+            try:
+                self._client.close()
+            except Exception as e:
+                pass
 
     @abstractmethod
     def get_container(self, proformAChecker, studentenv):
@@ -371,7 +383,7 @@ class DockerSandboxImage(ABC):
 
 
 ## CPP/C tests
-class GoogletestSandbox(DockerSandbox):
+class CppSandbox(DockerSandbox):
     def __init__(self, client, studentenv, command):
         super().__init__(client, studentenv,
                          "python3 /sandbox/compile_suite.py", # compile command
@@ -379,7 +391,7 @@ class GoogletestSandbox(DockerSandbox):
                          "/sandbox/test_detail.xml") # download path
 
 
-class GoogletestImage(DockerSandboxImage):
+class CppImage(DockerSandboxImage):
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test,
                          '/praktomat/docker-sandbox-image/cpp',
@@ -387,7 +399,7 @@ class GoogletestImage(DockerSandboxImage):
 
     def get_container(self, studentenv, command):
         self._create_image()
-        sandbox = GoogletestSandbox(self._client, studentenv, command)
+        sandbox = CppSandbox(self._client, studentenv, command)
         sandbox.create(self._image_name + ':' + self._get_image_tag())
         return sandbox
 
@@ -414,3 +426,20 @@ class JavaImage(DockerSandboxImage):
         sandbox = JavaSandbox(self._client, studentenv, command)
         sandbox.create(self._image_name + ':' + self._get_image_tag())
         return sandbox
+
+
+
+# def create_images():
+#     global main_called
+#     main_called = True
+#     # create images
+#     print("create docker image for c/C++ tests")
+#     CppImage(None).get_container('/', 'ls')
+#     print("create docker image for java tests")
+#     JavaImage(None).get_container('/', 'ls')
+#
+# if __name__ == '__main__':
+#     create_images()
+#
+#
+#
