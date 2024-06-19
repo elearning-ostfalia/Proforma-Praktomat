@@ -1,5 +1,7 @@
 #!/bin/bash
 #set -x
+set -o pipefail
+set -e
 
 DATABASE_INITIALISED=0
 
@@ -25,7 +27,8 @@ echo "clean python cache"
 sudo -n /usr/bin/py3clean /praktomat/src
 
 # py3clean does not delete cache files generated from source files that have been deleted since
-find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
+# find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
+find . | grep -E "(__pycache__|\.pyc|\.pyo$)" | xargs rm -rf || true
 
 # update tables in case of a modified or added checker
 
