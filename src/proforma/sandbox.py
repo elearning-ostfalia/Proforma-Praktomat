@@ -234,7 +234,7 @@ class DockerSandbox(ABC):
             return True, ""
         return self.exec(self._compile_command)
 
-    def runTests(self, command=None):
+    def runTests(self, command=None, safe=True):
         """
         returns passed?, logs, timnout?
         """
@@ -270,18 +270,28 @@ class DockerSandbox(ABC):
         code = None
         # code, output = self._container.exec_run(cmd, user="999", detach=True)
         logger.debug("execute '" + self._run_command + "'")
-        self._container = self._client.containers.run(self._image.tags[0],
-                                                    command=self._run_command, user="praktomat", detach=True,
-                                                    healthcheck=self._healthcheck, init=True,
-                                                    mem_limit=self._mem_limit,
-#                                                    cpu_period=100000, cpu_quota=90000,  # max. 40% of the CPU time => configure
-                                                    network_disabled=True,
-                                                    stdout=True,
-                                                    stderr=True,
-                                                    ulimits=ulimits,
-                                                    working_dir="/sandbox",
-                                                    name="tmp_" + str(number)
-                                                    )
+        if safe:
+            self._container = self._client.containers.run(self._image.tags[0],
+                                                        command=self._run_command, user="praktomat", detach=True,
+                                                        healthcheck=self._healthcheck, init=True,
+                                                        mem_limit=self._mem_limit,
+    #                                                    cpu_period=100000, cpu_quota=90000,  # max. 40% of the CPU time => configure
+                                                        network_disabled=True,
+                                                        stdout=True,
+                                                        stderr=True,
+                                                        ulimits=ulimits,
+                                                        working_dir="/sandbox",
+                                                        name="tmp_" + str(number)
+                                                        )
+        else:
+            # Checkstyle requires network (arrggh!)
+            self._container = self._client.containers.run(self._image.tags[0],
+                                                          command=self._run_command, user="praktomat", detach=True,
+                                                          stdout=True,
+                                                          stderr=True,
+                                                          working_dir="/sandbox",
+                                                          name="tmp_" + str(number)
+                                                          )
 
         logger.debug("wait timeout is " + str(self._get_run_timeout()))
         try:
@@ -598,6 +608,43 @@ class PythonImage(DockerSandboxImage):
     def empty_function(self):
         return True
 
+
+def cleanup():
+    client = docker.from_env()
+    try:
+        filters = {
+            "status" : "exited",
+            "name" : "tmp_*",
+        }
+        print("deleting old containers")
+        containers = client.containers.list(filters=filters)
+        print(containers)
+        for container in containers:
+            if container.image.tags[0].startswith('tmp:'):
+                print("Remove container " + container.name)
+                try:
+                    container.stop()
+                    container.remove()
+                except Exception as e:
+                    print("cannot remove container " + container.name)
+                    print(e)
+        print("ok")
+
+        print("deleting old images")
+        images = client.images.list(name="tmp")
+        print(images)
+        for image in images:
+            if image.tags[0].startswith('tmp:'):
+                print("Remove image " + image.tags[0])
+                image.remove()
+        print("ok")
+
+        print("deleting dangling images")
+        client.images.prune(filters={"dangling":1})
+        print("ok")
+    finally:
+        client.close()
+
 def create_images():
     # create images
     print("creating docker image for python tests ...")
@@ -611,6 +658,7 @@ def create_images():
     print("done")
 
 if __name__ == '__main__':
+    cleanup()
     create_images()
 
 

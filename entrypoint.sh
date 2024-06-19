@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 echo "Docker entrypoint"
 #set -x

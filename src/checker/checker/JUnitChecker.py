@@ -6,9 +6,9 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils.html import escape
 from checker.basemodels import Checker, CheckerResult, truncated_log
-from checker.admin import    CheckerInline, AlwaysChangedModelForm
+# from checker.admin import    CheckerInline, AlwaysChangedModelForm
 from checker.checker.ProFormAChecker import ProFormAChecker
-from utilities.safeexec import execute_arglist
+# from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from solutions.models import Solution
 import xml.etree.ElementTree as ET
@@ -243,32 +243,32 @@ class JUnitChecker(ProFormAChecker):
                 # restore single backup file in case of Java parser testcode
                 (passed1, out) = j_sandbox.exec('mv ' + restore_filename + '__.bak ' + restore_filename)
 
-        else:
-            build_result = java_builder.run(env)
-
-            if not build_result.passed:
-                logger.info('could not compile JUNIT test')
-                # logger.debug("log: " + build_result.log)
-                result = self.create_result(env)
-                result.set_passed(False)
-                result.set_log(build_result.log,
-                               log_format=(
-                                   CheckerResult.FEEDBACK_LIST_LOG if ProFormAChecker.retrieve_subtest_results else CheckerResult.NORMAL_LOG))
-                #            result.set_log('<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/>\n'+build_result.log)
-                return result
-            # delete all java files in the sandbox in order to avoid the student getting the test source code :-)
-            [output, error, exitcode, timed_out, oom_ed] = \
-                execute_arglist(['find', '.' , '-name', '*.java', '-delete'], test_dir, unsafe=True)
-            if exitcode != 0:
-                logger.error('exitcode for java files deletion :' + str(exitcode))
-                logger.error(output)
-                logger.error(error)
-
-            if len(files) == 1:
-                # restore single backup file in case of Java parser testcode
-                import shutil
-                shutil.move(str(files[0].absolute()) + '__.bak', str(files[0].absolute()))
-
+        # else:
+        #     build_result = java_builder.run(env)
+        #
+        #     if not build_result.passed:
+        #         logger.info('could not compile JUNIT test')
+        #         # logger.debug("log: " + build_result.log)
+        #         result = self.create_result(env)
+        #         result.set_passed(False)
+        #         result.set_log(build_result.log,
+        #                        log_format=(
+        #                            CheckerResult.FEEDBACK_LIST_LOG if ProFormAChecker.retrieve_subtest_results else CheckerResult.NORMAL_LOG))
+        #         #            result.set_log('<pre>' + escape(self.test_description) + '\n\n======== Test Results ======\n\n</pre><br/>\n'+build_result.log)
+        #         return result
+        #     # delete all java files in the sandbox in order to avoid the student getting the test source code :-)
+        #     [output, error, exitcode, timed_out, oom_ed] = \
+        #         execute_arglist(['find', '.' , '-name', '*.java', '-delete'], test_dir, unsafe=True)
+        #     if exitcode != 0:
+        #         logger.error('exitcode for java files deletion :' + str(exitcode))
+        #         logger.error(output)
+        #         logger.error(error)
+        #
+        #     if len(files) == 1:
+        #         # restore single backup file in case of Java parser testcode
+        #         import shutil
+        #         shutil.move(str(files[0].absolute()) + '__.bak', str(files[0].absolute()))
+        #
 ################
 
         # run test
@@ -294,24 +294,24 @@ class JUnitChecker(ProFormAChecker):
             exitcode = 0 if passed else 1
             oom_ed = False
 
-        else:
-            environ = {}
-
-            environ['UPLOAD_ROOT'] = settings.UPLOAD_ROOT
-            environ['JAVA'] = settings.JVM
-            script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
-            environ['POLICY'] = os.path.join(script_dir, "junit.policy")
-            print(environ)
-            if not os.path.isfile(environ['POLICY']):
-                raise Exception('cannot find policy file ' + os.path.isfile(environ['POLICY']))
-            [output, error, exitcode, timed_out, oom_ed] = \
-                execute_arglist(cmd, test_dir, environment_variables=environ, timeout=settings.TEST_TIMEOUT,
-                                fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[script_dir], unsafe=True)
-            # Remove deprecated warning for Java 17 and security manager
-            output = JUnitChecker.remove_deprecated_warning(output)
-            logger.debug('JUNIT output:' + str(output))
-            logger.debug('JUNIT error:' + str(error))
-            logger.debug('JUNIT exitcode:' + str(exitcode))
+        # else:
+        #     environ = {}
+        #
+        #     environ['UPLOAD_ROOT'] = settings.UPLOAD_ROOT
+        #     environ['JAVA'] = settings.JVM
+        #     script_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'scripts')
+        #     environ['POLICY'] = os.path.join(script_dir, "junit.policy")
+        #     print(environ)
+        #     if not os.path.isfile(environ['POLICY']):
+        #         raise Exception('cannot find policy file ' + os.path.isfile(environ['POLICY']))
+        #     [output, error, exitcode, timed_out, oom_ed] = \
+        #         execute_arglist(cmd, test_dir, environment_variables=environ, timeout=settings.TEST_TIMEOUT,
+        #                         fileseeklimit=settings.TEST_MAXFILESIZE, extradirs=[script_dir], unsafe=True)
+        #     # Remove deprecated warning for Java 17 and security manager
+        #     output = JUnitChecker.remove_deprecated_warning(output)
+        #     logger.debug('JUNIT output:' + str(output))
+        #     logger.debug('JUNIT error:' + str(error))
+        #     logger.debug('JUNIT exitcode:' + str(exitcode))
 
 
 ################
