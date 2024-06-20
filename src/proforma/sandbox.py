@@ -3,7 +3,7 @@ import signal
 
 # This file is part of Ostfalia-Praktomat.
 #
-# Copyright (C) 2023 Ostfalia University
+# Copyright (C) 2024 Ostfalia University
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -94,6 +94,7 @@ class DockerSandbox(ABC):
             except Exception as e:
                 # ignore error if failed
                 logger.error(e)
+
             try:
                 # try and remove container
                 self._container.remove()
@@ -331,8 +332,22 @@ class DockerSandbox(ABC):
             with tarfile.open(self._studentenv + '/result.tar', 'r') as tar:
                 tar.extractall(path=self._studentenv)
             os.unlink(self._studentenv + '/result.tar')
+
+            # try and stop in order to save resources
+            self._container.stop()
         except:
             pass
+
+    # def stop(self):
+    #     """ stop as soon as possible"""
+    #     if hasattr(self, '_container') and self._container is not None:
+    #         try:
+    #             # try and stop container
+    #             self._container.stop()
+    #         except Exception as e:
+    #             # ignore error if failed
+    #             logger.error(e)
+
 
 
 
@@ -616,18 +631,37 @@ def cleanup():
             "status" : "exited",
             "name" : "tmp_*",
         }
-        print("deleting old containers")
+        print("deleting old containers (image tmp)")
         containers = client.containers.list(filters=filters)
         print(containers)
         for container in containers:
             if container.image.tags[0].startswith('tmp:'):
-                print("Remove container " + container.name)
+                print("Remove container " + container.name + " image: " + container.image.tags[0])
                 try:
                     container.stop()
                     container.remove()
                 except Exception as e:
                     print("cannot remove container " + container.name)
                     print(e)
+#           else:
+#                print("do not delete " + container.name)
+        print("ok")
+
+        print("deleting old containers (image *-praktomat_sandbox:*)")
+        containers = client.containers.list(all=True)
+        print(containers)
+        for container in containers:
+            if container.image.tags[0].find('-praktomat_sandbox:') >= 0 or \
+                    container.image.tags[0].find('tmp:') >= 0:
+                print("Remove container " + container.name + " image: " + container.image.tags[0])
+                try:
+                    container.stop()
+                    container.remove()
+                except Exception as e:
+                    print("cannot remove container " + container.name)
+                    print(e)
+#            else:
+#                print("do not delete " + container.name + " image: " + container.image.tags[0] + " state: " + container.status)
         print("ok")
 
         print("deleting old images")
@@ -636,11 +670,20 @@ def cleanup():
         for image in images:
             if image.tags[0].startswith('tmp:'):
                 print("Remove image " + image.tags[0])
-                image.remove()
+                try:
+                    image.remove()
+                except Exception as e:
+                    print(e)
+                pass
         print("ok")
 
         print("deleting dangling images")
-        client.images.prune(filters={"dangling":1})
+        try:
+            client.images.prune(filters={"dangling":1})
+        except Exception as e:
+            print(e)
+            pass
+
         print("ok")
     finally:
         client.close()

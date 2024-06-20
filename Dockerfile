@@ -16,14 +16,26 @@ ARG PRAKTOMAT_ID=1100
 
 
 # set locale to German (UTF-8)
-ARG LOCALE=de_DE.UTF-8
+# ARG LOCALE=de_DE.UTF-8
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# change locale to something UTF-8
-RUN apt-get update && apt-get install -y locales && locale-gen ${LOCALE} && rm -rf /var/lib/apt/lists/*
+# set locale
+ARG LOCALE_PLAIN=de_DE
+ARG LOCALE=${LOCALE_PLAIN}.UTF-8
+
+# this is how to set locale for debian (from https://hub.docker.com/_/debian):
+RUN apt-get update && apt-get install -y locales && rm -rf /var/lib/apt/lists/* \
+	&& localedef -i ${LOCALE_PLAIN} -c -f UTF-8 -A /usr/share/locale/locale.alias ${LOCALE}
+
 ENV LANG ${LOCALE}
 ENV LC_ALL ${LOCALE}
+ENV LANGUAGE ${LOCALE}
+
+# change locale to something UTF-8
+#RUN apt-get update && apt-get install -y locales && locale-gen ${LOCALE} && rm -rf /var/lib/apt/lists/*
+#ENV LANG ${LOCALE}
+#ENV LC_ALL ${LOCALE}
 
 
 # libffi-dev is used for python unittests with pandas (avoid extra RUN command)
