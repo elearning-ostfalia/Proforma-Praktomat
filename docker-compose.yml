@@ -66,8 +66,8 @@ services:
     #command: ./src/manage.py runserver 0.0.0.0:8010
 
     volumes:
-     - ./extra:/praktomat/extra
-     - ./extra:/praktomat/docker-sandbox-image/java/extra
+     - ./extra:/praktomat/extra:ro
+     - ./extra:/praktomat/docker-sandbox-image/java/extra:ro
       # for development: map source folders into container:
       # not for production!
      - ./src:/praktomat/src # not readonly because migrations and python cache needs to be created!

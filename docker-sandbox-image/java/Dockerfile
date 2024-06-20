@@ -1,6 +1,6 @@
-FROM alpine:3.20
+# FROM scratch as build
+FROM alpine:3.20 as build
 
-ARG PRAKTOMAT_ID=1100
 
 # set locale
 # THIS DOES NOT CHANGE THE LOCALE OF THE JDK OUTPUT!
@@ -13,10 +13,9 @@ ARG PRAKTOMAT_ID=1100
 #    && sed -i 's|LANG=C.UTF-8|LANG=${LOCALE}|' /etc/profile.d/locale.sh
 
 
-RUN apk add --no-cache openjdk21
-
 # Add JFX
 ADD https://download2.gluonhq.com/openjfx/21.0.3/openjfx-21.0.3_linux-x64_bin-sdk.zip /
+
 
 COPY extra /praktomat/extra
 
@@ -35,15 +34,28 @@ ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.
     /praktomat/lib/
 
 
-RUN unzip /openjfx-21.0.3_linux-x64_bin-sdk.zip && mv /javafx-sdk-21.0.3 /usr/share/openjfx && rm /openjfx-21.0.3_linux-x64_bin-sdk.zip \
-    && cd /praktomat/lib && unzip hamcrest-core-1.3.jar.zip && rm hamcrest-core-1.3.jar.zip \
+RUN unzip /openjfx-21.0.3_linux-x64_bin-sdk.zip  \
+  && mv /javafx-sdk-21.0.3 /usr/share/openjfx  \
+  && rm /openjfx-21.0.3_linux-x64_bin-sdk.zip \
+  && cd /praktomat/lib && unzip hamcrest-core-1.3.jar.zip && rm hamcrest-core-1.3.jar.zip \
 # set permissions for folder and files in /praktomat
-    && find /praktomat -type d -exec chmod 755 {} \; \
-    && find /praktomat -type f -exec chmod 644 {} \; \
+  && find /praktomat -type d -exec chmod 755 {} \; \
+  && find /praktomat -type f -exec chmod 644 {} \;
     # change permissions for sandbox (allow everything)
-    # add user praktomat
-    && adduser -u ${PRAKTOMAT_ID} praktomat -s /bin/ash --disabled-password
 
+
+
+
+FROM alpine:3.20
+
+ARG PRAKTOMAT_ID=1100
+# add user praktomat
+RUN adduser -u ${PRAKTOMAT_ID} praktomat -s /bin/ash --disabled-password
+
+COPY --from=build --chown=praktomat /praktomat /praktomat
+COPY --from=build --chown=praktomat /usr/share/openjfx  /usr/share/openjfx
+
+RUN apk add --no-cache openjdk21
 
 
 # create sandbox folder
@@ -51,6 +63,9 @@ WORKDIR /sandbox
 
 RUN chmod -R 777 /sandbox
 
+
+
 # change user
 USER praktomat
+
 
