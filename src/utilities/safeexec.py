@@ -71,27 +71,27 @@ def execute_arglist(args, working_directory, environment_variables={},
         # run restrict binary which changes user to tester and limits resources
         # command = sudo_prefix.copy()
         command = ["/sbin/restrict"]
-    elif settings.USESAFEDOCKER:
-        command = ["sudo", "safe-docker"]
-        # for safe-docker, we cannot kill it ourselves, due to sudo, so
-        # rely on the timeout provided by safe-docker
-        if timeout is not None:
-            command += ["--timeout", "%d" % timeout]
-            # give the time out mechanism below some extra time
-            timeout += 5
-        if maxmem is not None:
-            command += ["--memory", "%sm" % maxmem]
-        for d in extradirs:
-            command += ["--dir", d]
-        command += ["--"]
-        # ensure ulimit
-        if fileseeklimit:
-            # Doesn’t work yet: http://stackoverflow.com/questions/25789425
-            command += ["bash", "-c", 'ulimit -f %d; exec \"$@\"' % fileseeklimit, "ulimit-helper"]
-        # add environment
-        command += ["env"]
-        for k, v in environment_variables.items():
-            command += ["%s=%s" % (k, v)]
+    # elif settings.USESAFEDOCKER:
+    #     command = ["sudo", "safe-docker"]
+    #     # for safe-docker, we cannot kill it ourselves, due to sudo, so
+    #     # rely on the timeout provided by safe-docker
+    #     if timeout is not None:
+    #         command += ["--timeout", "%d" % timeout]
+    #         # give the time out mechanism below some extra time
+    #         timeout += 5
+    #     if maxmem is not None:
+    #         command += ["--memory", "%sm" % maxmem]
+    #     for d in extradirs:
+    #         command += ["--dir", d]
+    #     command += ["--"]
+    #     # ensure ulimit
+    #     if fileseeklimit:
+    #         # Doesn’t work yet: http://stackoverflow.com/questions/25789425
+    #         command += ["bash", "-c", 'ulimit -f %d; exec \"$@\"' % fileseeklimit, "ulimit-helper"]
+    #     # add environment
+    #     command += ["env"]
+    #     for k, v in environment_variables.items():
+    #         command += ["%s=%s" % (k, v)]
     else:
         command = []
     command += args[:]
@@ -166,12 +166,6 @@ def execute_arglist(args, working_directory, environment_variables={},
         [output, error] = process.communicate()
         if not timed_out:
             raise # no timeout
-
-    if settings.USESAFEDOCKER and process.returncode == 23: #magic value
-        timed_out = True
-
-    if settings.USESAFEDOCKER and process.returncode == 24: #magic value
-        oom_ed = True
 
     # proforma: remove invalid xml char
     return [escape_xml_invalid_chars(output.decode('utf-8')), error, process.returncode, timed_out, oom_ed]

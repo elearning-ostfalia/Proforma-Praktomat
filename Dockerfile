@@ -1,5 +1,6 @@
-FROM ubuntu:jammy
+#FROM ubuntu:jammy
 # => Python 3.10
+FROM python:3.11.9-slim-bookworm
 
 MAINTAINER Ostfalia
 
@@ -26,17 +27,22 @@ ENV LC_ALL ${LOCALE}
 
 
 # libffi-dev is used for python unittests with pandas (avoid extra RUN command)
+#    libffi-dev \
 # squashfs-tools is used for sandbox templates
+# libpq-dev: for postgres access
+# netcat-openbsd (netcat on ubuntu): for waiting for postgres to be started
 RUN apt-get update && \
-    apt-get install -y libxml2-dev libxslt1-dev python3-pip libpq-dev wget cron netcat sudo \
-    subversion git unzip \
-    libffi-dev \
+    apt-get install -y libxml2-dev libxslt1-dev  \
+    libpq-dev  \
+    cron  \
+    netcat-openbsd  \
+    sudo \
+    subversion git  \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 #    apt-get install -y swig libxml2-dev libxslt1-dev python3-pip python3-venv libpq-dev wget cron netcat sudo \
 
-# Install Java needed for Checkstyle (currently not running in own sandbox)
-RUN apt-get update && apt-get install -y openjdk-21-jdk && rm -rf /var/lib/apt/lists/*
 # ADD UNIX USERS
 ################
 
@@ -56,7 +62,7 @@ RUN groupadd -g ${GROUP_ID} praktomat && \
 #  useradd -g ${GROUP_ID} -u ${TESTER_ID} tester -s /bin/false --no-create-home -c "Test Execution User"
 
 # allow user praktomat to start cron
-RUN echo "praktomat ALL=NOPASSWD:SETENV: /usr/sbin/cron,/usr/bin/py3clean,/usr/bin/python3,/usr/bin/mount " >> /etc/sudoers && \
+RUN echo "praktomat ALL=NOPASSWD:SETENV: /usr/sbin/cron,/usr/local/bin/pyclean,/usr/local/bin/python3,/usr/bin/mount " >> /etc/sudoers && \
 echo "praktomat ALL=(tester) NOPASSWD: ALL" >> /etc/sudoers
 
 
@@ -83,18 +89,18 @@ COPY cron.conf /etc/cron.d/praktomat-cron
 
 # add JAVA test specific libraries
 # Checkstyle
-ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.0/checkstyle-10.17.0-all.jar \
-    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.1/checkstyle-10.1-all.jar \
-    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.23/checkstyle-8.23-all.jar \
-    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.29/checkstyle-8.29-all.jar \
+#ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.0/checkstyle-10.17.0-all.jar \
+#    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.1/checkstyle-10.1-all.jar \
+#    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.23/checkstyle-8.23-all.jar \
+#    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.29/checkstyle-8.29-all.jar \
 # destination
-    /praktomat/lib/
+#    /praktomat/lib/
 
 
 # set permissions
 # RUN chmod 0644 /praktomat/lib/* /praktomat/extra/* \
-RUN chmod 0644 /praktomat/lib/* \
-    && chown praktomat:praktomat /praktomat/init_database.sh /praktomat/entrypoint.sh \
+# RUN chmod 0644 /praktomat/lib/* \
+RUN chown praktomat:praktomat /praktomat/init_database.sh /praktomat/entrypoint.sh \
     && chmod u+x /praktomat/init_database.sh /praktomat/entrypoint.sh
 
 # compile and install restrict.c

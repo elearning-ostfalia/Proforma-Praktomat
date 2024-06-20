@@ -12,6 +12,7 @@ lxml==5.2.2 #
 # for getting shared objects for sandbox
 # lddcollect==0.2.0 #
 
+pyclean
 
 psycopg2-binary==2.9.9 #
 
