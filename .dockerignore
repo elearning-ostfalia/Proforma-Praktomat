@@ -9,6 +9,8 @@
 */*.pyc
 */*.bak
 
+*/unused/*
+
 old_examples
 test
 

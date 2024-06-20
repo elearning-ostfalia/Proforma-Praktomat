@@ -32,15 +32,7 @@ ENV LANG ${LOCALE}
 ENV LC_ALL ${LOCALE}
 ENV LANGUAGE ${LOCALE}
 
-# change locale to something UTF-8
-#RUN apt-get update && apt-get install -y locales && locale-gen ${LOCALE} && rm -rf /var/lib/apt/lists/*
-#ENV LANG ${LOCALE}
-#ENV LC_ALL ${LOCALE}
 
-
-# libffi-dev is used for python unittests with pandas (avoid extra RUN command)
-#    libffi-dev \
-# squashfs-tools is used for sandbox templates
 # libpq-dev: for postgres access
 # netcat-openbsd (netcat on ubuntu): for waiting for postgres to be started
 RUN apt-get update && \
@@ -53,12 +45,9 @@ RUN apt-get update && \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-#    apt-get install -y swig libxml2-dev libxslt1-dev python3-pip python3-venv libpq-dev wget cron netcat sudo \
 
 # ADD UNIX USERS
 ################
-
-
 
 # create group praktomat
 RUN groupadd -g ${GROUP_ID} praktomat && \
@@ -70,8 +59,6 @@ RUN groupadd -g ${GROUP_ID} praktomat && \
 # add user praktomat to sudo (???) \
   usermod -aG sudo praktomat && \
   echo "praktomat:$PASSWORD" | sudo chpasswd
-# add user tester (uid=777) \
-#  useradd -g ${GROUP_ID} -u ${TESTER_ID} tester -s /bin/false --no-create-home -c "Test Execution User"
 
 # allow user praktomat to start cron
 RUN echo "praktomat ALL=NOPASSWD:SETENV: /usr/sbin/cron,/usr/local/bin/pyclean,/usr/local/bin/python3,/usr/bin/mount " >> /etc/sudoers && \
@@ -85,38 +72,19 @@ RUN pip3 install --upgrade pip && \
     pip3 --version && \
     pip3 install -r requirements.txt --ignore-installed --force-reinstall --upgrade --no-cache-dir
 
-
 COPY . /praktomat
 
 RUN mkdir -p /praktomat/upload && mkdir -p /praktomat/media
-
-
-# COPY src/ src/
-# COPY extra extra/
 
 # create cron job for deleting temporary files (no dots in new filename)
 COPY cron.conf /etc/cron.d/praktomat-cron
 #COPY --chown=999:999 cron.conf /etc/cron.d/praktomat-cron
 #RUN chmod 0644 /etc/cron.d/praktomat-cron
 
-# add JAVA test specific libraries
-# Checkstyle
-#ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.0/checkstyle-10.17.0-all.jar \
-#    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.1/checkstyle-10.1-all.jar \
-#    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.23/checkstyle-8.23-all.jar \
-#    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.29/checkstyle-8.29-all.jar \
-# destination
-#    /praktomat/lib/
-
 
 # set permissions
-# RUN chmod 0644 /praktomat/lib/* /praktomat/extra/* \
-# RUN chmod 0644 /praktomat/lib/* \
 RUN chown praktomat:praktomat /praktomat/init_database.sh /praktomat/entrypoint.sh \
     && chmod u+x /praktomat/init_database.sh /praktomat/entrypoint.sh
-
-# compile and install restrict.c
-# RUN cd /praktomat/src && make restrict && sudo install -m 4750 -o root -g praktomat restrict /sbin/restrict
 
 # change user
 USER praktomat
