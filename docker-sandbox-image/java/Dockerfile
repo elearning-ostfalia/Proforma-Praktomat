@@ -18,7 +18,7 @@ RUN apk add --no-cache openjdk21
 # Add JFX
 ADD https://download2.gluonhq.com/openjfx/21.0.3/openjfx-21.0.3_linux-x64_bin-sdk.zip /
 
-ADD extra /praktomat/extra
+COPY extra /praktomat/extra
 
 # add JAVA test specific libraries
 # Checkstyle tests do not run in sandbox

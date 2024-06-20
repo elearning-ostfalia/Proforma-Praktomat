@@ -36,7 +36,7 @@ RUN useradd -u ${PRAKTOMAT_ID} praktomat -s /bin/bash
 # create sandbox folder and copy framework files into it
 WORKDIR /sandbox
 
-ADD framework /sandbox
+COPY framework /sandbox
 
 # prepare sandbox folder: 
 # - set permissions
