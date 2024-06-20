@@ -78,6 +78,10 @@ RUN mkdir -p /praktomat/upload && mkdir -p /praktomat/media
 
 # create cron job for deleting temporary files (no dots in new filename)
 COPY cron.conf /etc/cron.d/praktomat-cron
+RUN chmod 0644 /etc/cron.d/praktomat-cron
+# Apply cron job
+RUN crontab /etc/cron.d/praktomat-cron
+
 #COPY --chown=999:999 cron.conf /etc/cron.d/praktomat-cron
 #RUN chmod 0644 /etc/cron.d/praktomat-cron
 
