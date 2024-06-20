@@ -85,6 +85,7 @@ class DockerSandbox(ABC):
     def __del__(self):
         """ remove container
         """
+        # return # for testing
         if debug_sand_box:
             logger.debug('__del__')
         if hasattr(self, '_container') and self._container is not None:
