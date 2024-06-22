@@ -264,6 +264,7 @@ class DockerSandbox(ABC):
             docker.types.Ulimit(name='CPU', soft=25, hard=30),
             docker.types.Ulimit(name='nproc', soft=250, hard=250),
             docker.types.Ulimit(name='nofile', soft=64, hard=64),
+            docker.types.Ulimit(name='as', soft=self._mem_limit, hard=self._mem_limit),
             docker.types.Ulimit(name='fsize', soft=1024 * 100, hard=1024 * 100), # 100MB
         ]
         if self._mem_limit < 1200 * DockerSandbox.meg_byte:
@@ -438,7 +439,7 @@ class JavaSandbox(DockerSandbox):
 #                         "javac -classpath . -nowarn -d . @sources.txt",  # compile command: java
                          command, # run command
                          None) # download path
-        self._mem_limit = DockerSandbox.meg_byte * 2000 # increase memory limit
+        self._mem_limit = DockerSandbox.meg_byte * 5000 # increase memory limit
 
 
 class JavaImage(DockerSandboxImage):
