@@ -107,6 +107,15 @@ def load_defaults(settings):
 #        'accounts.middleware.LogoutInactiveUserMiddleware',
     ]
 
+
+    d.MIGRATION_MODULES = {
+        'checker': 'migrations.checker',
+        'solutions': 'migrations.solutions',
+        'accounts': 'migrations.accounts',
+        'tasks': 'migrations.tasks',
+        'proforma': 'migrations.proforma',
+    }
+
     # needed since Django 1.11 in order to show the 'Deactivated' page
     d.AUTH_BACKEND = 'django.contrib.auth.backends.AllowAllUsersModelBackend'
 
@@ -216,31 +225,6 @@ def load_defaults(settings):
     d.EMAIL_HOST_PASSWORD = ""
     d.EMAIL_USE_TLS = False
 
-    # TinyMCE
-
-# NOT NEEDED FOR PROFORMA
-#    d.TINYMCE_JS_URL = STATIC_URL + 'frameworks/tiny_mce/tiny_mce_src.js'
-#    d.TINYMCE_DEFAULT_CONFIG = {
-#      'plugins': 'safari,pagebreak,table,advhr,advimage,advlink,emotions,iespell,inlinepopups,media,searchreplace,print,contextmenu,paste,fullscreen,noneditable,visualchars,nonbreaking,syntaxhl',
-
-#      'theme': "advanced",
-#      'theme_advanced_buttons1': "formatselect,|,bold,italic,underline,strikethrough,|,forecolor,|,bullist,numlist,|,sub,sup,|,outdent,indent,blockquote,syntaxhl,|,visualchars,nonbreaking,|,link,unlink,anchor,image,cleanup,help,code,|,print,|,fullscreen",
-#        'theme_advanced_buttons2': "cut,copy,paste,pastetext,pasteword,|,search,replace,|,undo,redo,|,tablecontrols,|,hr,removeformat,visualaid,|,charmap,emotions,iespell,media,advhr",
-#        'theme_advanced_buttons3': "",
-#        'theme_advanced_buttons4': "",
-#        'theme_advanced_toolbar_location': "top",
-#        'theme_advanced_toolbar_align': "left",
-#        'theme_advanced_statusbar_location': "bottom",
-#        'theme_advanced_resizing': True,
-#        'extended_valid_elements': "textarea[cols|rows|disabled|name|readonly|class]",
-
-#        'content_css': STATIC_URL + '/styles/style.css',
-#      'relative_urls': False,
-#    }
-#    d.TINYMCE_SPELLCHECKER = False
-#    d.TINYMCE_COMPRESSOR = False
-#    d.TINYMCE_INCLUDE_JQUERY = False
-
     #############################################################################
     # Praktomat-specific settings                                               #
     #############################################################################
@@ -323,18 +307,6 @@ def load_defaults(settings):
     # This is actually a django setting, but depends on a praktomat setting:
     d.LOGIN_URL = 'login'
 
-    # if DEBUG:
-        # Setup for the debug toolbar
-        # settings['INSTALLED_APPS'] = ('debug_toolbar',) + settings['INSTALLED_APPS']
-        # settings['MIDDLEWARE'] = [
-        #    'debug_toolbar.middleware.DebugToolbarMiddleware',
-        # ] + settings['MIDDLEWARE']
-
-    # d.DEBUG_TOOLBAR_PATCH_SETTINGS = False
-    # d.DEBUG_TOOLBAR_CONFIG = {
-    #     'SHOW_TOOLBAR_CALLBACK': 'settings.defaults.show_toolbar',
-    # }
-
     d.LOGGING = {
         'version': 1,
         'disable_existing_loggers': False,
@@ -353,10 +325,3 @@ def load_defaults(settings):
         },
     }
 
-# Always show toolbar (if DEBUG is true)
-def show_toolbar(request):
-    if request.is_ajax():
-        return False
-
-    # return True here to enable the debug toolbar
-    return True
