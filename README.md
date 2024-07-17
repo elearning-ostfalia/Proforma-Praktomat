@@ -260,6 +260,12 @@ Remove unused images:
 
         docker rmi $(docker images --filter=reference="tmp:*" -q)
 
+
+Retrieve state information:
+
+        http://{serverhost}/praktomat-info
+
+
 ### Software Update
 
 In case of a software update this is the recommended process:

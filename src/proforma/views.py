@@ -92,9 +92,13 @@ def show_info(request):
     database['solutions'] = len(Solution.objects.all())
 
     docker = sandbox.get_state()
+    # print(docker)
 
     t = get_template('proforma/info.html')
-    html_result = t.render({'database': database, 'disk': disk, 'version': version, 'docker': docker})
+    html_result = t.render({'database': database,
+                            'disk': disk,
+                            'version': version,
+                            'docker': docker})
     return HttpResponse(html_result)
 
 @csrf_exempt

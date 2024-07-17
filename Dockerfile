@@ -1,10 +1,7 @@
-#FROM ubuntu:jammy
-# => Python 3.10
 FROM python:3.11.9-slim-bookworm
 
 MAINTAINER Ostfalia
 
-ENV PYTHONUNBUFFERED 1
 ARG PASSWORD=123
 
 ARG GROUP_ID=999
@@ -15,25 +12,26 @@ ARG PRAKTOMAT_ID=1100
 # ARG TESTER_ID=777
 
 
-# set locale to German (UTF-8)
-# ARG LOCALE=de_DE.UTF-8
-
 ARG DEBIAN_FRONTEND=noninteractive
 
 # set locale
 ARG LOCALE_PLAIN=de_DE
 ARG LOCALE=${LOCALE_PLAIN}.UTF-8
 
+# set environment
+ENV LANG     = ${LOCALE} \
+    LC_ALL   = ${LOCALE} \
+    LANGUAGE = ${LOCALE} \
+    PYTHONUNBUFFERED = 1
+
+
 # this is how to set locale for debian (from https://hub.docker.com/_/debian):
 RUN apt-get update && apt-get install -y locales && rm -rf /var/lib/apt/lists/* \
 	&& localedef -i ${LOCALE_PLAIN} -c -f UTF-8 -A /usr/share/locale/locale.alias ${LOCALE}
 
-ENV LANG ${LOCALE}
-ENV LC_ALL ${LOCALE}
-ENV LANGUAGE ${LOCALE}
 
 
-# libpq-dev: for postgres access
+# libpq-dev: needed for postgres access
 # netcat-openbsd (netcat on ubuntu): for waiting for postgres to be started
 RUN apt-get update && \
     apt-get install -y libxml2-dev libxslt1-dev  \
@@ -78,9 +76,9 @@ RUN mkdir -p /praktomat/upload && mkdir -p /praktomat/media
 
 # create cron job for deleting temporary files (no dots in new filename)
 COPY cron.conf /etc/cron.d/praktomat-cron
-RUN chmod 0644 /etc/cron.d/praktomat-cron
-# Apply cron job
-RUN crontab /etc/cron.d/praktomat-cron
+RUN chmod 0644 /etc/cron.d/praktomat-cron \
+  # Apply cron job
+    && crontab /etc/cron.d/praktomat-cron
 
 #COPY --chown=999:999 cron.conf /etc/cron.d/praktomat-cron
 #RUN chmod 0644 /etc/cron.d/praktomat-cron

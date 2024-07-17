@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import signal
+from math import floor
 
 # This file is part of Ostfalia-Praktomat.
 #
@@ -707,42 +708,37 @@ def get_state():
 
     client = docker.from_env()
     try:
+        state['info'] = client.info()
         filters = {
             "status": "exited",
             "name": "tmp_*",
         }
-        print("containers (image tmp)")
-        containers = client.containers.list(filters=filters)
-        print(containers)
-        counter = 0
-        for container in containers:
-            if container.image.tags[0].startswith('tmp:'):
-                counter = counter + 1
+        print("containers")
+        containerlist = []
+        for container in client.containers.list(all=True):
+            containerlist.append(container)
 
-        print("ok")
-
-        print("containers (image *-praktomat_sandbox:*)")
-        containers = client.containers.list(all=True)
-        print(containers)
-        for container in containers:
-            if container.image.tags[0].find('-praktomat_sandbox:') >= 0 or \
-                    container.image.tags[0].find('tmp:') >= 0:
-                print("container " + container.name + " image: " + container.image.tags[0])
-                counter = counter + 1
-
-        state['containers'] = counter
-        print("ok")
-
+        state['containers'] = containerlist
         print("images")
-        images = client.images.list(name="tmp")
-        print(images)
-        counter = 0
-        for image in images:
-            if image.tags[0].startswith('tmp:'):
-                print("image " + image.tags[0])
-                counter = counter + 1
-        print("ok")
-        state['images'] = str(counter)
+
+#        images = client.images.list(name="tmp")
+        # print(images)
+        imagelist = []
+        for image in client.images.list():
+            # if image.tags[0].startswith('tmp:'):
+                # print("image " + image.tags[0])
+                # print(image.tags)
+                # print(image.labels)
+                # print(image.attrs)
+                # print(image.history())
+                # imagelist.append(image.tags[0])
+                # print(image)
+                newimage = {}
+                newimage['name'] = image.tags[0]
+                newimage["sizeMb"] = floor(float(image.attrs['Size']) / (1024.0 * 1024.0)) # int(image.attrs.Size) / (1024.0 * 1024.0)
+                imagelist.append(newimage)
+
+        state['images'] = imagelist
     finally:
         client.close()
 
