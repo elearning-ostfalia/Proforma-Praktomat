@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Praktomat State</title>
+</head>
+<body>
+    <h1>Praktomat</h1>
+
+    {{ version }} <br>
+
+    <h2>Database</h2>
+        Tasks: {{ database.tasks }} <br>
+        Solutions: {{ database.solutions }} <br>
+
+    <h2>Docker</h2>
+        Images: {{ docker.images }} <br>
+        Containers: {{ docker.containers }} <br>
+
+
+    <h2>Disk usage</h2>
+        Sandbox disk usage: {{ disk.sandbox }}
+
+</body>
+</html>

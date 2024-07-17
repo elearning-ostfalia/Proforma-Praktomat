@@ -702,6 +702,52 @@ def create_images():
     JavaImage(None).get_container('/', 'ls')
     print("done")
 
+def get_state():
+    state = {}
+
+    client = docker.from_env()
+    try:
+        filters = {
+            "status": "exited",
+            "name": "tmp_*",
+        }
+        print("containers (image tmp)")
+        containers = client.containers.list(filters=filters)
+        print(containers)
+        counter = 0
+        for container in containers:
+            if container.image.tags[0].startswith('tmp:'):
+                counter = counter + 1
+
+        print("ok")
+
+        print("containers (image *-praktomat_sandbox:*)")
+        containers = client.containers.list(all=True)
+        print(containers)
+        for container in containers:
+            if container.image.tags[0].find('-praktomat_sandbox:') >= 0 or \
+                    container.image.tags[0].find('tmp:') >= 0:
+                print("container " + container.name + " image: " + container.image.tags[0])
+                counter = counter + 1
+
+        state['containers'] = counter
+        print("ok")
+
+        print("images")
+        images = client.images.list(name="tmp")
+        print(images)
+        counter = 0
+        for image in images:
+            if image.tags[0].startswith('tmp:'):
+                print("image " + image.tags[0])
+                counter = counter + 1
+        print("ok")
+        state['images'] = str(counter)
+    finally:
+        client.close()
+
+    return state
+
 if __name__ == '__main__':
     cleanup()
     create_images()
