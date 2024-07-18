@@ -422,12 +422,18 @@ class CppSandbox(DockerSandbox):
                          "python3 /sandbox/run_suite.py " + command, # run command
                          "/sandbox/test_detail.xml") # download path
 
+    def __del__(self):
+        super().__del__()
 
 class CppImage(DockerSandboxImage):
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test,
                          '/praktomat/docker-sandbox-image/cpp',
                          "cpp-praktomat_sandbox")
+
+    def __del__(self):
+        super().__del__()
+
 
     def get_container(self, studentenv, command):
         self._create_image()
@@ -446,12 +452,19 @@ class JavaSandbox(DockerSandbox):
                          None) # download path
         self._mem_limit = DockerSandbox.meg_byte * 5000 # increase memory limit
 
+    def __del__(self):
+        super().__del__()
+
 
 class JavaImage(DockerSandboxImage):
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test,
                          '/praktomat/docker-sandbox-image/java',
                          "java-praktomat_sandbox")
+
+    def __del__(self):
+        super().__del__()
+
 
     def get_container(self, studentenv, command):
         self._create_image()
@@ -471,6 +484,10 @@ class PythonSandbox(DockerSandbox):
                          "python3 -m compileall /sandbox -q",
                          "python3 /sandbox/run_suite.py",
                          PythonSandbox.remote_result_folder)
+
+    def __del__(self):
+        super().__del__()
+
 
     def download_result_file(self):
         super().download_result_file()
@@ -503,6 +520,9 @@ class PythonImage(DockerSandboxImage):
                          #                         dockerfilename='Dockerfile.alpine',
                          )
         self._requirements_path = requirements_path
+
+    def __del__(self):
+        super().__del__()
 
     def yield_log(self, log):
         if log is None:
