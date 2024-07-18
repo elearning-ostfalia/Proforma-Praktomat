@@ -223,7 +223,8 @@ class DockerSandbox(ABC):
         if debug_sand_box:
             logger.debug("exitcode is " + str(code))
         # capture output from generator
-        text = output.decode('UTF-8').replace('\n', '\r\n')
+        from utilities.safeexec import escape_xml_invalid_chars
+        text = escape_xml_invalid_chars(output.decode('UTF-8').replace('\n', '\r\n'))
         logger.debug(text)
         return (code == 0), text
 
@@ -319,7 +320,10 @@ class DockerSandbox(ABC):
         output = self._container.logs()
         # capture output from generator
         text = output.decode('UTF-8').replace('\n', '\r\n')
-        return (code == 0), text, False
+
+        # import locally
+        from utilities.safeexec import escape_xml_invalid_chars
+        return (code == 0), escape_xml_invalid_chars(text), False
 
 
     def download_result_file(self):
