@@ -51,6 +51,8 @@ def execute_arglist(args, working_directory, environment_variables={},
                     timeout=None, maxmem=None, fileseeklimit=None, extradirs=[], unsafe=False, error_to_output=True):
     """ Wrapper to execute Commands with the praktomat testuser. Excpects Command as list of arguments, the first being the execeutable to run. """
     assert isinstance(args, list)
+    if not unsafe:
+        raise Exception("Safe mode is not supported")
 
     command = args[:]
 
@@ -65,35 +67,35 @@ def execute_arglist(args, working_directory, environment_variables={},
 
     sudo_prefix = ["sudo", "-E", "-u", "tester"]
 
-    if unsafe:
-        command = []
-    elif settings.USEPRAKTOMATTESTER:
-        # run restrict binary which changes user to tester and limits resources
-        # command = sudo_prefix.copy()
-        command = ["/sbin/restrict"]
-    # elif settings.USESAFEDOCKER:
-    #     command = ["sudo", "safe-docker"]
-    #     # for safe-docker, we cannot kill it ourselves, due to sudo, so
-    #     # rely on the timeout provided by safe-docker
-    #     if timeout is not None:
-    #         command += ["--timeout", "%d" % timeout]
-    #         # give the time out mechanism below some extra time
-    #         timeout += 5
-    #     if maxmem is not None:
-    #         command += ["--memory", "%sm" % maxmem]
-    #     for d in extradirs:
-    #         command += ["--dir", d]
-    #     command += ["--"]
-    #     # ensure ulimit
-    #     if fileseeklimit:
-    #         # Doesn’t work yet: http://stackoverflow.com/questions/25789425
-    #         command += ["bash", "-c", 'ulimit -f %d; exec \"$@\"' % fileseeklimit, "ulimit-helper"]
-    #     # add environment
-    #     command += ["env"]
-    #     for k, v in environment_variables.items():
-    #         command += ["%s=%s" % (k, v)]
-    else:
-        command = []
+    # if unsafe:
+    command = []
+    # elif settings.USEPRAKTOMATTESTER:
+    #     # run restrict binary which changes user to tester and limits resources
+    #     # command = sudo_prefix.copy()
+    #     command = ["/sbin/restrict"]
+    # # elif settings.USESAFEDOCKER:
+    # #     command = ["sudo", "safe-docker"]
+    # #     # for safe-docker, we cannot kill it ourselves, due to sudo, so
+    # #     # rely on the timeout provided by safe-docker
+    # #     if timeout is not None:
+    # #         command += ["--timeout", "%d" % timeout]
+    # #         # give the time out mechanism below some extra time
+    # #         timeout += 5
+    # #     if maxmem is not None:
+    # #         command += ["--memory", "%sm" % maxmem]
+    # #     for d in extradirs:
+    # #         command += ["--dir", d]
+    # #     command += ["--"]
+    # #     # ensure ulimit
+    # #     if fileseeklimit:
+    # #         # Doesn’t work yet: http://stackoverflow.com/questions/25789425
+    # #         command += ["bash", "-c", 'ulimit -f %d; exec \"$@\"' % fileseeklimit, "ulimit-helper"]
+    # #     # add environment
+    # #     command += ["env"]
+    # #     for k, v in environment_variables.items():
+    # #         command += ["%s=%s" % (k, v)]
+    # else:
+    #     command = []
     command += args[:]
 
     logger.debug('execute command in ' + working_directory + ':')

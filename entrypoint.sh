@@ -12,6 +12,7 @@ then
     echo "PostgreSQL started"
 fi
 
+echo "Cleaning docker and precreate docker images"
 python3 /praktomat/src/proforma/sandbox.py
 
 
