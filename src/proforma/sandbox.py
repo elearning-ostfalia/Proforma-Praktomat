@@ -55,28 +55,28 @@ debug_sand_box = True
 
 def delete_dangling_container(client, name):
     if debug_sand_box:
-        print("delete dangling container " + name)
+        logger.debug("delete dangling container " + name)
     try:
-        containers = client.containers.list() #filters={"name": name})
-        print(containers)
-#        if len(containers) == 0:
-#            print("cannot find dangling container " + name)
+        containers = client.containers.list(filters={"name": name})
+        if len(containers) == 0:
+            logger.error("cannot find dangling container " + name)
 
         for container in containers:
             if container.name != name:
                 continue
 
-            print("Remove dangling container " + container.name)
+            if debug_sand_box:
+                logger.debug("Stop and remove dangling container " + container.name)
             try:
                 container.stop()
             except Exception as e:
-                print("cannot stop dangling container " + container.name)
-                print(e)
+                logger.debug("cannot stop dangling container " + container.name)
+                logger.debug(e)
             try:
                 container.remove(force=True)
             except Exception as e:
-                print("cannot remove dangling container " + container.name)
-                print(e)
+                logger.debug("cannot remove dangling container " + container.name)
+                logger.debug(e)
     except Exception as e1:
         logger.error(e1)
 
@@ -120,6 +120,8 @@ class DockerSandbox(ABC):
         if hasattr(self, '_container') and self._container is not None:
             try:
                 # try and stop container
+                if debug_sand_box:
+                    logger.debug('stop container')
                 self._container.stop()
             except Exception as e:
                 # ignore error if failed
@@ -127,18 +129,19 @@ class DockerSandbox(ABC):
 
             try:
                 # try and remove container
+                if debug_sand_box:
+                    logger.debug('remove container')
                 self._container.remove(force=True)
             except Exception as e:
                 logger.error(e)
-                # if container cannot be removed, try and force remove
-                logger.info("try and force kill")
-                self._container.remove(force=True)
-                logger.info("force kill succeeded")
         if hasattr(self, '_image') and self._image is not None:
             try:
+                if debug_sand_box:
+                    logger.debug('remove (temporary) image')
                 self._image.remove(force=True)
             except Exception as e:
                 logger.error(e)
+
         if debug_sand_box:
             logger.debug('__del__')
 
@@ -215,7 +218,7 @@ class DockerSandbox(ABC):
 
     def upload_environmment(self):
         if debug_sand_box:
-            logger.debug('upload')
+            logger.debug('upload to container')
 
         if not os.path.exists(self._studentenv):
             raise Exception("subfolder " + self._studentenv + " does not exist")
@@ -245,7 +248,7 @@ class DockerSandbox(ABC):
 
     def exec(self, command):
         if debug_sand_box:
-            logger.debug("** compile tests in sandbox")
+            logger.debug("exec_run in sandbox")
         logger.debug("exec: " + command)
         code, output = self._container.exec_run(command, user="praktomat")
         if debug_sand_box:
@@ -257,8 +260,6 @@ class DockerSandbox(ABC):
         return (code == 0), text
 
     def compile_tests(self, command=None):
-        if debug_sand_box:
-            logger.debug("** compile tests in sandbox")
         # start_time = time.time()
         if not command is None:
             self._compile_command = command
@@ -325,7 +326,7 @@ class DockerSandbox(ABC):
             # So we look for a container named xxx and try and remove it
             # filters = { "name": "tmp_" + str(number) }
             logger.error("FATAL ERROR: cannot create new container for running command - " + name)
-            logger.error(e.__cause__)
+            logger.error(e)
             delete_dangling_container(self._client, name)
             raise e
 
@@ -435,7 +436,7 @@ class DockerSandboxImage(ABC):
         full_imagename = self._get_image_fullname(tag)
         logger.debug("check if image exists: " + full_imagename)
         images = self._client.images.list(filters = {"reference": full_imagename})
-        print(images)
+        # print(images)
         return len(images) > 0
 
     def _create_image(self):
@@ -606,7 +607,7 @@ class PythonImage(DockerSandboxImage):
 #        self.check_preconditions()
 
         tag = self._get_image_tag()
-        print("tag " + str(tag))
+        # print("tag " + str(tag))
         if self._image_exists(tag):
             logger.debug("python image for tag " + tag + " already exists")
             yield 'data: python image for tag ' + tag + ' already exists\n\n'
