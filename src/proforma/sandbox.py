@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 # working without commit and using exec_run is faster but wait does not work with exec_run :-(
 
-debug_sand_box = True
+debug_sand_box = False
 
 
 def delete_dangling_container(client, name):
@@ -113,7 +113,7 @@ class DockerSandbox(ABC):
             "retries": 1,
             "start_period": (DockerSandbox.sec * 3),  # 1000000000 # start after 1s
         }
-        self._mem_limit = DockerSandbox.meg_byte * 1000
+        self._mem_limit = DockerSandbox.meg_byte * settings.TEST_MAXMEM_DOCKER_DEFAULT
 
     def __del__(self):
         """ remove container
@@ -300,8 +300,9 @@ class DockerSandbox(ABC):
             docker.types.Ulimit(name='as', soft=self._mem_limit, hard=self._mem_limit),
             docker.types.Ulimit(name='fsize', soft=1024 * 100, hard=1024 * 100),  # 100MB
         ]
-        if self._mem_limit < 1200 * DockerSandbox.meg_byte:
-            ulimits.append(docker.types.Ulimit(name='AS', soft=self._mem_limit, hard=self._mem_limit))
+
+        # if self._mem_limit < 1200 * DockerSandbox.meg_byte:
+        # ulimits.append(docker.types.Ulimit(name='AS', soft=self._mem_limit, hard=self._mem_limit))
 
         code = None
         # code, output = self._container.exec_run(cmd, user="999", detach=True)
@@ -494,7 +495,7 @@ class JavaSandbox(DockerSandbox):
                          #                         "javac -classpath . -nowarn -d . @sources.txt",  # compile command: java
                          command,  # run command
                          None)  # download path
-        self._mem_limit = DockerSandbox.meg_byte * 5000  # increase memory limit
+        self._mem_limit = DockerSandbox.meg_byte * settings.TEST_MAXMEM_DOCKER_JAVA  # increase memory limit
 
 
 #   def __del__(self):
@@ -507,9 +508,6 @@ class JavaImage(DockerSandboxImage):
                          '/praktomat/docker-sandbox-image/java',
                          "java-praktomat_sandbox",
                          None)
-
-    #    def __del__(self):
-    #        super().__del__()
 
     def get_container(self, studentenv, command):
         self._create_image()
@@ -527,9 +525,7 @@ class PythonSandbox(DockerSandbox):
                          "python3 -m compileall /sandbox -q",
                          "python3 /sandbox/run_suite.py",
                          PythonSandbox.remote_result_folder)
-
-    #    def __del__(self):
-    #        super().__del__()
+        self._mem_limit = DockerSandbox.meg_byte * settings.TEST_MAXMEM_DOCKER_PYTHON  # increase memory limit
 
     def download_result_file(self):
         super().download_result_file()
