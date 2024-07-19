@@ -127,7 +127,7 @@ class DockerSandbox(ABC):
 
             try:
                 # try and remove container
-                self._container.remove()
+                self._container.remove(force=True)
             except Exception as e:
                 logger.error(e)
                 # if container cannot be removed, try and force remove
@@ -136,7 +136,7 @@ class DockerSandbox(ABC):
                 logger.info("force kill succeeded")
         if hasattr(self, '_image') and self._image is not None:
             try:
-                self._image.remove()
+                self._image.remove(force=True)
             except Exception as e:
                 logger.error(e)
         if debug_sand_box:
@@ -286,7 +286,7 @@ class DockerSandbox(ABC):
         self._image = self._container.commit("tmp", str(number))
         # stop old container and remove
         self._container.stop()
-        self._container.remove()
+        self._container.remove(force=True)
         self._container = None
         print(self._image.tags)
 
@@ -674,7 +674,7 @@ class PythonImage(DockerSandboxImage):
             if tmp_filename:
                 os.unlink(tmp_filename)
             container.stop()
-            container.remove()
+            container.remove(force=True)
             pass
 
 
@@ -727,7 +727,7 @@ def cleanup():
                 print("Remove container " + container.name + " image: " + container.image.tags[0])
                 try:
                     container.stop()
-                    container.remove()
+                    container.remove(force=True)
                 except Exception as e:
                     print("cannot remove container " + container.name)
                     print(e)
@@ -744,7 +744,7 @@ def cleanup():
                 print("Remove container " + container.name + " image: " + container.image.tags[0])
                 try:
                     container.stop()
-                    container.remove()
+                    container.remove(force=True)
                 except Exception as e:
                     print("cannot remove container " + container.name)
                     print(e)
@@ -759,7 +759,7 @@ def cleanup():
             if image.tags[0].startswith('tmp:'):
                 print("Remove image " + image.tags[0])
                 try:
-                    image.remove()
+                    image.remove(force=True)
                 except Exception as e:
                     print(e)
                 pass
