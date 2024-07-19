@@ -22,7 +22,6 @@ from math import floor
 # functions for creating sandboxes
 
 
-from django.conf import settings
 import docker
 import tarfile
 from abc import ABC, abstractmethod
@@ -113,6 +112,7 @@ class DockerSandbox(ABC):
             "retries": 1,
             "start_period": (DockerSandbox.sec * 3),  # 1000000000 # start after 1s
         }
+        from django.conf import settings
         self._mem_limit = DockerSandbox.meg_byte * settings.TEST_MAXMEM_DOCKER_DEFAULT
 
     def __del__(self):
@@ -216,6 +216,7 @@ class DockerSandbox(ABC):
     def _get_run_timeout(self):
         """ in seconds
         """
+        from django.conf import settings
         return settings.TEST_TIMEOUT
 
     def upload_environmment(self):
@@ -495,6 +496,7 @@ class JavaSandbox(DockerSandbox):
                          #                         "javac -classpath . -nowarn -d . @sources.txt",  # compile command: java
                          command,  # run command
                          None)  # download path
+        from django.conf import settings
         self._mem_limit = DockerSandbox.meg_byte * settings.TEST_MAXMEM_DOCKER_JAVA  # increase memory limit
 
 
@@ -525,6 +527,7 @@ class PythonSandbox(DockerSandbox):
                          "python3 -m compileall /sandbox -q",
                          "python3 /sandbox/run_suite.py",
                          PythonSandbox.remote_result_folder)
+        from django.conf import settings
         self._mem_limit = DockerSandbox.meg_byte * settings.TEST_MAXMEM_DOCKER_PYTHON  # increase memory limit
 
     def download_result_file(self):
