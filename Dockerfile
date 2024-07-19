@@ -1,6 +1,7 @@
 FROM python:3.11.9-slim-bookworm
 
-MAINTAINER Ostfalia
+LABEL description="Praktomat with ProFormA interface"
+LABEL org.opencontainers.image.authors="Ostfalia University of Applied Sciences"
 
 ARG PASSWORD=123
 
