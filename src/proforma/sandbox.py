@@ -745,6 +745,7 @@ def cleanup():
         containers = client.containers.list(all=True)
         print(containers)
         for container in containers:
+            print(container.image.tags)
             if container.image.tags[0].find('-praktomat_sandbox:') >= 0 or \
                     container.image.tags[0].find('tmp:') >= 0:
                 print("Remove container " + container.name + " image: " + container.image.tags[0])
