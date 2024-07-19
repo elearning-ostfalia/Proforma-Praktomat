@@ -65,7 +65,6 @@ def delete_dangling_container(client, name):
             containers = client.containers.list(filters={"name": name})
             logger.error("FATAL: cannot find dangling container " + name)
 
-
         for container in containers:
             if container.name != name:
                 continue
@@ -108,11 +107,11 @@ class DockerSandbox(ABC):
         self._container = None
         self._image = None
         self._healthcheck = {
-            "test": [], # ["CMD", "ls"],
-            "interval": (DockerSandbox.sec * 1), # 500000000, # 500ms
-            "timeout": (DockerSandbox.sec * 1), # 500000000, # 500ms
+            "test": [],  # ["CMD", "ls"],
+            "interval": (DockerSandbox.sec * 1),  # 500000000, # 500ms
+            "timeout": (DockerSandbox.sec * 1),  # 500000000, # 500ms
             "retries": 1,
-            "start_period": (DockerSandbox.sec * 3), # 1000000000 # start after 1s
+            "start_period": (DockerSandbox.sec * 3),  # 1000000000 # start after 1s
         }
         self._mem_limit = DockerSandbox.meg_byte * 1000
 
@@ -150,7 +149,6 @@ class DockerSandbox(ABC):
         if debug_sand_box:
             logger.debug('__del__')
 
-
     def create(self, image_name):
         # with the init flag set to True signals are handled properly so that
         # stopping the container is much faster
@@ -164,12 +162,12 @@ class DockerSandbox(ABC):
         self._container = self._client.containers.create(
             image_name, init=True,
             mem_limit=self._mem_limit,
-#            cpu_period=100000, cpu_quota=90000,  # max. 70% of the CPU time => configure
+            #            cpu_period=100000, cpu_quota=90000,  # max. 70% of the CPU time => configure
             network_disabled=True,
-            command=DockerSandbox.default_cmd, # keep container running
+            command=DockerSandbox.default_cmd,  # keep container running
             detach=True,
             healthcheck=self._healthcheck
-#            tty=True
+            #            tty=True
         )
 
         if self._container is None:
@@ -180,41 +178,40 @@ class DockerSandbox(ABC):
 
         # self.wait_test(image_name)
 
-#     def wait_test(self, image_name):
-#         """ wait seems to work only with run, not with exec_run :-(
-#         """
-#         try:
-#             print("wait_test") # sleep 2 seconds
-#             # code, output = self._container.exec_run(cmd="sleep 2", user="999", detach=True)
-#             tmp_container = self._client.containers.run(image_name, command="sleep 20", user="999", detach=True)
-#
-#             try:
-#                 # wait_dict = self._container.wait(timeout=5, condition="next-exit") # timeout in seconds
-#                 wait_dict = tmp_container.wait(timeout=5) # , condition="next-exit") # timeout in seconds
-#                 print(wait_dict)
-# #            except requests.exceptions.ReadTimeout as e:
-#                 print("failed")
-#             except Exception  as e:
-#                 print("passed")
-#                 logger.error(e)
-#
-#                 tmp_container = self._client.containers.run(image_name, command="sleep 2", user="999", detach=True)
-#                 try:
-#                     # wait_dict = self._container.wait(timeout=5, condition="next-exit") # timeout in seconds
-#                     wait_dict = tmp_container.wait(timeout=5)  # , condition="next-exit") # timeout in seconds
-#                     print(wait_dict)
-#                     print("passed")
-#                 except Exception as e:
-#                     print("failed")
-#                     logger.error(e)
-#
-#             print("end of wait_test")
-#             logger.debug("end of sleep")
-#
-#         except Exception as ex:
-#             logger.error("command execution failed")
-#             logger.error(ex)
-
+    #     def wait_test(self, image_name):
+    #         """ wait seems to work only with run, not with exec_run :-(
+    #         """
+    #         try:
+    #             print("wait_test") # sleep 2 seconds
+    #             # code, output = self._container.exec_run(cmd="sleep 2", user="999", detach=True)
+    #             tmp_container = self._client.containers.run(image_name, command="sleep 20", user="999", detach=True)
+    #
+    #             try:
+    #                 # wait_dict = self._container.wait(timeout=5, condition="next-exit") # timeout in seconds
+    #                 wait_dict = tmp_container.wait(timeout=5) # , condition="next-exit") # timeout in seconds
+    #                 print(wait_dict)
+    # #            except requests.exceptions.ReadTimeout as e:
+    #                 print("failed")
+    #             except Exception  as e:
+    #                 print("passed")
+    #                 logger.error(e)
+    #
+    #                 tmp_container = self._client.containers.run(image_name, command="sleep 2", user="999", detach=True)
+    #                 try:
+    #                     # wait_dict = self._container.wait(timeout=5, condition="next-exit") # timeout in seconds
+    #                     wait_dict = tmp_container.wait(timeout=5)  # , condition="next-exit") # timeout in seconds
+    #                     print(wait_dict)
+    #                     print("passed")
+    #                 except Exception as e:
+    #                     print("failed")
+    #                     logger.error(e)
+    #
+    #             print("end of wait_test")
+    #             logger.debug("end of sleep")
+    #
+    #         except Exception as ex:
+    #             logger.error("command execution failed")
+    #             logger.error(ex)
 
     def _get_run_timeout(self):
         """ in seconds
@@ -283,9 +280,9 @@ class DockerSandbox(ABC):
         # start_time = time.time()
 
         # use stronger limits for test run
-#        warning_dict = self._container.update(mem_limit="1g",
-#                               cpu_period=100000, cpu_quota=20000) # max. 20% of the CPU time => configure
-#       print(warning_dict)
+        #        warning_dict = self._container.update(mem_limit="1g",
+        #                               cpu_period=100000, cpu_quota=20000) # max. 20% of the CPU time => configure
+        #       print(warning_dict)
 
         # commit intermediate container to image
         number = random.randrange(1000000000)
@@ -301,7 +298,7 @@ class DockerSandbox(ABC):
             docker.types.Ulimit(name='nproc', soft=250, hard=250),
             docker.types.Ulimit(name='nofile', soft=64, hard=64),
             docker.types.Ulimit(name='as', soft=self._mem_limit, hard=self._mem_limit),
-            docker.types.Ulimit(name='fsize', soft=1024 * 100, hard=1024 * 100), # 100MB
+            docker.types.Ulimit(name='fsize', soft=1024 * 100, hard=1024 * 100),  # 100MB
         ]
         if self._mem_limit < 1200 * DockerSandbox.meg_byte:
             ulimits.append(docker.types.Ulimit(name='AS', soft=self._mem_limit, hard=self._mem_limit))
@@ -313,18 +310,19 @@ class DockerSandbox(ABC):
         try:
             self._container = (
                 self._client.containers.run(self._image.tags[0],
-                  command=self._run_command, user="praktomat", detach=True,
-                  stdout=True,
-                  stderr=True,
-                  working_dir="/sandbox",
-                  name=name,
-                  init=True,
-                  healthcheck=self._healthcheck,
-                  mem_limit=self._mem_limit if safe else None,
-                  #                                                    cpu_period=100000, cpu_quota=90000,  # max. 40% of the CPU time => configure
-                  network_disabled=True if safe else False, # Checkstyle requires network (arrggh!)
-                  ulimits=ulimits if safe else None,
-                  ))
+                                            command=self._run_command, user="praktomat", detach=True,
+                                            stdout=True,
+                                            stderr=True,
+                                            working_dir="/sandbox",
+                                            name=name,
+                                            init=True,
+                                            healthcheck=self._healthcheck,
+                                            mem_limit=self._mem_limit if safe else None,
+                                            #                                                    cpu_period=100000, cpu_quota=90000,  # max. 40% of the CPU time => configure
+                                            network_disabled=True if safe else False,
+                                            # Checkstyle requires network (arrggh!)
+                                            ulimits=ulimits if safe else None,
+                                            ))
         except Exception as e:
             # in case of an exception there might be a dangling container left
             # that is not removed by the docker code.
@@ -350,7 +348,7 @@ class DockerSandbox(ABC):
                 logger.debug("got logs")
             text = 'Execution timed out... (Check for infinite loop in your code)'
             text += output.decode('UTF-8').replace('\n', '\r\n')
-#            text += '\r\n+++ Test Timeout +++'
+            #            text += '\r\n+++ Test Timeout +++'
             return False, text, True
         if debug_sand_box:
             logger.debug("run finished")
@@ -361,7 +359,6 @@ class DockerSandbox(ABC):
         # import locally
         from utilities.safeexec import escape_xml_invalid_chars
         return (code == 0), escape_xml_invalid_chars(text), False
-
 
     def download_result_file(self):
         if debug_sand_box:
@@ -393,13 +390,11 @@ class DockerSandbox(ABC):
     #             logger.error(e)
 
 
-
-
 class DockerSandboxImage(ABC):
-    base_tag = '0' # default tag name
+    base_tag = '0'  # default tag name
 
     def __init__(self, checker, dockerfile_path, image_name,
-                 dockerfilename = 'Dockerfile'):
+                 dockerfilename='Dockerfile'):
         self._checker = None
         # global module_init_called
         # if not module_init_called:
@@ -418,8 +413,6 @@ class DockerSandboxImage(ABC):
             except Exception as e:
                 pass
 
-
-
     @abstractmethod
     def get_container(self, proformAChecker, studentenv):
         """ return an instance created from this template """
@@ -437,10 +430,11 @@ class DockerSandboxImage(ABC):
             raise ValueError("self._tag is None")
 
         return self._image_name + ':' + tag
+
     def _image_exists(self, tag):
         full_imagename = self._get_image_fullname(tag)
         logger.debug("check if image exists: " + full_imagename)
-        images = self._client.images.list(filters = {"reference": full_imagename})
+        images = self._client.images.list(filters={"reference": full_imagename})
         # print(images)
         return len(images) > 0
 
@@ -459,7 +453,7 @@ class DockerSandboxImage(ABC):
         image, logs_gen = self._client.images.build(path=self._dockerfile_path,
                                                     dockerfile=self._dockerfilename,
                                                     tag=self._get_image_fullname(tag),
-                                                    rm =True, forcerm=True)
+                                                    rm=True, forcerm=True)
         return self._get_image_fullname(tag)
 
 
@@ -467,9 +461,10 @@ class DockerSandboxImage(ABC):
 class CppSandbox(DockerSandbox):
     def __init__(self, client, studentenv, command):
         super().__init__(client, studentenv,
-                         "python3 /sandbox/compile_suite.py", # compile command
-                         "python3 /sandbox/run_suite.py " + command, # run command
-                         "/sandbox/test_detail.xml") # download path
+                         "python3 /sandbox/compile_suite.py",  # compile command
+                         "python3 /sandbox/run_suite.py " + command,  # run command
+                         "/sandbox/test_detail.xml")  # download path
+
 
 #    def __del__(self):
 #        super().__del__()
@@ -481,9 +476,8 @@ class CppImage(DockerSandboxImage):
                          "cpp-praktomat_sandbox",
                          None)
 
-#    def __del__(self):
-#        super().__del__()
-
+    #    def __del__(self):
+    #        super().__del__()
 
     def get_container(self, studentenv, command):
         self._create_image()
@@ -496,11 +490,12 @@ class CppImage(DockerSandboxImage):
 class JavaSandbox(DockerSandbox):
     def __init__(self, client, studentenv, command):
         super().__init__(client, studentenv,
-                        "javac -classpath . @sources.txt", # compile command: java
-#                         "javac -classpath . -nowarn -d . @sources.txt",  # compile command: java
-                         command, # run command
-                         None) # download path
-        self._mem_limit = DockerSandbox.meg_byte * 5000 # increase memory limit
+                         "javac -classpath . @sources.txt",  # compile command: java
+                         #                         "javac -classpath . -nowarn -d . @sources.txt",  # compile command: java
+                         command,  # run command
+                         None)  # download path
+        self._mem_limit = DockerSandbox.meg_byte * 5000  # increase memory limit
+
 
 #   def __del__(self):
 #        super().__del__()
@@ -513,9 +508,8 @@ class JavaImage(DockerSandboxImage):
                          "java-praktomat_sandbox",
                          None)
 
-#    def __del__(self):
-#        super().__del__()
-
+    #    def __del__(self):
+    #        super().__del__()
 
     def get_container(self, studentenv, command):
         self._create_image()
@@ -524,21 +518,18 @@ class JavaImage(DockerSandboxImage):
         return j_sandbox
 
 
-
-
-
 class PythonSandbox(DockerSandbox):
     remote_result_subfolder = "__result__"
     remote_result_folder = "/sandbox/" + remote_result_subfolder
+
     def __init__(self, container, studentenv):
         super().__init__(container, studentenv,
                          "python3 -m compileall /sandbox -q",
                          "python3 /sandbox/run_suite.py",
                          PythonSandbox.remote_result_folder)
 
-#    def __del__(self):
-#        super().__del__()
-
+    #    def __del__(self):
+    #        super().__del__()
 
     def download_result_file(self):
         super().download_result_file()
@@ -564,17 +555,17 @@ class PythonImage(DockerSandboxImage):
         else:
             return None
 
-    def __init__(self, praktomat_test, requirements_path = None):
+    def __init__(self, praktomat_test, requirements_path=None):
         super().__init__(praktomat_test,
                          dockerfile_path='/praktomat/docker-sandbox-image/python',
                          image_name=PythonImage.image_name,
                          #                         dockerfilename='Dockerfile.alpine',
-                         dockerfilename = None)
+                         dockerfilename=None)
 
         self._requirements_path = requirements_path
 
-#    def __del__(self):
-#        super().__del__()
+    #    def __del__(self):
+    #        super().__del__()
 
     def yield_log(self, log):
         if log is None:
@@ -600,16 +591,16 @@ class PythonImage(DockerSandboxImage):
             md5 = hashlib.md5('\n'.join(modules).encode('utf-8')).hexdigest()
             return md5
 
-#    def check_preconditions(self):
-#        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
-#        if len(requirements_txt) > 1:
-#            raise Exception('more than one requirements.txt found')
+    #    def check_preconditions(self):
+    #        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
+    #        if len(requirements_txt) > 1:
+    #            raise Exception('more than one requirements.txt found')
 
     def create_image(self):
-#        """ creates the docker image """
+        #        """ creates the docker image """
         logger.debug("create python image (if it does not exist)")
 
-#        self.check_preconditions()
+        #        self.check_preconditions()
 
         tag = self._get_image_tag()
         # print("tag " + str(tag))
@@ -632,7 +623,7 @@ class PythonImage(DockerSandboxImage):
         logger.info('install requirements from ' + self._requirements_path)
         logger.debug('create container from ' + PythonImage.base_image_tag)
         number = random.randrange(1000000000)
-        name = "tmp_python_image_" +  str(number)
+        name = "tmp_python_image_" + str(number)
         try:
             container = self._client.containers.create(image=PythonImage.base_image_tag,
                                                        init=True,
@@ -675,15 +666,13 @@ class PythonImage(DockerSandboxImage):
             logger.debug("** commit image to " + PythonImage.image_name + ':' + tag)
             container.commit(repository=PythonImage.image_name,
                              tag=tag)
-#                             tag=PythonSandboxTemplate.image_name + ':' + tag)
+        #                             tag=PythonSandboxTemplate.image_name + ':' + tag)
         finally:
             if tmp_filename:
                 os.unlink(tmp_filename)
             container.stop()
             container.remove(force=True)
             pass
-
-
 
     def _get_image_tag(self):
         if not self._tag is None:
@@ -695,14 +684,14 @@ class PythonImage(DockerSandboxImage):
             self._tag = PythonImage._get_hash(self._requirements_path)
 
             #        requirements_txt = self._checker.files.filter(filename='requirements.txt', path='')
-#        if len(requirements_txt) > 1:
-#            raise Exception('more than one requirements.txt found')
-#        if len(requirements_txt) == 0:
-#            self._tag = super()._get_image_tag()
-#        else:
-#            requirements_txt = requirements_txt.first()
-#            requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
-#            self._tag = PythonImage._get_hash(requirements_path)
+        #        if len(requirements_txt) > 1:
+        #            raise Exception('more than one requirements.txt found')
+        #        if len(requirements_txt) == 0:
+        #            self._tag = super()._get_image_tag()
+        #        else:
+        #            requirements_txt = requirements_txt.first()
+        #            requirements_path = os.path.join(settings.UPLOAD_ROOT, task.get_storage_path(requirements_txt, requirements_txt.filename))
+        #            self._tag = PythonImage._get_hash(requirements_path)
 
         return self._tag
 
@@ -714,6 +703,7 @@ class PythonImage(DockerSandboxImage):
         p_sandbox.create(self._get_image_fullname(self._get_image_tag()))
         return p_sandbox
 
+
 #    def empty_function(self):
 #        return True
 
@@ -721,24 +711,38 @@ class PythonImage(DockerSandboxImage):
 def cleanup():
     client = docker.from_env()
     try:
+        print("deleting old containers (image tmp exited)")
         filters = {
-            "status" : "exited",
-            "name" : "tmp_*",
+            "status": "exited",
+            "name": "tmp_*",
         }
-        print("deleting old containers (image tmp)")
         containers = client.containers.list(filters=filters)
         print(containers)
         for container in containers:
-            if container.image.tags[0].startswith('tmp:'):
-                print("Remove container " + container.name + " image: " + container.image.tags[0])
-                try:
-                    container.stop()
+            try:
+                if container.image.tags[0].startswith('tmp:'):
+                    print("Remove container " + container.name + " image: " + container.image.tags[0])
                     container.remove(force=True)
-                except Exception as e:
-                    print("cannot remove container " + container.name)
-                    print(e)
-#           else:
-#                print("do not delete " + container.name)
+            except Exception as e:
+                print("cannot remove container " + container.name)
+                print(e)
+        print("ok")
+
+        print("deleting dangling containers (image tmp created)")
+        filters = {
+            "status": "created",
+            "name": "tmp_*",
+        }
+        containers = client.containers.list(filters=filters)
+        print(containers)
+        for container in containers:
+            try:
+                # no image available
+                print("Remove container " + container.name)
+                container.remove(force=True)
+            except Exception as e:
+                print("cannot remove container " + container.name)
+                print(e)
         print("ok")
 
         print("deleting old containers (image *-praktomat_sandbox:*)")
@@ -755,8 +759,8 @@ def cleanup():
                 except Exception as e:
                     print("cannot remove container " + container.name)
                     print(e)
-#            else:
-#                print("do not delete " + container.name + " image: " + container.image.tags[0] + " state: " + container.status)
+        #            else:
+        #                print("do not delete " + container.name + " image: " + container.image.tags[0] + " state: " + container.status)
         print("ok")
 
         print("deleting old images")
@@ -774,7 +778,7 @@ def cleanup():
 
         print("deleting dangling images")
         try:
-            client.images.prune(filters={"dangling":1})
+            client.images.prune(filters={"dangling": 1})
         except Exception as e:
             print(e)
             pass
@@ -782,6 +786,7 @@ def cleanup():
         print("ok")
     finally:
         client.close()
+
 
 def create_images():
     # create images
@@ -794,6 +799,7 @@ def create_images():
     print("creating docker image for java tests ...")
     JavaImage(None).get_container('/', 'ls')
     print("done")
+
 
 def get_state():
     state = {}
@@ -813,28 +819,30 @@ def get_state():
         state['containers'] = containerlist
         print("images")
 
-#        images = client.images.list(name="tmp")
+        #        images = client.images.list(name="tmp")
         # print(images)
         imagelist = []
         for image in client.images.list():
             # if image.tags[0].startswith('tmp:'):
-                # print("image " + image.tags[0])
-                # print(image.tags)
-                # print(image.labels)
-                # print(image.attrs)
-                # print(image.history())
-                # imagelist.append(image.tags[0])
-                # print(image)
-                newimage = {}
-                newimage['name'] = image.tags[0]
-                newimage["sizeMb"] = floor(float(image.attrs['Size']) / (1024.0 * 1024.0)) # int(image.attrs.Size) / (1024.0 * 1024.0)
-                imagelist.append(newimage)
+            # print("image " + image.tags[0])
+            # print(image.tags)
+            # print(image.labels)
+            # print(image.attrs)
+            # print(image.history())
+            # imagelist.append(image.tags[0])
+            # print(image)
+            newimage = {}
+            newimage['name'] = image.tags[0]
+            newimage["sizeMb"] = floor(
+                float(image.attrs['Size']) / (1024.0 * 1024.0))  # int(image.attrs.Size) / (1024.0 * 1024.0)
+            imagelist.append(newimage)
 
         state['images'] = imagelist
     finally:
         client.close()
 
     return state
+
 
 if __name__ == '__main__':
     cleanup()
