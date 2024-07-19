@@ -53,7 +53,7 @@ class MakeChecker(ProFormAChecker):
         (passed, output) = gt_sandbox.compile_tests()
         if not passed:
             return self.handle_compile_error(env, output, "", False, False)
-        (passed, output, timeout) = gt_sandbox.runTests()
+        (passed, output, timeout) = gt_sandbox.runTests(image_suffix="make")
         logger.debug("passed " + str(passed))
         logger.debug("output " + output)
         result = self.create_result(env)

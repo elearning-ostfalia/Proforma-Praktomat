@@ -68,7 +68,7 @@ class CheckStyleChecker(ProFormAChecker):
 
             cmd = ' '.join(args)  # convert cmd to string
             timed_out = False
-            (passed, output, timed_out) = j_sandbox.runTests(cmd, safe=False)
+            (passed, output, timed_out) = j_sandbox.runTests(cmd, safe=False, image_suffix="cs")
             # (passed, output) = j_sandbox.exec_unsafe(cmd)
 
             exitcode = 0 if passed else 1

@@ -129,7 +129,7 @@ class PythonChecker(ProFormAChecker):
             return self.handle_compile_error(env, output, "", False, False)
 
         # run test
-        (passed, output, timeout) = p_sandbox.runTests()
+        (passed, output, timeout) = p_sandbox.runTests(image_suffix="python")
         result = self.create_result(env)
         (output, truncated) = truncated_log(output)
 

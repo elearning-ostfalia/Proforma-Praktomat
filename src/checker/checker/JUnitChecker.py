@@ -288,7 +288,7 @@ class JUnitChecker(ProFormAChecker):
             # logger.debug(cmd)
             # j_sandbox.exec('ls -al')
 
-            (passed, output, timed_out) = j_sandbox.runTests(cmd)
+            (passed, output, timed_out) = j_sandbox.runTests(command=cmd, image_suffix="junit")
 #            (passed, output, timed_out) = j_sandbox.runTests("tail -f /dev/null")
             # logger.debug(output)
             exitcode = 0 if passed else 1

@@ -105,7 +105,7 @@ class SetlXChecker(ProFormAChecker):
             cmd = ' '.join(cmd)  # convert cmd to string
             timed_out = False
 #            (passed, output, timed_out) = j_sandbox.runTests(cmd, safe=False)
-            (passed, output, timed_out) = j_sandbox.runTests(cmd)
+            (passed, output, timed_out) = j_sandbox.runTests(command=cmd, image_suffix="setlx")
 
             exitcode = 0 if passed else 1
             oom_ed = False

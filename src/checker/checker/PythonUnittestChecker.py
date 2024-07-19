@@ -106,7 +106,7 @@ class PythonUnittestChecker(ProFormAChecker):
             return self.handle_compile_error(env, output, "", False, False)
         # run test
         result = self.create_result(env)
-        (passed, output, timeout) = p_sandbox.runTests()
+        (passed, output, timeout) = p_sandbox.runTests(image_suffix="pythonunit")
         if passed:
             p_sandbox.download_result_file()
         else:

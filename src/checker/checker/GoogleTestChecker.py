@@ -120,7 +120,7 @@ class GoogleTestChecker(ProFormAChecker):
         logger.debug(output)
         if not passed:
             return self.handle_compile_error(env, output, "", False, False)
-        (passed, output, timeout) = gt_sandbox.runTests()
+        (passed, output, timeout) = gt_sandbox.runTests(image_suffix="googletest")
         gt_sandbox.download_result_file()
         result = self.create_result(env)
 
