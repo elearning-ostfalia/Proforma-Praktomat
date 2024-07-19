@@ -65,7 +65,7 @@ def delete_dangling_container(client, name):
         for container in containers:
             if container.name != name:
                 continue
-                
+
             print("Remove dangling container " + container.name)
             try:
                 container.stop()
@@ -324,7 +324,8 @@ class DockerSandbox(ABC):
             # that is not removed by the docker code.
             # So we look for a container named xxx and try and remove it
             # filters = { "name": "tmp_" + str(number) }
-            logger.error("FATAL ERROR: cannot create new container for running command")
+            logger.error("FATAL ERROR: cannot create new container for running command - " + name)
+            logger.error(e.__cause__)
             delete_dangling_container(self._client, name)
             raise e
 
@@ -637,7 +638,7 @@ class PythonImage(DockerSandboxImage):
             # in case of an exception there might be a dangling container left
             # that is not removed by the docker code.
             # So we look for a container named xxx and try and remove it
-            logger.error("FATAL ERROR: cannot create new python image")
+            logger.error("FATAL ERROR: cannot create new python image - " + name)
             delete_dangling_container(self._client, name)
             raise e
 
