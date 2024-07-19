@@ -60,6 +60,11 @@ def delete_dangling_container(client, name):
         containers = client.containers.list(filters={"name": name})
         if len(containers) == 0:
             logger.error("cannot find dangling container " + name)
+            import time
+            time.sleep(2)
+            containers = client.containers.list(filters={"name": name})
+            logger.error("FATAL: cannot find dangling container " + name)
+
 
         for container in containers:
             if container.name != name:
