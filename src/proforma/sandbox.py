@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import signal
-from math import floor
 
 # This file is part of Ostfalia-Praktomat.
 #
@@ -21,7 +19,9 @@ from math import floor
 #
 # functions for creating sandboxes
 
-
+from math import floor
+import sys
+from django.conf import settings
 import docker
 import tarfile
 from abc import ABC, abstractmethod
@@ -112,7 +112,6 @@ class DockerSandbox(ABC):
             "retries": 1,
             "start_period": (DockerSandbox.sec * 3),  # 1000000000 # start after 1s
         }
-        from django.conf import settings
         self._mem_limit = DockerSandbox.meg_byte * settings.TEST_MAXMEM_DOCKER_DEFAULT
 
     def __del__(self):
@@ -216,7 +215,6 @@ class DockerSandbox(ABC):
     def _get_run_timeout(self):
         """ in seconds
         """
-        from django.conf import settings
         return settings.TEST_TIMEOUT
 
     def upload_environmment(self):
@@ -440,7 +438,7 @@ class DockerSandboxImage(ABC):
         # print(images)
         return len(images) > 0
 
-    def _create_image(self):
+    def create_image(self):
         """ creates the default docker image """
         self._create_image_for_tag(self._get_image_tag())
 
@@ -482,7 +480,7 @@ class CppImage(DockerSandboxImage):
     #        super().__del__()
 
     def get_container(self, studentenv, command):
-        self._create_image()
+        self.create_image()
         cpp_sandbox = CppSandbox(self._client, studentenv, command)
         cpp_sandbox.create(self._get_image_fullname(self._get_image_tag()))
         return cpp_sandbox
@@ -496,7 +494,6 @@ class JavaSandbox(DockerSandbox):
                          #                         "javac -classpath . -nowarn -d . @sources.txt",  # compile command: java
                          command,  # run command
                          None)  # download path
-        from django.conf import settings
         self._mem_limit = DockerSandbox.meg_byte * settings.TEST_MAXMEM_DOCKER_JAVA  # increase memory limit
 
 
@@ -511,11 +508,14 @@ class JavaImage(DockerSandboxImage):
                          "java-praktomat_sandbox",
                          None)
 
-    def get_container(self, studentenv, command):
-        self._create_image()
-        j_sandbox = JavaSandbox(self._client, studentenv, command)
-        j_sandbox.create(self._get_image_fullname(self._get_image_tag()))
-        return j_sandbox
+    def get_container(self, studentenv = None, command = None):
+        self.create_image()
+        if studentenv is not None:
+            j_sandbox = JavaSandbox(self._client, studentenv, command)
+            j_sandbox.create(self._get_image_fullname(self._get_image_tag()))
+            return j_sandbox
+        else:
+            return None
 
 
 class PythonSandbox(DockerSandbox):
@@ -595,7 +595,7 @@ class PythonImage(DockerSandboxImage):
     #        if len(requirements_txt) > 1:
     #            raise Exception('more than one requirements.txt found')
 
-    def create_image(self):
+    def create_image_yield(self):
         #        """ creates the docker image """
         logger.debug("create python image (if it does not exist)")
 
@@ -748,7 +748,7 @@ def cleanup():
         containers = client.containers.list(all=True)
         print(containers)
         for container in containers:
-            print(container.image.tags)
+            # print(container.image.tags)
             if container.image.tags[0].find('-praktomat_sandbox:') >= 0 or \
                     container.image.tags[0].find('tmp:') >= 0:
                 print("Remove container " + container.name + " image: " + container.image.tags[0])
@@ -789,14 +789,22 @@ def cleanup():
 
 def create_images():
     # create images
+    print("creating docker image for java tests ...")
+    sys.stdout.flush()
+    sys.stderr.flush()
+    JavaImage(None).create_image()
+    print("done")
+
     print("creating docker image for python tests ...")
-    PythonImage(None).get_container('/')
+    sys.stdout.flush()
+    sys.stderr.flush()
+    for a in PythonImage(None).create_image_yield():
+        pass
     print("done")
     print("creating docker image for c/C++ tests ...")
-    CppImage(None).get_container('/', 'ls')
-    print("done")
-    print("creating docker image for java tests ...")
-    JavaImage(None).get_container('/', 'ls')
+    sys.stdout.flush()
+    sys.stderr.flush()
+    CppImage(None).create_image()
     print("done")
 
 
@@ -844,6 +852,10 @@ def get_state():
 
 
 if __name__ == '__main__':
+    # flush echo messages from shell script on praktomat docker startup
+    sys.stdout.flush()
+    sys.stderr.flush()
+
     cleanup()
     create_images()
 
