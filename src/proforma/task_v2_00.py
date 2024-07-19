@@ -446,7 +446,7 @@ class Task_2_00:
 #        if len(requirements_txt) > 1:
 #            raise Exception('more than one requirements.txt found')
         yield 'data: create sandbox image for python unit test\n\n'
-        yield from image.create_image()
+        yield from image.create_image_yield()
 
     def _create_java_checkstyle_test(self, xmlTest):
         checker_ns = self._ns.copy()
