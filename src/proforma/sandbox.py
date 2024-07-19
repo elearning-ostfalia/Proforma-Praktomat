@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 # working without commit and using exec_run is faster but wait does not work with exec_run :-(
 
-debug_sand_box = False
+debug_sand_box = True
 
 
 class DockerSandbox(ABC):
@@ -275,28 +275,45 @@ class DockerSandbox(ABC):
         code = None
         # code, output = self._container.exec_run(cmd, user="999", detach=True)
         logger.debug("execute '" + self._run_command + "'")
-        if safe:
-            self._container = self._client.containers.run(self._image.tags[0],
-                                                        command=self._run_command, user="praktomat", detach=True,
-                                                        healthcheck=self._healthcheck, init=True,
-                                                        mem_limit=self._mem_limit,
-    #                                                    cpu_period=100000, cpu_quota=90000,  # max. 40% of the CPU time => configure
-                                                        network_disabled=True,
-                                                        stdout=True,
-                                                        stderr=True,
-                                                        ulimits=ulimits,
-                                                        working_dir="/sandbox",
-                                                        name="tmp_" + str(number)
-                                                        )
-        else:
-            # Checkstyle requires network (arrggh!)
-            self._container = self._client.containers.run(self._image.tags[0],
-                                                          command=self._run_command, user="praktomat", detach=True,
-                                                          stdout=True,
-                                                          stderr=True,
-                                                          working_dir="/sandbox",
-                                                          name="tmp_" + str(number)
-                                                          )
+        try:
+            #if safe:
+                self._container = (
+                    self._client.containers.run(self._image.tags[0],
+                      command=self._run_command, user="praktomat", detach=True,
+                      stdout=True,
+                      stderr=True,
+                      working_dir="/sandbox",
+                      name="tmp_" + str(number),
+                      init=True,
+                      healthcheck=self._healthcheck,
+                      mem_limit=self._mem_limit if safe else None,
+                      #                                                    cpu_period=100000, cpu_quota=90000,  # max. 40% of the CPU time => configure
+                      network_disabled=True if safe else False, # Checkstyle requires network (arrggh!)
+                      ulimits=ulimits if safe else None,
+                      ))
+        except Exception as e:
+            # in case of an exception there might be a dangling container left
+            # that is not removed by the docker code.
+            # So we look for a container named xxx and try and remove it
+            # filters = { "name": "tmp_" + str(number) }
+            if debug_sand_box:
+                print("creating run container failed")
+            logger.error("FATAL ERROR: cannot create new container for running command")
+            containers = self._client.containers.list(filters={ "name": "tmp_" + str(number) })
+            print(containers)
+            for container in containers:
+                print("Remove container " + container.name)
+                try:
+                    container.stop()
+                except Exception as e:
+                    print("cannot stop container " + container.name)
+                    print(e)
+                try:
+                    container.remove(force=True)
+                except Exception as e:
+                    print("cannot remove container " + container.name)
+                    print(e)
+            raise e
 
         logger.debug("wait timeout is " + str(self._get_run_timeout()))
         try:
@@ -361,7 +378,8 @@ class DockerSandbox(ABC):
 class DockerSandboxImage(ABC):
     base_tag = '0' # default tag name
 
-    def __init__(self, checker, dockerfile_path, image_name, dockerfilename = 'Dockerfile'):
+    def __init__(self, checker, dockerfile_path, image_name,
+                 dockerfilename = 'Dockerfile', prefix=''):
         self._checker = None
         # global module_init_called
         # if not module_init_called:
@@ -372,6 +390,11 @@ class DockerSandboxImage(ABC):
         self._image_name = image_name
         self._dockerfilename = dockerfilename
         self._checker = checker
+        prefix = prefix.strip()
+        if len(prefix) > 0:
+            self._prefix = '_' + prefix
+        else:
+            self._prefix = prefix
 
     def __del__(self):
         if hasattr(self, '_client') and self._client is not None:
@@ -409,7 +432,7 @@ class DockerSandboxImage(ABC):
         logger.debug("create image for tag " + tag + " from " + self._dockerfile_path)
         image, logs_gen = self._client.images.build(path=self._dockerfile_path,
                                                     dockerfile=self._dockerfilename,
-                                                    tag=self._image_name + ':' + tag,
+                                                    tag=self._image_name + self._prefix + ':' + tag,
                                                     rm =True, forcerm=True)
         return self._image_name + ':' + tag
 
@@ -422,17 +445,19 @@ class CppSandbox(DockerSandbox):
                          "python3 /sandbox/run_suite.py " + command, # run command
                          "/sandbox/test_detail.xml") # download path
 
-    def __del__(self):
-        super().__del__()
+#    def __del__(self):
+#        super().__del__()
 
 class CppImage(DockerSandboxImage):
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test,
                          '/praktomat/docker-sandbox-image/cpp',
-                         "cpp-praktomat_sandbox")
+                         "cpp-praktomat_sandbox",
+                         None,
+                         prefix = "cpp")
 
-    def __del__(self):
-        super().__del__()
+#    def __del__(self):
+#        super().__del__()
 
 
     def get_container(self, studentenv, command):
@@ -452,18 +477,20 @@ class JavaSandbox(DockerSandbox):
                          None) # download path
         self._mem_limit = DockerSandbox.meg_byte * 5000 # increase memory limit
 
-    def __del__(self):
-        super().__del__()
+#   def __del__(self):
+#        super().__del__()
 
 
 class JavaImage(DockerSandboxImage):
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test,
                          '/praktomat/docker-sandbox-image/java',
-                         "java-praktomat_sandbox")
+                         "java-praktomat_sandbox",
+                         None,
+                         prefix="java")
 
-    def __del__(self):
-        super().__del__()
+#    def __del__(self):
+#        super().__del__()
 
 
     def get_container(self, studentenv, command):
@@ -485,8 +512,8 @@ class PythonSandbox(DockerSandbox):
                          "python3 /sandbox/run_suite.py",
                          PythonSandbox.remote_result_folder)
 
-    def __del__(self):
-        super().__del__()
+#    def __del__(self):
+#        super().__del__()
 
 
     def download_result_file(self):
@@ -518,11 +545,13 @@ class PythonImage(DockerSandboxImage):
                          dockerfile_path='/praktomat/docker-sandbox-image/python',
                          image_name=PythonImage.image_name,
                          #                         dockerfilename='Dockerfile.alpine',
-                         )
+                         dockerfilename = None,
+                         prefix="java")
+
         self._requirements_path = requirements_path
 
-    def __del__(self):
-        super().__del__()
+#    def __del__(self):
+#        super().__del__()
 
     def yield_log(self, log):
         if log is None:
