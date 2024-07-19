@@ -673,6 +673,10 @@ class PythonImage(DockerSandboxImage):
             container.remove(force=True)
             pass
 
+    def create_image(self):
+        for a in self.create_image_yield():  # function is generator, so this must be handled in order to be executed
+            pass
+
     def _get_image_tag(self):
         if not self._tag is None:
             return self._tag
@@ -696,8 +700,7 @@ class PythonImage(DockerSandboxImage):
 
     def get_container(self, studentenv):
         """ return an instance created from this template """
-        for a in self.create_image_yield():  # function is generator, so this must be handled in order to be executed
-            pass
+        self.create_image()  # function is generator, so this must be handled in order to be executed
         p_sandbox = PythonSandbox(self._client, studentenv)
         p_sandbox.create(self._get_image_fullname(self._get_image_tag()))
         return p_sandbox

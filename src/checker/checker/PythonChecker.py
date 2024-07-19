@@ -45,8 +45,7 @@ class PythonDoctestImage(sandbox.PythonImage):
         super().__init__(praktomat_test)
 
     def get_container(self, studentenv, command):
-        for a in self.create_image_yield():  # function is generator, so this must be handled in order to be executed
-            pass
+        self.create_image()  # function is generator, so this must be handled in order to be executed
         sandbox = PythonDoctestSandbox(self._client, studentenv, command)
         sandbox.create(self._get_image_fullname(self._get_image_tag()))
         return sandbox

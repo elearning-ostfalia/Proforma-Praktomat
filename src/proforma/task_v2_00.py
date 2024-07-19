@@ -603,7 +603,7 @@ class Task_2_00:
                     logger.debug('** create_python_test')
                     self._create_python_test(xmlTest)
                 self._val_order += 1
-                logger.debug('increment vald_order, new value= ' + str(self._val_order))
+                logger.debug('increment val_order, new value= ' + str(self._val_order))
 
         except Exception:
             # delete objects
