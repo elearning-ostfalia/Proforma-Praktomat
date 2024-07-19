@@ -59,17 +59,20 @@ def delete_dangling_container(client, name):
     try:
         containers = client.containers.list(filters={"name": name})
         print(containers)
+        if len(containers) == 0:
+            print("cannot find dangling container " + name)
+
         for container in containers:
-            print("Remove container " + container.name)
+            print("Remove dangling container " + container.name)
             try:
                 container.stop()
             except Exception as e:
-                print("cannot stop container " + container.name)
+                print("cannot stop dangling container " + container.name)
                 print(e)
             try:
                 container.remove(force=True)
             except Exception as e:
-                print("cannot remove container " + container.name)
+                print("cannot remove dangling container " + container.name)
                 print(e)
     except Exception as e1:
         logger.error(e1)
