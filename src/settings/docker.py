@@ -157,9 +157,9 @@ defaults.MIMETYPE_ADDITIONAL_EXTENSIONS.append(('text/x-stlx', '.stlx'))
 defaults.MIMETYPE_ADDITIONAL_EXTENSIONS.append(('text/plain', '.csv'))
 
 # default memory limit for docker sandboxes
-defaults.TEST_MAXMEM_DOCKER_DEFAULT = 1500
-defaults.TEST_MAXMEM_DOCKER_JAVA = 5000  # java sandboxes
-defaults.TEST_MAXMEM_DOCKER_PYTHON = 1800  # python sandboxes
+TEST_MAXMEM_DOCKER_DEFAULT = 1500
+TEST_MAXMEM_DOCKER_JAVA = 5000  # java sandboxes
+TEST_MAXMEM_DOCKER_PYTHON = 1800  # python sandboxes
 
 
 # # logging formatter for profiling function runtime
