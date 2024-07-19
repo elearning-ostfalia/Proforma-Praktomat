@@ -276,3 +276,13 @@ In case of a software update this is the recommended process:
 4. `docker dompose build`    
 5. `docker dompose up` 
 
+### Troubleshooting 
+
+If you encounter responses containing something like 'cannot allocate memory' then
+you should try and increase one of the values 
+
+    TEST_MAXMEM_DOCKER_DEFAULT
+    TEST_MAXMEM_DOCKER_JAVA
+    TEST_MAXMEM_DOCKER_PYTHON
+
+in settings.docker.py for your programming language. 
