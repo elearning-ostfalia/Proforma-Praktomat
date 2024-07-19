@@ -57,12 +57,15 @@ def delete_dangling_container(client, name):
     if debug_sand_box:
         print("delete dangling container " + name)
     try:
-        containers = client.containers.list(filters={"name": name})
+        containers = client.containers.list() #filters={"name": name})
         print(containers)
-        if len(containers) == 0:
-            print("cannot find dangling container " + name)
+#        if len(containers) == 0:
+#            print("cannot find dangling container " + name)
 
         for container in containers:
+            if container.name != name:
+                continue
+                
             print("Remove dangling container " + container.name)
             try:
                 container.stop()
