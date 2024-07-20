@@ -16,9 +16,8 @@ Most of the unused code is removed in order to ease maintenance.
 The ProFormA format for tasks is 2.0 and 2.0.1 with some limitations.
 The ProFormA format for HTTP request and response is 2.0 and 2.1. 
 
-The code is currently only used as a 'docker composition'.
-So the installation manual for a plain Linux server is not up-to-date, 
-but you can follow the Dockerfile. 
+The code is running as a 'docker composition'.
+Each testcase runs in its own docker container. 
 
 #### Programming Languages
 
@@ -52,10 +51,7 @@ The following types of submission are supported:
 
 ## Installation
 
-ProFormA Praktomat requires
- 
-* docker (https://docs.docker.com/engine/install/) and 
-* docker-compose (https://docs.docker.com/compose/install/). 
+ProFormA Praktomat requires docker (https://docs.docker.com/get-docker/).  
 
 Each test run in its own docker container. This requires the user in the main container 
 to be member of the docker group of the host computer. 
@@ -78,7 +74,7 @@ A sample file is included as .env.example.
 
 Modify credentials!
 
-Adjust number of workers to fit your hardware.
+Adjust number of workers to fit your hardware (e.g. WORKERS = <number of cores>). 
 
 ##### Optional: Change Locale
 
@@ -91,6 +87,7 @@ docker-compose.yml file. E.g. for American English set LOCALE to en_US.UTF-8:
         args:
             LOCALE: en_US.UTF-8
 
+Note: This does not work at the moment with the supplied Java dockerfile.  
 
 ##### Optional: HTTPS
 For enabling HTTPS (port 443) you must 
@@ -102,8 +99,8 @@ For enabling HTTPS (port 443) you must
 
 ##### Optional: Different Test Framework Versions
 
-For using other test framework versions then you need to modify the following files:
-- URLs in Dockerfile
+For using other test framework versions you need to modify the following files:
+- URLs in Dockerfile (folder docker-sandbox-image)
 - src/checker/checker/JUnitChecker.py
 - src/checker/checker/CheckStyleChecker.py
 - src/settings/docker.py

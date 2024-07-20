@@ -56,26 +56,35 @@ def delete_dangling_container(client, name):
     if debug_sand_box:
         logger.debug("delete dangling container " + name)
     try:
-        containers = client.containers.list(filters={"name": name})
+        # Note: we have to add a status. Otherwise only running containes will be delivered
+        # and the container will probably not be running
+        containers = client.containers.list(filters={"name": name, "status": "created"})
         if len(containers) == 0:
-            logger.error("cannot find dangling container " + name)
-            import time
-            time.sleep(2)
-            containers = client.containers.list(filters={"name": name})
+            containers = client.containers.list(filters={"name": name, "status": "exited"})
+        if len(containers) == 0:
+            containers = client.containers.list(filters={"name": name, "status": "exited"})
+        if len(containers) == 0:
+            containers = client.containers.list(filters={"name": name, "status": "restarting"})
+        if len(containers) == 0:
+            containers = client.containers.list(filters={"name": name, "status": "running"})
+        if len(containers) == 0:
             logger.error("FATAL: cannot find dangling container " + name)
 
+        # print(containers)
         for container in containers:
             if container.name != name:
                 continue
 
             if debug_sand_box:
-                logger.debug("Stop and remove dangling container " + container.name)
+                logger.debug("Stop dangling container " + container.name)
             try:
                 container.stop()
             except Exception as e:
                 logger.debug("cannot stop dangling container " + container.name)
                 logger.debug(e)
             try:
+                if debug_sand_box:
+                    logger.debug("Remove dangling container " + container.name)
                 container.remove(force=True)
             except Exception as e:
                 logger.debug("cannot remove dangling container " + container.name)
