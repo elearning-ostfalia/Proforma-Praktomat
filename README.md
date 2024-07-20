@@ -258,6 +258,17 @@ Remove unused images:
         docker rmi $(docker images --filter=reference="tmp:*" -q)
 
 
+On Praktomat (re)start all dangling containers and intermediate images are removed. 
+The docker images for the individual programming languages are retained.
+
+        docker compose up
+
+In case these are to be recreated, e.g. if the programming language Dockerfile
+has been changed, they must be deleted manually.
+
+        docker image ls
+        docker image rm <image1> <image2> ...
+
 Retrieve state information:
 
         http://{serverhost}/praktomat-info
@@ -275,11 +286,15 @@ In case of a software update this is the recommended process:
 
 ### Troubleshooting 
 
-If you encounter responses containing something like 'cannot allocate memory' then
-you should try and increase one of the values 
+If you encounter responses containing errors like 'cannot allocate memory' then
+you should try and increase one of the following values 
 
     TEST_MAXMEM_DOCKER_DEFAULT
     TEST_MAXMEM_DOCKER_JAVA
     TEST_MAXMEM_DOCKER_PYTHON
 
-in settings.docker.py for your programming language. 
+in src/settings/docker.py for your programming language. 
+However, memory shortages can also lead to other error messages.
+
+
+
