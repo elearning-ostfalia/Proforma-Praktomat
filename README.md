@@ -256,10 +256,6 @@ Remove unused temporary sandbox images:
 
         docker rm $(docker images --filter=reference="tmp:*" -q)
 
-Remove all sandbox base images: 
-
-        docker image rm $(docker images --filter=reference="*-praktomat_sandbox" -q)
-
 
 On Praktomat (re)start all dangling containers and intermediate images are removed. 
 The docker images for the individual programming languages are retained.
@@ -271,6 +267,10 @@ has been changed, they must be deleted manually.
 
         docker image ls
         docker image rm <image1> <image2> ...
+
+Or: Remove all sandbox base images: 
+
+        docker image rm $(docker images --filter=reference="*-praktomat_sandbox" -q)
 
 Retrieve state information:
 
