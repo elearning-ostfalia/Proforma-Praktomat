@@ -248,10 +248,9 @@ Remove dangling containers:
 
         docker rm $(docker container ls -a -q --filter name=tmp_* --filter status=exited)
 
-or if all exited containers shall be removed: 
+Under certain conditions, containers that have never been run could also get stuck:
 
-        docker rm $(docker container ls -a -q --filter status=exited)
-
+        docker rm $(docker container ls -a -q --filter name=tmp_* --filter status=created)
 
 Remove unused temporary sandbox images: 
 
