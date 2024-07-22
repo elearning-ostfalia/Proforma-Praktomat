@@ -821,8 +821,7 @@ def create_images():
 
 
 def get_state():
-    state = {}
-
+    state = {'containers': [], 'images': []}
     client = docker.from_env()
     try:
         state['info'] = client.info()
@@ -857,6 +856,8 @@ def get_state():
             imagelist.append(newimage)
 
         state['images'] = imagelist
+    except Exception:
+        pass
     finally:
         client.close()
 

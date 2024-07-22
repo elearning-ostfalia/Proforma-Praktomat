@@ -253,9 +253,13 @@ or if all exited containers shall be removed:
         docker rm $(docker container ls -a -q --filter status=exited)
 
 
-Remove unused images: 
+Remove unused temporary sandbox images: 
 
-        docker rmi $(docker images --filter=reference="tmp:*" -q)
+        docker rm $(docker images --filter=reference="tmp:*" -q)
+
+Remove all sandbox base images: 
+
+        docker image rm $(docker images --filter=reference="*-praktomat_sandbox" -q)
 
 
 On Praktomat (re)start all dangling containers and intermediate images are removed. 
