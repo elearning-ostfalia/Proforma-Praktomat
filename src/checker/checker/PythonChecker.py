@@ -7,7 +7,7 @@ from checker.basemodels import CheckerFileField, CheckerResult, truncated_log
 from utilities.file_operations import *
 from django.utils.html import escape
 from checker.checker.ProFormAChecker import ProFormAChecker
-from proforma import sandbox
+from proforma import custom_sandbox, sandbox
 
 import os
 
@@ -39,7 +39,7 @@ class PythonDoctestSandbox(sandbox.DockerSandbox):
                          None) # download path
 
 
-class PythonDoctestImage(sandbox.PythonImage):
+class PythonDoctestImage(custom_sandbox.PythonImage):
     """ derive from PythonImage in order to support requirements """
     def __init__(self, praktomat_test):
         super().__init__(praktomat_test)

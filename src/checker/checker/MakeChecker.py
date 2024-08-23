@@ -8,7 +8,7 @@ from checker.basemodels import CheckerResult, truncated_log
 #from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
-from proforma import sandbox
+from proforma import custom_sandbox
 
 
 import logging
@@ -47,7 +47,7 @@ class MakeChecker(ProFormAChecker):
         test_dir = env.tmpdir()
 
         # cmd = [self.class_name]
-        gt_sandbox = sandbox.CppImage(self).get_container(test_dir, self.class_name)
+        gt_sandbox = custom_sandbox.CppImage(self).get_container(test_dir, self.class_name)
         gt_sandbox.upload_environmment()
         # run test
         (passed, output) = gt_sandbox.compile_tests()

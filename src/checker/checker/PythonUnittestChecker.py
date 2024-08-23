@@ -7,7 +7,7 @@ from lxml import etree
 from checker.basemodels import CheckerResult, truncated_log
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
-from proforma import sandbox
+from proforma import custom_sandbox
 
 import logging
 
@@ -95,8 +95,8 @@ class PythonUnittestChecker(ProFormAChecker):
         self.prepare_run(env)
         logger.debug('task code is in ' + test_dir)
 
-        req_txt = sandbox.PythonImage.look_for_requirements_txt(test_dir)
-        p_sandbox = sandbox.PythonImage(self, req_txt).get_container(test_dir)
+        req_txt = custom_sandbox.PythonImage.look_for_requirements_txt(test_dir)
+        p_sandbox = custom_sandbox.PythonImage(self, req_txt).get_container(test_dir)
         p_sandbox.upload_environmment()
         # precompile
         (passed, output) = p_sandbox.compile_tests()

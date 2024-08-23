@@ -119,7 +119,7 @@ class JavaBuilder(ClassFileGeneratingBuilder):
         #        [output, _, _, _, _]  = execute_arglist(args, env.tmpdir(), self.environment(), extradirs=[script_dir], unsafe=True)
 
         ####
-        j_sandbox = sandbox.JavaImage(self).get_container(test_dir, None)
+        j_sandbox = custom_sandbox.JavaImage(self).get_container(test_dir, None)
         j_sandbox.upload_environmment()
         # compile
         (passed, output) = j_sandbox.compile_tests(cmd)

@@ -13,7 +13,11 @@ then
 fi
 
 echo "Cleaning docker and precreate docker images"
-python3 /praktomat/src/proforma/sandbox.py
+# python3 -m /praktomat/src/proforma/custom_sandbox.py
+python3 -c "import sys; \
+sys.path.append('/praktomat/src/proforma'); \
+from custom_sandbox import create_images; \
+create_images()"
 
 
 

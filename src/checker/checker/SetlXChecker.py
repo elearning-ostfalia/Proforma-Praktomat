@@ -14,7 +14,7 @@ from checker.basemodels import CheckerResult, CheckerFileField, truncated_log
 from utilities.safeexec import execute_arglist
 from utilities.file_operations import *
 from checker.checker.ProFormAChecker import ProFormAChecker
-from proforma import sandbox
+from proforma import custom_sandbox
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ class SetlXChecker(ProFormAChecker):
 
 
         if use_sandbox:
-            j_sandbox = sandbox.JavaImage(self).get_container(test_dir, None)
+            j_sandbox = custom_sandbox.JavaImage(self).get_container(test_dir, None)
             j_sandbox.upload_environmment()
 
             cmd = ' '.join(cmd)  # convert cmd to string

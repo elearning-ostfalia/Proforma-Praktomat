@@ -12,7 +12,7 @@ from checker.checker.ProFormAChecker import ProFormAChecker
 from utilities.file_operations import *
 from solutions.models import Solution
 import xml.etree.ElementTree as ET
-from proforma import sandbox
+from proforma import custom_sandbox
 
 from checker.compiler.JavaBuilder import JavaBuilder
 import logging
@@ -225,7 +225,7 @@ class JUnitChecker(ProFormAChecker):
 ################
         if use_sandbox:
             # use sandbox instead of Java security manager
-            j_sandbox = sandbox.JavaImage(self).get_container(test_dir, None)
+            j_sandbox = custom_sandbox.JavaImage(self).get_container(test_dir, None)
             j_sandbox.upload_environmment()
             # compile
             # j_sandbox.exec('ls -al')
