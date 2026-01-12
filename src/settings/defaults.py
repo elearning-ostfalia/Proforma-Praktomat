@@ -115,7 +115,13 @@ def load_defaults(settings):
 
     d.AUTHENTICATION_BACKENDS = (d.AUTH_BACKEND,)
 
-    d.DEFAULT_FILE_STORAGE = 'utilities.storage.UploadStorage'
+    d.STORAGES = {
+        "default": {
+            "BACKEND": 'utilities.storage.UploadStorage',
+            "OPTIONS": {
+            }
+        }
+    }
 
     # URL and file paths
     # Template file path is set in template section

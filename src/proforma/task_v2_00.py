@@ -28,6 +28,8 @@ from datetime import datetime
 import xmlschema
 
 from django.core.files import File
+from django.utils import timezone
+
 
 from checker.checker import PythonChecker, PythonUnittestChecker, SetlXChecker
 from checker.checker import CheckStyleChecker, JUnitChecker,  \
@@ -542,7 +544,7 @@ class Task_2_00:
             old_task = task.get_task(self._hash, task_uuid, task_title)
             if old_task is not None:
                 old_task.used = old_task.used + 1
-                old_task.last_use = datetime.now()
+                old_task.last_use = timezone.now()
                 old_task.save()
                 logger.debug('task already exists, no import')
                 yield 'data: task already exists, no import\n\n'
