@@ -104,7 +104,7 @@ def show_info(request):
 @csrf_exempt
 def tasks(request):
     html_result = "todo: list all tasks"
-    tasks = Task.objects.all()
+    tasks = Task.objects.all().order_by('-last_use')
 
     # taskname proglang created count solutions
     t = get_template('proforma/tasks.html')

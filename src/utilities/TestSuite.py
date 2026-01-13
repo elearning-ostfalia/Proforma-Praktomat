@@ -71,6 +71,7 @@ class SeleniumTestCase(LiveServerTestCase):
 
 from accounts.models import User #, Tutorial
 from django.contrib.auth.models import Group
+from django.utils import timezone
 from tasks.models import Task
 from solutions.models import Solution, SolutionFile
 from attestation.models import Attestation
@@ -105,7 +106,7 @@ def create_test_data():
     task = Task.objects.create(
             title = 'Test task',
             description = 'Test description.',
-            publication_date = datetime.now() - timedelta(hours=5),
+            publication_date = timezone.now() - timedelta(hours=5),
             # submission_date =  datetime.now() + timedelta(hours=5)
             #model_solution
             #all_checker_finished = False

@@ -39,7 +39,7 @@ from solutions.models import Solution, SolutionFile
 from checker.checker import CreateFileChecker, CheckStyleChecker, JUnitChecker, \
     PythonChecker, SetlXChecker
 from checker.compiler import JavaBuilder# , CBuilder
-
+from django.utils import timezone
 
 from . import task
 
@@ -104,7 +104,7 @@ def import_task(task_xml, xml_object, dict_zip_files_post=None ):
     new_task = Task.objects.create(title="test",
                                    description=xml_task.description.text,
                                    # submission_date=datetime.now(),
-                                   publication_date=datetime.now())
+                                   publication_date=timezone.now())
 
     try:
         # check for submission-restriction

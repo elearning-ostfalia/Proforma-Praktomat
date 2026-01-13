@@ -11,6 +11,7 @@ from django.db import transaction
 from django.core import serializers
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
+from django.utils import timezone
 
 
 from utilities.safeexec import execute_arglist
@@ -42,7 +43,7 @@ class Task(models.Model):
     # for statistics
     prog_lang = models.CharField(max_length=30, help_text = _("Programming language"))
     used = models.IntegerField(default=1, help_text = _("How often is the task used?"))
-    last_use = models.DateTimeField(help_text = _("The time on which the task was last used."), default=datetime.now)
+    last_use = models.DateTimeField(help_text = _("The time on which the task was last used."), default=timezone.now)
 
     class Meta:
         ordering = ['title']

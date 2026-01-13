@@ -1,5 +1,5 @@
 # FROM scratch as build
-FROM alpine:3.22 as build
+FROM alpine:3.23.2 as build
 
 
 # set locale

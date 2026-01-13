@@ -32,6 +32,7 @@ from lxml import etree
 from django.http import HttpResponse, StreamingHttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.core.files import File
+from django.utils import timezone
 from django.template.loader import render_to_string
 
 # from solutions.models import Solution
@@ -184,7 +185,7 @@ def grade_api_v2(request,):
         print("ExternalSubmissionException caught Stack Trace: " + str(callstack))
         response = HttpResponse()
         from datetime import datetime
-        now = datetime.now().isoformat()
+        now = timezone.now().isoformat()
 
         response_xml = render_to_string("proforma/response_student_visible_error.xml",
                            {

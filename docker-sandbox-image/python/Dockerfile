@@ -1,5 +1,4 @@
-FROM python:3.13.5-slim-bookworm
-# FROM python:3.11.13-alpine3.20
+FROM python:3.13.11-slim-bookworm
 
 MAINTAINER Ostfalia
 

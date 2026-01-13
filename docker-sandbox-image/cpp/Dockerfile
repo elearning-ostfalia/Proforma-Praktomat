@@ -1,6 +1,4 @@
-# FROM ubuntu:jammy
-#FROM python:3.13.5-slim-bookworm
-FROM python:3.11.13-slim-bookworm
+FROM python:3.11.14-slim-bookworm
 
 MAINTAINER Ostfalia
 

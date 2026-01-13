@@ -103,7 +103,7 @@ class Praktomat_Task_2_00:
         self._task = Task.objects.create(title="test",
                                          description="",
                                          # submission_date=datetime.now(),
-                                         publication_date=datetime.now(),
+                                         publication_date=timezone.now(),
                                          prog_lang=prog_lang)
 
     def _getTask(self):

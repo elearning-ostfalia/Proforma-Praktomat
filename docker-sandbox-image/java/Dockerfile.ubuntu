@@ -1,3 +1,4 @@
+# currently an alpine base also works and results in an smaller image
 
 # jammy: Ubuntu 22.04 LTS
 # FROM debian:bookworm-slim

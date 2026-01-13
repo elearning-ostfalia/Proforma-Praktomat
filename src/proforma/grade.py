@@ -29,6 +29,7 @@ from django.core.files import File
 
 from accounts.models import User
 from django.utils._os import safe_join
+from django.utils import timezone
 from solutions.models import Solution, SolutionFile
 from VERSION import version
 
@@ -127,7 +128,7 @@ class Grader:
         false_required_hidden_test = False
         solution.seperate = True
         from datetime import datetime
-        solution.timestamp = datetime.now().isoformat()
+        solution.timestamp = timezone.now().isoformat()
 
         # solution.versioncontrol = True
         grader = dict()
