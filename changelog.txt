@@ -1,3 +1,7 @@
+# 5.3.2
+
+update Django
+
 # 5.3.1
 
 updating the software used (e.g. Django 5.2)
