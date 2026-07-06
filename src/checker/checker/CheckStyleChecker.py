@@ -36,6 +36,7 @@ class CheckStyleChecker(ProFormAChecker):
         (u'check-8.29', u'Checkstyle 8.29 all'),
         (u'check-10.1', u'Checkstyle 10.1 all'),
         (u'check-10.17', u'Checkstyle 10.17 all'),
+        (u'check-13.7', u'Checkstyle 13.7 all'),
     )
     check_version = models.CharField(max_length=16, choices=CHECKSTYLE_CHOICES, default="check-8.29")
 

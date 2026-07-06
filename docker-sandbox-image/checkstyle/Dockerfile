@@ -1,5 +1,5 @@
 # FROM scratch as build
-FROM alpine:3.23.2 as build
+FROM alpine:3.24 as build
 
 
 # set locale
@@ -13,12 +13,12 @@ FROM alpine:3.23.2 as build
 #    && sed -i 's|LANG=C.UTF-8|LANG=${LOCALE}|' /etc/profile.d/locale.sh
 
 
-# Checkstyle
-ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.0/checkstyle-10.17.0-all.jar \
+# Install different checkstyle versions to /praktomat/lib
+ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-13.7.0/checkstyle-13.7.0-all.jar \
+    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.0/checkstyle-10.17.0-all.jar \
     https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.1/checkstyle-10.1-all.jar \
     https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.23/checkstyle-8.23-all.jar \
     https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.29/checkstyle-8.29-all.jar \
-# destination
     /praktomat/lib/
 
 
@@ -29,7 +29,7 @@ ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.
 
 
 
-FROM alpine:3.22
+FROM alpine:3.24
 
 ARG PRAKTOMAT_ID=1100
 # add user praktomat
@@ -39,7 +39,7 @@ RUN adduser -u ${PRAKTOMAT_ID} praktomat --disabled-password
 COPY --from=build --chown=praktomat /praktomat /praktomat
 
 # java is required for running Checkstyle
-RUN apk add --no-cache openjdk21-jre
+RUN apk add --no-cache openjdk25-jre
 
 # create sandbox folder
 WORKDIR /sandbox

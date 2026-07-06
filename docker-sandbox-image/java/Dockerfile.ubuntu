@@ -56,7 +56,8 @@ ADD extra /praktomat/extra
 
 # add JAVA test specific libraries
 # Checkstyle
-ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.0/checkstyle-10.17.0-all.jar \
+ADD https://github.com/checkstyle/checkstyle/releases/download/checkstyle-13.7.0/checkstyle-13.7.0-all.jar \
+    https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.0/checkstyle-10.17.0-all.jar \
     https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.1/checkstyle-10.1-all.jar \
     https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.23/checkstyle-8.23-all.jar \
     https://github.com/checkstyle/checkstyle/releases/download/checkstyle-8.29/checkstyle-8.29-all.jar \
