@@ -1,4 +1,4 @@
-FROM python:3.11.14-slim-bookworm
+FROM python:3.14.6-slim-bookworm
 # FROM python:3.13.5-slim-bookworm
 
 LABEL description="Praktomat with ProFormA interface"

@@ -85,7 +85,7 @@ class JavaBuilder(ClassFileGeneratingBuilder):
         result = dict()
         if ProFormAChecker.retrieve_subtest_results:
             t = get_template('checker/compiler/java_builder_report.xml')
-            regexp = '(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
+            regexp = r'(?<filename>\/?(\w+\/)*(\w+)\.([^:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?: (?<msgtype>[a-z]+): (?<text>.+)(?<code>\s+.+)?(?<position>\s+\^)?(\s+symbol:\s*(?<symbol>\s+.+))?'
 #            regexp = '(?<filename>\/?(.+\/)*(.+)\.([^\s:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?:\s(?<msgtype>[a-z]+):\s(?<text>.+)'
             result["format"] = CheckerResult.FEEDBACK_LIST_LOG
             # in order to improve testability sort all filenames alphabetically

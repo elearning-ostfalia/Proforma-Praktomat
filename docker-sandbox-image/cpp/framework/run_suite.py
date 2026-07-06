@@ -28,7 +28,12 @@ except subprocess.CalledProcessError as e:
     sys.tracebacklimit = 0
     # command may be invalid
     if e.returncode < 0:
-        print('Signal:\r\n' + signal.strsignal(- e.returncode))
+        print('Signal:' + str(e.returncode))
+        try:
+            # print string version of error
+            print(signal.strsignal(- e.returncode))
+        except ValueError as err:
+            pass
     exit(e.returncode)
 except FileNotFoundError as e:
     import sys

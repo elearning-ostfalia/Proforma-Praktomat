@@ -141,7 +141,7 @@ class SetlXChecker(ProFormAChecker):
             # plain text output
             if passed and (RXFAIL.search(output) is not None or exitcode):
                 # add regular expression in case of an error
-                regexp = 'line\ (?<line>[0-9]+)(:(?<column>[0-9]+))?\s(?<text>.+)'
+                regexp = r'line\ (?<line>[0-9]+)(:(?<column>[0-9]+))?\s(?<text>.+)'
                 result.set_regexp(regexp)
             result.set_log(output, timed_out=timed_out, truncated=truncated, log_format=CheckerResult.TEXT_LOG)
         else:

@@ -90,7 +90,7 @@ class CheckStyleChecker(ProFormAChecker):
             # simply use plaintext
             result.set_log(output, timed_out=timed_out, truncated=False, oom_ed=oom_ed,
                            log_format=CheckerResult.TEXT_LOG)
-            regexp = '\[(?<msgtype>[A-Z]+)\]\s(?<filename>\/?(.+\/)*(.+)\.([^\s:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?:\s(?<text>.+\.)\s\[(?<short>\w+)\]'
+            regexp = r'\[(?<msgtype>[A-Z]+)\]\s(?<filename>\/?(.+\/)*(.+)\.([^\s:]+)):(?<line>[0-9]+)(:(?<column>[0-9]+))?:\s(?<text>.+\.)\s\[(?<short>\w+)\]'
             result.set_regexp(regexp)
         else:
             # old handling (e.g. for LON-CAPA)

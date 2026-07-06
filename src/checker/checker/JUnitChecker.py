@@ -330,7 +330,7 @@ class JUnitChecker(ProFormAChecker):
                 # because truncating log will result in invalid XML.
                 output = ''
                 truncated = False
-            output = '\Execution timed out... (Check for infinite loop in your code)\r\n' + output
+            output = '\nExecution timed out... (Check for infinite loop in your code)\r\n' + output
             (output, truncated) = truncated_log(output)
             # Do not set timout flag in order to handle timeout only as failed testcase.
             # Student shall be motivated to look for error in his or her code and not in testcode.

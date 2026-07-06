@@ -347,7 +347,7 @@ class Task_2_00:
         if junit_version == None or len(junit_version) == 0:
             raise task.TaskXmlException('Junit Version is missing')
 
-        version = re.split('\.', junit_version)
+        version = re.split(r'\.', junit_version)
 
         inst.junit_version = "junit" + junit_version
         logger.debug("JUNIT-version is " + inst.junit_version)

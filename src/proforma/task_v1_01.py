@@ -477,7 +477,7 @@ def import_task(task_xml, xml_object, dict_zip_files_post=None ):
                 if xmlTest.xpath("p:test-configuration/unit:unittest[@framework='JUnit']", namespaces=ns):
                     if xmlTest.xpath("p:test-configuration/unit:unittest[@framework='JUnit']",
                                      namespaces=ns)[0].attrib.get("version"):
-                        version = re.split('\.', xmlTest.xpath("p:test-configuration/"
+                        version = re.split(r'\.', xmlTest.xpath("p:test-configuration/"
                                                                "unit:unittest[@framework='JUnit']",
                                                                namespaces=ns)[0].attrib.get("version"))
 
@@ -531,7 +531,7 @@ def import_task(task_xml, xml_object, dict_zip_files_post=None ):
                         if attributes.get("id"):
                             inst.proforma_id = attributes.get("id")
                     if xmlTest.xpath("p:test-configuration/praktomat:version", namespaces=ns):
-                        checkstyle_version = re.split('\.', xmlTest.xpath("p:test-configuration/"
+                        checkstyle_version = re.split(r'\.', xmlTest.xpath("p:test-configuration/"
                                                       "praktomat:version", namespaces=ns)[0].text)
                         if int(checkstyle_version[0]) == 7 and int(checkstyle_version[1]) == 6:
                             inst.check_version = 'check-7.6'
