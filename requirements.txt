@@ -1,5 +1,5 @@
 
-Django==5.2.15
+Django==5.2.17
 gevent==26.5.0
 gunicorn==26.0.0
 chardet==7.4.3
